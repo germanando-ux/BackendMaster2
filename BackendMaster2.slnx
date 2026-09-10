@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="BackendMaster2.Api/BackendMaster2.Api.csproj" />
+  <Project Path="BackendMaster2.Modules/BackendMaster2.Modules.csproj" />
+  <Project Path="BackendMaster2.Shared/BackendMaster2.Shared.csproj" />
+  <Project Path="BackendMaster2.Web/BackendMaster2.Web.csproj" />
+</Solution>
