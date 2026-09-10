@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Elementos de la solución/">
+    <File Path="compose.yaml" />
+  </Folder>
   <Project Path="BackendMaster2.Api/BackendMaster2.Api.csproj" />
   <Project Path="BackendMaster2.Modules/BackendMaster2.Modules.csproj" />
   <Project Path="BackendMaster2.Shared/BackendMaster2.Shared.csproj" />

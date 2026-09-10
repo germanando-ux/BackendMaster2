@@ -5,7 +5,7 @@ using System.Text;
 namespace BackendMaster2.Shared.Common
 {
     /// <summary>
-    /// Represemta un resultado de una operación que puede ser exitosa o fallida.
+    /// Representa un resultado de una operación que puede ser exitosa o fallida.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class Result<T>
