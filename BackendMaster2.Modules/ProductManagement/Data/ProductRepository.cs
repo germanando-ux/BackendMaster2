@@ -1,7 +1,7 @@
-﻿using BackendMaster2.Modules.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using BackendMaster2.Modules.Data;
 using BackendMaster2.Modules.ProductManagement.Interface;
 using BackendMaster2.Shared.Domain;
-using Microsoft.EntityFrameworkCore;
 
 namespace BackendMaster2.Modules.ProductManagement.Data
 {
