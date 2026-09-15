@@ -20,40 +20,42 @@ namespace BackendMaster2.Modules.ProductManagement.Services
             _repository = repository;
         }
 
-        public async Task<Result<IEnumerable<Product>>> GetAllAsync()
+        public async Task<IEnumerable<Product>> GetAllAsync()
         {
-            var products = await _repository.GetAllAsync();
-            return Result<IEnumerable<Product>>.Success(products);
+            return await _repository.GetAllAsync();
         }
 
-        public async Task<Result<Product>> GetByIdAsync(Guid id)
+        public async Task<Product> GetByIdAsync(Guid id)
         {
             var product = await _repository.GetByIdAsync(id);
-            return product is null
-                ? Result<Product>.Failure($"No existe ningún producto con el id {id}.")
-                : Result<Product>.Success(product);
+            if (product is null)
+            {
+                throw new NotFoundException($"No existe ningún producto con el id {id}.");
+            }
+
+            return product;
         }
 
-        public async Task<Result<Product>> CreateAsync(Product product)
+        public async Task<Product> CreateAsync(Product product)
         {
             // REGLA DE NEGOCIO: el SKU no puede estar duplicado.
             var existing = await _repository.GetBySkuAsync(product.Sku);
             if (existing is not null)
             {
-                return Result<Product>.Failure($"Ya existe un producto con el SKU '{product.Sku}'.");
+                throw new DuplicateResourceException($"Ya existe un producto con el SKU '{product.Sku}'.");
             }
 
             await _repository.AddAsync(product);
-            return Result<Product>.Success(product);
+            return product;
         }
 
-        public async Task<Result<Product>> UpdateAsync(Product product)
+        public async Task<Product> UpdateAsync(Product product)
         {
             // 1. Cargo la entidad RASTREADA (la que vive en la memoria del DbContext).
             var existing = await _repository.GetByIdAsync(product.Id);
             if (existing is null)
             {
-                return Result<Product>.Failure($"No existe ningún producto con el id {product.Id}.");
+                throw new NotFoundException($"No existe ningún producto con el id {product.Id}.");
             }
 
             // 2. REGLA: si el SKU cambió, el nuevo también debe estar libre.
@@ -62,7 +64,7 @@ namespace BackendMaster2.Modules.ProductManagement.Services
                 var skuOcupado = await _repository.GetBySkuAsync(product.Sku);
                 if (skuOcupado is not null)
                 {
-                    return Result<Product>.Failure($"Ya existe un producto con el SKU '{product.Sku}'.");
+                    throw new DuplicateResourceException($"Ya existe un producto con el SKU '{product.Sku}'.");
                 }
             }
 
@@ -73,17 +75,18 @@ namespace BackendMaster2.Modules.ProductManagement.Services
             // ...resto de propiedades editables de tu Product
 
             await _repository.UpdateAsync(existing);
-            return Result<Product>.Success(existing);
+            return existing;
         }
 
-        public async Task<Result<bool>> DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
             var existing = await _repository.GetByIdAsync(id);
             if (existing is null)
-                return Result<bool>.Failure($"No existe ningún producto con el id {id}.");
+            {
+                throw new NotFoundException($"No existe ningún producto con el id {id}.");
+            }
 
             await _repository.DeleteAsync(id);
-            return Result<bool>.Success(true);
         }
     }
 }
