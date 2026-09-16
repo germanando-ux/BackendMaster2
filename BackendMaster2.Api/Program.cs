@@ -1,4 +1,5 @@
 using BackendMaster2.Api.Middlewares;
+using BackendMaster2.Api.Settings;
 using BackendMaster2.Modules.Data;
 using BackendMaster2.Modules.ProductManagement.Data;
 using BackendMaster2.Modules.ProductManagement.Interface;
@@ -27,6 +28,9 @@ namespace BackendMaster2.Api
 
             // Registro de validadores de FluentValidation
             builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+            // Registro de JWT
+            builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 
             // Configuración de scallar/OpenAPI
             builder.Services.AddOpenApi();
