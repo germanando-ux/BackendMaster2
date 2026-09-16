@@ -1,5 +1,7 @@
 using BackendMaster2.Api.Middlewares;
 using BackendMaster2.Api.Settings;
+using BackendMaster2.Modules.Auth.Data;
+using BackendMaster2.Modules.Auth.Interface;
 using BackendMaster2.Modules.Data;
 using BackendMaster2.Modules.ProductManagement.Data;
 using BackendMaster2.Modules.ProductManagement.Interface;
@@ -25,6 +27,7 @@ namespace BackendMaster2.Api
             //registro de inyección de dependencias 
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
 
             // Registro de validadores de FluentValidation
             builder.Services.AddValidatorsFromAssemblyContaining<Program>();
