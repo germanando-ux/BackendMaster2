@@ -70,10 +70,13 @@ namespace BackendMaster2.Modules.ProductManagement.Services
 
             // 3. Copio los cambios SOBRE la entidad rastreada: el tracker los
             //    detectará y el SaveChanges del repositorio generará el UPDATE.
+
             existing.Sku = product.Sku;
             existing.Name = product.Name;
-            // ...resto de propiedades editables de tu Product
-
+            existing.Description = product.Description;
+            existing.Price = product.Price;
+            existing.Stock = product.Stock;
+            existing.IsActive = product.IsActive;
             await _repository.UpdateAsync(existing);
             return existing;
         }

@@ -24,4 +24,10 @@ public class ApiProblemDetails : ProblemDetails
     /// Stack trace visible solo en Development. En Production queda vacío.
     /// </summary>
     public string? StackTrace { get; set; }
+
+    /// <summary>
+    /// Errores de validación agrupados por propiedad.
+    /// Solo presente en respuestas 400 de validación.
+    /// </summary>
+    public IDictionary<string, string[]>? Errors { get; set; }
 }

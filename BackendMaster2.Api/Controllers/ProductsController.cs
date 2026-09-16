@@ -1,5 +1,7 @@
-﻿using BackendMaster2.Modules.ProductManagement.Interface;
+﻿using BackendMaster2.Api.Validators;
+using BackendMaster2.Modules.ProductManagement.Interface;
 using BackendMaster2.Shared.Domain;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BackendMaster2.Api.Controllers;
@@ -9,11 +11,15 @@ namespace BackendMaster2.Api.Controllers;
     public class ProductsController : ControllerBase
     {
         private readonly IProductService _service;
+        private readonly CreateProductValidator _createValidator;
+        private readonly UpdateProductValidator _updateValidator;
 
         // El controller solo conoce el CONTRATO del service.
-        public ProductsController(IProductService service)
+        public ProductsController(IProductService service, CreateProductValidator createValidator, UpdateProductValidator updateValidator)
         {
             _service = service;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         [HttpGet]
@@ -33,6 +39,8 @@ namespace BackendMaster2.Api.Controllers;
         [HttpPost]
         public async Task<ActionResult<Product>> Create(Product product)
         {
+            await _createValidator.ValidateAndThrowAsync(product);
+            
             var created = await _service.CreateAsync(product);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
@@ -40,11 +48,8 @@ namespace BackendMaster2.Api.Controllers;
         [HttpPut("{id:guid}")]
         public async Task<ActionResult<Product>> Update(Guid id, Product product)
         {
-            if (id != product.Id)
-            {
-                return BadRequest("El id de la ruta no coincide con el id del cuerpo.");
-            }
-
+         
+            await _updateValidator.ValidateAndThrowAsync(product);  
             var updated = await _service.UpdateAsync(product);
             return Ok(updated);
         }

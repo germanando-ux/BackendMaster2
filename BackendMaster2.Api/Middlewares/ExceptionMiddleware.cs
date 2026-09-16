@@ -1,5 +1,6 @@
 ﻿using BackendMaster2.Api.Models;
 using BackendMaster2.Shared.Common;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using System.Net;
@@ -23,6 +24,8 @@ public class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly IWebHostEnvironment _environment;
+
+ 
 
     // Opciones de serialización compartidas para evitar reinstanciar en cada request
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -89,6 +92,14 @@ public class ExceptionMiddleware
         // Mapeo de excepciones de dominio a códigos HTTP específicos
         switch (exception)
         {
+            case ValidationException validationException:
+                problem.Status = (int)HttpStatusCode.BadRequest;
+                problem.Title = "Error de validación";
+                problem.Detail = "El request no supera las reglas de validación.";
+                problem.Type = "https://httpstatuses.com/400";
+                problem.Errors = validationException.Errors.GroupBy(e => e.PropertyName).ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+                break;
+
             case NotFoundException:
                 problem.Status = (int)HttpStatusCode.NotFound;
                 problem.Title = "Recurso no encontrado";
