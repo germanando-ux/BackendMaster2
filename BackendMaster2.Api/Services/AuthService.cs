@@ -1,4 +1,5 @@
-﻿using BackendMaster2.Api.Settings;
+﻿using BackendMaster2.Api.Interface;
+using BackendMaster2.Api.Settings;
 using BackendMaster2.Modules.Auth.Data;
 using BackendMaster2.Modules.Auth.Interface;
 using BackendMaster2.Modules.Data;
@@ -16,13 +17,13 @@ namespace BackendMaster2.Api.Services;
 /// Fábrica y guardián de tokens: firma access tokens (JWT) y gestiona
 /// refresh tokens hasheados en base de datos.
 /// </summary>
-public class TokenService
+public class AuthService: IAuthService
 {
     private readonly JwtSettings _jwt;
     private readonly IUserRepository _userRepository;
 
 
-    public TokenService(IOptions<JwtSettings> jwt, IUserRepository userRepository)
+    public AuthService(IOptions<JwtSettings> jwt, IUserRepository userRepository)
     {
         _jwt = jwt.Value;
         _userRepository = userRepository;
@@ -142,3 +143,4 @@ public class TokenService
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token))).ToLowerInvariant();
     }
 }
+
