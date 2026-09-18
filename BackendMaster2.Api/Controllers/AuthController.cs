@@ -16,11 +16,11 @@ namespace BackendMaster2.Api.Controllers
     public class AuthController : Controller
     {
         
-        private readonly IAuthService _tokenService;
+        private readonly IAuthService _AuthService;
 
-        public AuthController(IAuthService tokenService)
+        public AuthController(IAuthService authService)
         {
-            _tokenService = tokenService;
+            _AuthService = authService;
         }
 
         /// <summary>
@@ -31,15 +31,15 @@ namespace BackendMaster2.Api.Controllers
         {
             // null cubre los tres fallos (no existe, contraseña mal, desactivado):
             // misma respuesta para todos, no regalamos información al atacante.
-            var user = await _tokenService.ValidateCredentialsAsync(request.Email, request.Password);
+            var user = await _AuthService.ValidateCredentialsAsync(request.Email, request.Password);
 
             if (user == null)
             {
                 return Unauthorized("Credenciales inválidas");
             }
 
-            var (accessToken, expiresAt) = _tokenService.CreateAccessToken(user);
-            var refreshToken = await _tokenService.CreateRefreshTokenAsync(user.Id);
+            var (accessToken, expiresAt) = _AuthService.CreateAccessToken(user);
+            var refreshToken = await _AuthService.CreateRefreshTokenAsync(user.Id);
 
             return Ok(new TokenResponse
             {
@@ -56,14 +56,14 @@ namespace BackendMaster2.Api.Controllers
         [HttpPost("refresh")]
         public async Task<ActionResult<TokenResponse>> Refresh([FromBody] RefreshRequest request)
         {
-            var user = await _tokenService.ValidateRefreshTokenAsync(request.RefreshToken);
+            var user = await _AuthService.ValidateRefreshTokenAsync(request.RefreshToken);
 
             if (user == null)
             {
                 return Unauthorized("Refresh token inválido o caducado");
             }
 
-            var (accessToken, expiresAt) = _tokenService.CreateAccessToken(user);
+            var (accessToken, expiresAt) = _AuthService.CreateAccessToken(user);
 
             return Ok(new TokenResponse
             {
@@ -81,7 +81,7 @@ namespace BackendMaster2.Api.Controllers
         [HttpPost("revoke")]
         public async Task<ActionResult> Revoke([FromBody] RefreshRequest request)
         {
-            await _tokenService.RevokeRefreshTokenAsync(request.RefreshToken);
+            await _AuthService.RevokeRefreshTokenAsync(request.RefreshToken);
             return Ok();
         }
     }

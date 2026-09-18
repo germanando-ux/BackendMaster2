@@ -5,5 +5,5 @@
   <Project Path="BackendMaster2.Api/BackendMaster2.Api.csproj" />
   <Project Path="BackendMaster2.Modules/BackendMaster2.Modules.csproj" />
   <Project Path="BackendMaster2.Shared/BackendMaster2.Shared.csproj" />
-  <Project Path="BackendMaster2.Web/BackendMaster2.Web.csproj" />
+  <Project Path="BackendMaster2.Web/BackendMaster2.Web.csproj" Id="150cdd57-a550-4e8d-a154-1a28ea9f8777" />
 </Solution>

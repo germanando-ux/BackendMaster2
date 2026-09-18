@@ -1,7 +1,17 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Inicio</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudText Typo="Typo.h4" Class="mb-3">Recreo de tema</MudText>
 
-Welcome to your new app.
+<MudStack Row="true" Spacing="2">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary">Primario relleno</MudButton>
+    <MudButton Variant="Variant.Outlined" Color="Color.Secondary">Secundario contorno</MudButton>
+    <MudButton Variant="Variant.Text" Color="Color.Tertiary">Terciario texto</MudButton>
+</MudStack>
+
+<MudPaper Class="pa-4 mt-4" Elevation="4">
+    <MudText Typo="Typo.body1">
+        Este papel tiene sombra de nivel 4. Cambia Elevation a 0, 12 o 24 y mira cómo respira o se aplasta.
+    </MudText>
+</MudPaper>

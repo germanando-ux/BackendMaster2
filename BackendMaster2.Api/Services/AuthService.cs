@@ -111,7 +111,7 @@ public class AuthService: IAuthService
         if (storedToken == null) return null;        
         if (storedToken.RevokedAtUtc != null) return null;
         if (storedToken.ExpiresAtUtc < DateTime.UtcNow) return null;
-        if (!storedToken.User?.IsActive != true) return null;
+        if (storedToken.User?.IsActive != true) return null;
 
         return storedToken.User;
     }

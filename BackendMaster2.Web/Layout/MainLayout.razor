@@ -1,16 +1,60 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<MudThemeProvider Theme="_miTema" IsDarkMode="_modoOscuro" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-        <article class="content px-4">
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+        <MudText Typo="Typo.h6">BackendMaster2</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@(_modoOscuro ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+               Color="Color.Inherit"
+               OnClick="ToggleOscuro" />
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+        <MudNavMenu>
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Inicio</MudNavLink>
+            <MudNavLink Href="/productos" Icon="@Icons.Material.Filled.Inventory">Productos</MudNavLink>
+            <MudNavLink Href="/usuarios" Icon="@Icons.Material.Filled.People">Usuarios</MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer Class="pa-4" MaxWidth="MaxWidth.Large">
             @Body
-        </article>
-    </main>
-</div>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _modoOscuro;
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+    private void ToggleOscuro() => _modoOscuro = !_modoOscuro;
+
+    private readonly MudTheme _miTema = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = Colors.Blue.Darken3,            // #1565C0
+            Secondary = Colors.Teal.Darken1,          // #00897B
+            Tertiary = Colors.Orange.Darken3,         // #EF6C00
+            AppbarBackground = Colors.Blue.Darken3,
+            DrawerBackground = Colors.BlueGray.Lighten5, // #ECEFF1
+            Background = "#F5F7FA",                   // gris azulado propio, fuera de la carta
+            Surface = "#FFFFFF"
+        },
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#00E5A0",                      // neón menta propio, fuera de la carta
+            Secondary = Colors.LightBlue.Accent2,     // #40C4FF
+            AppbarBackground = "#0D1117",
+            Background = "#0B0F14",
+            Surface = "#161B22",
+            DrawerBackground = "#10151C"
+        }
+    };
+}
