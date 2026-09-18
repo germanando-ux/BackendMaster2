@@ -67,9 +67,22 @@ namespace BackendMaster2.Api
             // Configuración de scallar/OpenAPI
             builder.Services.AddOpenApi();
 
-
+            //CORS
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("FrontLocal", policy =>
+                {
+                    policy.WithOrigins("https://localhost:7275") // ← aquí tu origen real del front
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
 
             var app = builder.Build();
+
+            app.UseHttpsRedirection(); //redirección de http a https
+            app.UseCors("FrontLocal");
 
             //if (app.Environment.IsDevelopment())
             //{

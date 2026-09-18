@@ -27,7 +27,7 @@ namespace BackendMaster2.Api.Controllers
         /// POST /api/auth/login — comprueba email y contraseña y entrega los dos tokens.
         /// </summary>
         [HttpPost("login")]
-        public async Task<ActionResult<TokenResponse>> Login([FromBody] LoginRequest request)
+        public async Task<ActionResult<TokenResponseDto>> Login([FromBody] LoginRequestDto request)
         {
             // null cubre los tres fallos (no existe, contraseña mal, desactivado):
             // misma respuesta para todos, no regalamos información al atacante.
@@ -41,7 +41,7 @@ namespace BackendMaster2.Api.Controllers
             var (accessToken, expiresAt) = _AuthService.CreateAccessToken(user);
             var refreshToken = await _AuthService.CreateRefreshTokenAsync(user.Id);
 
-            return Ok(new TokenResponse
+            return Ok(new TokenResponseDto
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
@@ -54,7 +54,7 @@ namespace BackendMaster2.Api.Controllers
         /// El refresh se devuelve tal cual: hoy no hay rotación.
         /// </summary>
         [HttpPost("refresh")]
-        public async Task<ActionResult<TokenResponse>> Refresh([FromBody] RefreshRequest request)
+        public async Task<ActionResult<TokenResponseDto>> Refresh([FromBody] RefreshRequestDto request)
         {
             var user = await _AuthService.ValidateRefreshTokenAsync(request.RefreshToken);
 
@@ -65,7 +65,7 @@ namespace BackendMaster2.Api.Controllers
 
             var (accessToken, expiresAt) = _AuthService.CreateAccessToken(user);
 
-            return Ok(new TokenResponse
+            return Ok(new TokenResponseDto
             {
                 AccessToken = accessToken,
                 RefreshToken = request.RefreshToken,
@@ -79,7 +79,7 @@ namespace BackendMaster2.Api.Controllers
         /// Devuelve 200 siempre: logout idempotente, no filtra si el token existía.
         /// </summary>
         [HttpPost("revoke")]
-        public async Task<ActionResult> Revoke([FromBody] RefreshRequest request)
+        public async Task<ActionResult> Revoke([FromBody] RefreshRequestDto request)
         {
             await _AuthService.RevokeRefreshTokenAsync(request.RefreshToken);
             return Ok();
