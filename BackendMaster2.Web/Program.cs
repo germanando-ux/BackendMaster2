@@ -15,7 +15,18 @@ namespace BackendMaster2.Web
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
             builder.Services.AddMudServices();
+
+            var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? throw new InvalidOperationException("Falta ApiBaseUrl en wwwroot/appsettings.json");
+
+            // Cliente HTTP con nombre "Api" apuntando a tu API (URL en wwwroot/appsettings.json).
+            builder.Services.AddHttpClient("Api", client =>
+            {
+                client.BaseAddress = new Uri(apiBaseUrl);
+            });
+
             await builder.Build().RunAsync();
+
+
         }
     }
 }
