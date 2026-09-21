@@ -24,6 +24,9 @@ namespace BackendMaster2.Web
                 client.BaseAddress = new Uri(apiBaseUrl);
             });
 
+            // Registro de Servicio de sesión para guardar y recuperar tokens en localStorage.
+            builder.Services.AddScoped<BackendMaster2.Web.Services.SessionService>();
+
             await builder.Build().RunAsync();
 
 
