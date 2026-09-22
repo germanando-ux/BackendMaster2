@@ -1,0 +1,27 @@
+﻿.app-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1565C0;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+}
+
+.navbar-brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.navbar-logout {
+    background: transparent;
+    color: #fff;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    padding: 0.35rem 0.9rem;
+    cursor: pointer;
+}
+
+    .navbar-logout:hover {
+        background: #fff;
+        color: #1565C0;
+    }

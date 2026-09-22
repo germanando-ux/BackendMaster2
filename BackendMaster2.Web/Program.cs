@@ -27,6 +27,12 @@ namespace BackendMaster2.Web
                 client.BaseAddress = new Uri(apiBaseUrl);
             }).AddHttpMessageHandler<AuthDelegatingHandler>(); ;
 
+            // Cliente HTTP anónimo (sin portero) para llamadas de refresh y otros endpoints públicos. No pasa por AuthDelegatingHandler, no añade cabecera Authorization.
+            builder.Services.AddHttpClient("ApiAnonimo", client =>
+            {
+                client.BaseAddress = new Uri(apiBaseUrl);
+            });
+
             // Registro de Servicio de sesión para guardar y recuperar tokens en localStorage.
             builder.Services.AddScoped<ISessionService, SessionService>();
             // Registro del DelegatingHandler que añade el token a cada petición saliente.

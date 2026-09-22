@@ -14,4 +14,13 @@
     <PackageReference Include="MudBlazor" Version="9.10.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\Users\germa\source\repos\BackendMaster2\BackendMaster2.Web\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="C:\Users\germa\source\repos\BackendMaster2\BackendMaster2.Web\.editorconfig" />
+    <None Include="wwwroot\css\layout.css" />
+  </ItemGroup>
+
 </Project>
