@@ -1,4 +1,7 @@
-﻿@inherits LayoutComponentBase
+﻿@using BackendMaster2.Web.Interfaces
+@inherits LayoutComponentBase
+@inject ISessionService SessionService
+@inject NavigationManager NavigationManager
 
 <MudThemeProvider Theme="_miTema" IsDarkMode="_modoOscuro" />
 <MudPopoverProvider />
@@ -57,4 +60,22 @@
             DrawerBackground = "#10151C"
         }
     };
+
+    /// <summary>
+    /// Cada vez que termina de cargar la página en el layout, se comprueba si la sesión sigue activa. Si no los hay, se redirige a la página de login.
+    /// </summary>
+    /// <param name="firstRender"></param>
+    /// <returns></returns>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var tokens = await SessionService.GetAsync();
+            if (tokens == null)
+            {
+                NavigationManager.NavigateTo("/login");
+            }
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
 }

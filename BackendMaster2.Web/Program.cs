@@ -1,3 +1,5 @@
+using BackendMaster2.Web.Interfaces;
+using BackendMaster2.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
@@ -19,13 +21,16 @@ namespace BackendMaster2.Web
             var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? throw new InvalidOperationException("Falta ApiBaseUrl en wwwroot/appsettings.json");
 
             // Cliente HTTP con nombre "Api" apuntando a tu API (URL en wwwroot/appsettings.json).
+            // Cada petición saliente pasará por AuthDelegatingHandler, que añadirá el token si hay sesión.
             builder.Services.AddHttpClient("Api", client =>
             {
                 client.BaseAddress = new Uri(apiBaseUrl);
-            });
+            }).AddHttpMessageHandler<AuthDelegatingHandler>(); ;
 
             // Registro de Servicio de sesión para guardar y recuperar tokens en localStorage.
-            builder.Services.AddScoped<BackendMaster2.Web.Services.SessionService>();
+            builder.Services.AddScoped<ISessionService, SessionService>();
+            // Registro del DelegatingHandler que añade el token a cada petición saliente.
+            builder.Services.AddTransient<BackendMaster2.Web.Services.AuthDelegatingHandler>();
 
             await builder.Build().RunAsync();
 

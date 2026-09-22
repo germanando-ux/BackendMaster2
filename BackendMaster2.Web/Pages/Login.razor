@@ -1,0 +1,71 @@
+﻿@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+@inject ISessionService SessionService
+
+@page "/login"
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Services
+@layout LoginLayout
+<div class="login-split">
+    <div class="login-brand">
+        <h1>BackendMaster2</h1>
+        <p>Gestión PIM</p>
+    </div>
+
+    <div class="login-form-side">
+        <div class="login-form-box">
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="alert alert-danger" role="alert">@_error</div>
+            }
+            <EditForm Model="@logonRequestDto" OnValidSubmit="EntrarAsync">
+                <DataAnnotationsValidator />
+                <div class="mb-3"> 
+                    <label class="form-label">Correo electrónico</label>
+                    <InputText @bind-Value="logonRequestDto.Email" class="form-control" placeholder="tu@email.com" />
+                    <ValidationMessage For="@(() => logonRequestDto.Email)" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Contraseña</label>
+                    <InputText @bind-Value="logonRequestDto.Password" type="password" class="form-control" placeholder="********" />
+                    <ValidationMessage For="@(() => logonRequestDto.Password)" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Acceder</button>
+
+            </EditForm>
+
+        </div>
+    </div>
+
+</div>
+
+
+@code {
+    private LoginRequestDto logonRequestDto = new();
+    private string _error = string.Empty;
+
+    private async Task EntrarAsync()
+    {
+        try
+        {
+        _error = string.Empty;
+        var client = HttpClientFactory.CreateClient("Api");
+        var respuesta = await client.PostAsJsonAsync("api/auth/login", logonRequestDto);
+
+        if(respuesta.IsSuccessStatusCode)
+        {
+            var tokens = await respuesta.Content.ReadFromJsonAsync<TokenResponseDto>();
+            await SessionService.SaveAsync(tokens);
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            _error = respuesta.StatusCode == System.Net.HttpStatusCode.Unauthorized ? "Correo o contraseña incorrectos." : $"Error de comunicación ({(int)respuesta.StatusCode}). Inténtalo más tarde.";
+        }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error de comunicación con la API. Inténtalo más tarde. ({ex.Message})";
+        }
+    }
+}

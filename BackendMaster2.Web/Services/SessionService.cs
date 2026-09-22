@@ -1,4 +1,5 @@
-﻿using BackendMaster2.Web.Models.Dtos;
+﻿using BackendMaster2.Web.Interfaces;
+using BackendMaster2.Web.Models.Dtos;
 using Microsoft.JSInterop;
 
 namespace BackendMaster2.Web.Services;
@@ -7,10 +8,10 @@ namespace BackendMaster2.Web.Services;
 /// Almacén de la sesión del usuario: guarda los dos tokens en localStorage
 /// y los devuelve cuando hace falta. Todo el acceso a JS queda encapsulado aquí.
 /// </summary>
-public class SessionService
+public class SessionService: ISessionService
 { 
     private readonly IJSRuntime _js;
-    private const string StorageKey =  "backendmaster2.session";
+    private const string StorageKey = "backendmaster2.session";
 
     public SessionService(IJSRuntime js)
     {
@@ -54,9 +55,10 @@ public class SessionService
     /// <summary>
     /// Borra la sesión (logout).
     /// </summary>
-    public async Task BorrarAsync()
+    public async Task DeleteAsync()
     {
         await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
     }
 
 }
+
