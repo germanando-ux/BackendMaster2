@@ -1,17 +1,33 @@
 ﻿@page "/"
 
-<PageTitle>Inicio</PageTitle>
-
-<MudText Typo="Typo.h4" Class="mb-3">Recreo de tema</MudText>
-
-<MudStack Row="true" Spacing="2">
-    <MudButton Variant="Variant.Filled" Color="Color.Primary">Primario relleno</MudButton>
-    <MudButton Variant="Variant.Outlined" Color="Color.Secondary">Secundario contorno</MudButton>
-    <MudButton Variant="Variant.Text" Color="Color.Tertiary">Terciario texto</MudButton>
-</MudStack>
-
-<MudPaper Class="pa-4 mt-4" Elevation="4">
-    <MudText Typo="Typo.body1">
-        Este papel tiene sombra de nivel 4. Cambia Elevation a 0, 12 o 24 y mira cómo respira o se aplasta.
-    </MudText>
-</MudPaper>
+<h1 class="mb-1">Bienvenido a BackendMaster2</h1>
+<p class="text-muted mb-4">Panel de control</p>
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <div><i class="bi bi-box-seam fs-2 text-primary"></i></div>
+                <div class="fs-1 fw-bold">12</div>
+                <div class="text-muted">Productos activos</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body ">
+                <div><i class="bi bi-person fs-2 text-success"></i></div>
+                <div class="fs-1 fw-bold">3</div>
+                <div class="text-muted">Usuarios registrados</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <div><i class="bi bi-activity fs-2 text-warning"></i></div>
+                <div class="fs-1 fw-bold">8</div>
+                <div class="text-muted">Actividad reciente</div>
+            </div>
+        </div>
+    </div>
+</div>

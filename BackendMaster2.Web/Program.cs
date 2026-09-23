@@ -35,6 +35,8 @@ namespace BackendMaster2.Web
 
             // Registro de Servicio de sesión para guardar y recuperar tokens en localStorage.
             builder.Services.AddScoped<ISessionService, SessionService>();
+            //cliente productos
+            builder.Services.AddScoped<IProductsClient, ProductsClient>();
             // Registro del DelegatingHandler que añade el token a cada petición saliente.
             builder.Services.AddTransient<BackendMaster2.Web.Services.AuthDelegatingHandler>();
 
