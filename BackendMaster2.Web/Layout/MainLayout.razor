@@ -4,19 +4,21 @@
 @inject NavigationManager NavigationManager
 
 <div class="app-layout">
-    <nav class="app-navvar">
+    <nav class="app-navbar">
+        <button class="navbar-toggle" @onclick="AlternarSidebar" title="Menú"><i class="bi bi-list"></i></button>
         <div class="navbar-brand">BackendMaster2</div>
-        <button class="nabbar-logout" title="Cerrar sesión" @onclick="CerrarSesionAsync">
+        <button class="navbar-logout" title="Cerrar sesión" @onclick="CerrarSesionAsync">
             Salir
         </button>
     </nav>
 
-    <div class="app-body"> 
-        <aside class="app-sidebar">
+    <div class="app-body">         
+        <aside class="app-sidebar @(_sidebarAlternado ? "alternado" : "")">
             <nav class="sidebar-menu">
-                <a href="/" class="sidebar-link">Inicio</a>
-                <a href="/productos" class="sidebar-link">Productos</a>
-                <a href="/usuarios" class="sidebar-link">Usuarios</a>
+         
+                <NavLink href="/" class="sidebar-link" Match="NavLinkMatch.All"><i class="bi bi-house-door"></i><span class="link-texto">Inicio</span></NavLink>
+                <NavLink href="/productos" class="sidebar-link"><i class="bi bi-box-seam"></i><span class="link-texto">Productos</span></NavLink>
+                <NavLink href="/usuarios" class="sidebar-link"><i class="bi bi-people"></i><span class="link-texto">Usuarios</span></NavLink>
             </nav>
         </aside>
         <main class="app-content">
@@ -26,7 +28,7 @@
 </div>
 
 @code {
-     /// <summary>
+    /// <summary>
     /// Cada vez que termina de cargar la página en el layout, se comprueba si la sesión sigue activa. Si no los hay, se redirige a la página de login.
     /// </summary>
     /// <param name="firstRender"></param>
@@ -53,5 +55,14 @@
     {
         await SessionService.DeleteAsync();
         NavigationManager.NavigateTo("/login");
+    }
+    /// <summary>
+    /// Alterna la visibilidad de la barra lateral.
+    /// </summary>
+    private bool _sidebarAlternado;
+
+    private void AlternarSidebar()
+    {
+        _sidebarAlternado = !_sidebarAlternado;
     }
 }
