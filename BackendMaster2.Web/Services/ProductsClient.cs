@@ -1,24 +1,42 @@
-﻿using BackendMaster2.Web.Models.Dtos;
+﻿using BackendMaster2.Web.Interfaces;
+using BackendMaster2.Web.Models.Dtos;
 
 namespace BackendMaster2.Web.Services;
 
 
-public class ProductsClient: iProductsClient
+public class ProductsClient: IProductsClient
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ApiClient _apiClient;
+    private readonly IApiClient _apiClient;
 
-    public ProductsClient(IHttpClientFactory httpClientFactory, ApiClient apiClient)
-    {
-        _httpClientFactory = httpClientFactory;
+    public ProductsClient(IApiClient apiClient)
+    {        
         _apiClient = apiClient;
     }
 
-    public async Task<ProductDto> GetAllProductAsync()
-    {
+    public async Task<ApiResult<List<ProductDto>>> GetAllProductAsync()
+    {        
+       return await _apiClient.SendAsync<List<ProductDto>>(HttpMethod.Get, "api/products");
+    }
 
-        HttpClient Client = _httpClientFactory.CreateClient("Api");
-        ProductDto result = await _apiClient.SendAsync<ProductDto>(HttpMethod.Get, "/api/products");
-        return result;
+    public async Task<ApiResult<ProductDto>> GetProductByIdAsync(int id)
+    {
+        return await _apiClient.SendAsync<ProductDto>(HttpMethod.Get, $"api/products/{id}");
+    }
+
+    public async Task<ApiResult<ProductDto>> CreateProduct(ProductDto product)
+    {
+        return await _apiClient.SendAsync<ProductDto>(HttpMethod.Post, $"api/products",product);
+    }
+
+    public async Task<ApiResult<ProductDto>> UpdateProduct(Guid id, ProductDto product)
+    {
+        return await _apiClient.SendAsync<ProductDto>(HttpMethod.Put, $"api/products/{id}", product);
+    }
+
+
+    public async Task<ApiResult<ProductDto>> DeleteProduct(Guid id)
+    {
+        return await _apiClient.SendAsync<ProductDto>(HttpMethod.Delete, $"api/products/{id}");
     }
 }
+
