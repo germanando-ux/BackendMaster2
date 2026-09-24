@@ -62,5 +62,14 @@ public class ProductsController : ControllerBase
         await _service.DeleteAsync(id);
         return NoContent();
     }
+
+    /// <summary>ENDPOINT TEMPORAL DE PRUEBA: borrar después de probar el catch (JsonException).</summary>
+    [AllowAnonymous]
+    [HttpGet("error-plano")]
+    public ActionResult ErrorPlano()
+    {
+        Response.StatusCode = 500;
+        return Content("esto no es JSON", "text/plain");
+    }
 }
    

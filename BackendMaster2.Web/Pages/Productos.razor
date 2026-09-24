@@ -1,4 +1,105 @@
 ﻿@page "/productos"
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Models.Dtos
+@using System.Net
+@inject ISessionService SessionService
+@inject NavigationManager NavigationManager
+@inject IProductsClient ProductsClient
 
 <h1 class="mb-1">Productos</h1>
 <p class="text-muted mb-4">Gestión de productos</p>
+
+@if (_cargando)
+{
+    <p class="text-muted">Cargando productos…</p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger" role="alert">@_error</div>
+}
+else
+{
+    <div class="card shadow mb-4">
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-encabezado-marca">
+                <tr>
+                    <th>SKU</th>
+                    <th>Nombre</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var producto in _productos)
+                {
+                    <tr>
+                        <td>@producto.Sku</td>
+                        <td>@producto.Name</td>
+                        <td>@producto.Price.ToString("N2")</td>
+                        <td>@producto.Stock</td>
+                        <td>
+                            @if (producto.IsActive)
+                            {
+                                <span class="badge text-bg-success">Activo</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Inactivo</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<ProductDto> _productos = new();
+    private bool _cargando = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await ProductsClient.GetAllProductsAsync();
+
+        if (!result.IsSuccess)
+        {
+            ManejarError(result);
+            return;
+        }
+
+        _productos = result.Data ?? new List<ProductDto>();
+        _cargando = false;
+    }
+
+    private void ManejarError(ApiResult<List<ProductDto>> result)
+    {
+        _cargando = false;
+
+        if (result.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            // Sesión muerta: logout limpio, no se pinta nada.
+            SessionService.DeleteAsync();
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
+        if (result.Error?.Title == "Sin conexión con la API")
+        {
+            _error = "Sin conexión con la API. Comprueba que el backend esté arrancado y vuelve a intentarlo.";
+        }
+        else if ((int)result.StatusCode >= 500)
+        {
+            // Bug de servidor: genérico para el usuario, detalle para ti en la consola (F12).
+            Console.WriteLine($"Error servidor {(int)result.StatusCode}: {result.Error?.Detail}");
+            _error = "No se pudo completar la operación. Inténtalo de nuevo en unos minutos.";
+        }
+        else
+        {
+            // 4xx: el mensaje de negocio del backend sí le sirve al usuario.
+            _error = result.Error?.Detail ?? result.Error?.Title ?? $"Error {(int)result.StatusCode} al cargar los productos.";
+        }
+    }
+}

@@ -13,28 +13,28 @@ public class ProductsClient: IProductsClient
         _apiClient = apiClient;
     }
 
-    public async Task<ApiResult<List<ProductDto>>> GetAllProductAsync()
+    public async Task<ApiResult<List<ProductDto>>> GetAllProductsAsync()
     {        
        return await _apiClient.SendAsync<List<ProductDto>>(HttpMethod.Get, "api/products");
     }
 
-    public async Task<ApiResult<ProductDto>> GetProductByIdAsync(int id)
+    public async Task<ApiResult<ProductDto>> GetProductByIdAsync(Guid id)
     {
         return await _apiClient.SendAsync<ProductDto>(HttpMethod.Get, $"api/products/{id}");
     }
 
-    public async Task<ApiResult<ProductDto>> CreateProduct(ProductDto product)
+    public async Task<ApiResult<ProductDto>> CreateProductAsync(ProductDto product)
     {
         return await _apiClient.SendAsync<ProductDto>(HttpMethod.Post, $"api/products",product);
     }
 
-    public async Task<ApiResult<ProductDto>> UpdateProduct(Guid id, ProductDto product)
+    public async Task<ApiResult<ProductDto>> UpdateProductAsync(Guid id, ProductDto product)
     {
         return await _apiClient.SendAsync<ProductDto>(HttpMethod.Put, $"api/products/{id}", product);
     }
 
 
-    public async Task<ApiResult<ProductDto>> DeleteProduct(Guid id)
+    public async Task<ApiResult<ProductDto>> DeleteProductAsync(Guid id)
     {
         return await _apiClient.SendAsync<ProductDto>(HttpMethod.Delete, $"api/products/{id}");
     }
