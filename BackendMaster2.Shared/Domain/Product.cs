@@ -18,5 +18,6 @@ namespace BackendMaster2.Shared.Domain
         public decimal Price { get; set; }
         public int Stock { get; set; }
         public bool IsActive { get; set; } = true;           // Permite desactivar sin borrar
+        public ICollection<ProductOption> ProductOptions { get; set; } = new List<ProductOption>();
     }
 }

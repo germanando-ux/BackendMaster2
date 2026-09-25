@@ -4,6 +4,8 @@
     /* Opción B: recolorea las utilidades de Bootstrap que leen la variable en vivo. */
     --bs-primary: #1565C0;
     --bs-primary-rgb: 21, 101, 192;
+    /* Tinte de marca para estados activos (sidebar). */
+    --color-marca-suave: #E3F2FD;
 }
 
 /* Cabecera de tabla en azul de marca: inyecta las variables de tabla de Bootstrap. */

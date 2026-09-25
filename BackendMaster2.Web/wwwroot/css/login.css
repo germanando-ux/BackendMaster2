@@ -8,7 +8,7 @@
 
 .login-brand {
     flex: 1;
-    background: #1565C0;
+    background: var(--color-marca);
     color: #fff;
     display: flex;
     flex-direction: column;

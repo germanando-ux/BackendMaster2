@@ -16,6 +16,8 @@ namespace BackendMaster2.Modules.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<Person> Persons => Set<Person>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<Color> Color => Set<Color>();
+        public DbSet<ProductOption> ProductOptions => Set<ProductOption>();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -49,6 +51,32 @@ namespace BackendMaster2.Modules.Data
                       .WithOne(u => u.Person)
                       .HasForeignKey<Person>(p => p.UserId)
                       .OnDelete(DeleteBehavior.Cascade);           // borrada la cuenta, no queda perfil huérfano
+            });
+
+            modelBuilder.Entity<Color>(entity =>
+            {
+                entity.ToTable("Colors");
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Name).HasMaxLength(50).IsRequired();
+                entity.Property(c => c.HexCode).HasMaxLength(9).IsRequired();
+                entity.HasIndex(c => c.Name).IsUnique();
+            });
+
+            modelBuilder.Entity<ProductOption>(entity =>
+            {
+                entity.ToTable("ProductOptions");
+                entity.HasKey(po => po.Id);
+                entity.HasIndex(po => new { po.ProductId, po.ColorId }).IsUnique();
+
+                entity.HasOne(po => po.Product)
+                      .WithMany(p => p.ProductOptions)
+                      .HasForeignKey(po => po.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(po => po.Color)
+                      .WithMany()
+                      .HasForeignKey(po => po.ColorId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }
