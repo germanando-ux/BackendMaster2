@@ -19,9 +19,9 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 
 **Bloque C (Frontend):** 🚧 En progreso
 - Blazor WebAssembly standalone
-- MudBlazor como librería principal de componentes
-- Bootstrap disponible para componentes HTML personalizados
-- Esqueleto de layout con tema Material personalizado
+- Bootstrap como única librería de UI (MudBlazor evaluado y retirado)
+- Layout propio: sidebar colapsable, navbar y tema de marca
+- Página de productos con listado, estados de carga/error y tabla tematizada
 
 ## 🛠️ Stack tecnológico
 
@@ -35,7 +35,6 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 
 ### Frontend
 - **Blazor WebAssembly** (SPA con C#)
-- **MudBlazor** (componentes Material Design)
 - **Bootstrap** (para componentes HTML personalizados)
 
 ## 🏗️ Decisiones de arquitectura
@@ -81,19 +80,21 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 - Para peticiones complejas, REST puro se queda corto y no siempre encaja bien con acciones específicas del dominio
 - Reduce la carga cognitiva al navegar el código
 
-### 4. Blazor WebAssembly con librería dual (MudBlazor + Bootstrap)
+### 4. Blazor WebAssembly con Bootstrap puro (MudBlazor evaluado y retirado)
 
-**Decisión:** El frontend usa MudBlazor como librería principal de componentes, pero mantiene Bootstrap disponible para componentes HTML personalizados cuando se necesita control total.
+**Decisión:** El frontend usa Bootstrap + HTML puro como única librería de UI.
 
-**Por qué esta dualidad:**
-- **MudBlazor** para componentes estándar (tablas, formularios, diálogos): desarrollo rápido, consistencia visual, accesibilidad incluida
-- **Bootstrap + HTML puro** para componentes personalizados: control total sobre estructura y estilos, útil para layouts complejos o integraciones con librerías JavaScript externas
-- Permite aprender ambos enfoques: componentes de alto nivel y HTML/css tradicional
+**Historia:** El proyecto arrancó con MudBlazor como librería principal. Durante el Bloque C se sustituyó progresivamente por Bootstrap y, cuando ningún componente la usaba ya, se retiró por completo en cuatro pasos: links del index.html, usings, registro de servicios y paquete NuGet.
 
-**Ejemplo de uso:**
-- Tabla de productos: `MudTable` (componente MudBlazor)
-- Formulario de login: `EditForm` + Bootstrap grid (HTML puro con validación de Blazor)
+**Por qué Bootstrap puro:**
+- Control total: cada clase y cada regla css del proyecto es nuestra y se puede leer
+- Menos magia: cualquier comportamiento se depura en el markup, no dentro de una librería
+- Aprendizaje más profundo de HTML/CSS y de los mecanismos de Blazor sin capas intermedias
+- Cero dependencias de UI externas que versionar
 
+**Coste asumido:** Los componentes ricos (tablas con ordenación, diálogos, toasts) se construyen a mano sobre clases de Bootstrap. Más markup propio, a cambio de entender cada línea.
+
+**Consecuencia:** El sistema de tema vive centralizado en `wwwroot/css/app.css` (token `--color-marca`, override parcial de variables de Bootstrap y extensiones puntuales como `.table-encabezado-marca`).
 ### 5. Autenticación JWT
 
 JWT con access tokens cortos (15 min) y refresh tokens en base de datos (7 días) con capacidad de revocación. Patrón estándar de la industria.
@@ -117,7 +118,7 @@ JWT con access tokens cortos (15 min) y refresh tokens en base de datos (7 días
 
 ### En progreso
 - 🚧 **Bloque C:** Frontend Blazor WebAssembly
-  - ✅ Esqueleto con MudBlazor
+  - ✅ Esqueleto de layout con Bootstrap 
   - ✅ Configuración CORS en backend
   - ⏳ Integración con API de autenticación
   - ⏳ Gestión de estado de sesión
