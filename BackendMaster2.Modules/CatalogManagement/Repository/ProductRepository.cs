@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using BackendMaster2.Modules.Data;
-using BackendMaster2.Modules.ProductManagement.Interface;
 using BackendMaster2.Shared.Domain;
+using BackendMaster2.Modules.CatalogManagement.Interfaces;
 
-namespace BackendMaster2.Modules.ProductManagement.Repository
+namespace BackendMaster2.Modules.CatalogManagement.Repository
 {
     // ÚNICO sitio del módulo donde se escriben consultas LINQ contra el DbContext.
 

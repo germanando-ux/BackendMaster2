@@ -1,5 +1,4 @@
-﻿
-namespace BackendMaster2.Api.Models.Dtos;
+﻿namespace BackendMaster2.Modules.CatalogManagement.Dtos;
 
 public class ProductDetailDto
 {    

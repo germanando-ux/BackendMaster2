@@ -1,6 +1,6 @@
-﻿namespace BackendMaster2.Api.Models.Dtos;
+﻿namespace BackendMaster2.Modules.CatalogManagement.Dtos;
 
-public class ºColorDto
+public class ColorDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = null!;

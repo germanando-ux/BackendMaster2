@@ -1,11 +1,11 @@
-﻿using BackendMaster2.Api.Models.Dtos;
+﻿using BackendMaster2.Modules.CatalogManagement.Dtos;
 using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace BackendMaster2.Modules.ProductManagement.Interface
+namespace BackendMaster2.Modules.CatalogManagement.Interfaces
 {
     /// <summary>
     /// Casos de uso del módulo: devuelven datos reales.

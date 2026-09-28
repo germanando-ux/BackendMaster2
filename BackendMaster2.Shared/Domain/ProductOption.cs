@@ -6,5 +6,5 @@ public class ProductOption
     public Guid ProductId { get; set; }
  
     public Guid ColorId { get; set; }
- 
+    public Color Color { get; set; } = null!;
 }

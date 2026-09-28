@@ -1,12 +1,12 @@
-﻿using BackendMaster2.Api.Models.Dtos;
-using BackendMaster2.Modules.ProductManagement.Interface;
+﻿using BackendMaster2.Modules.CatalogManagement.Dtos;
+using BackendMaster2.Modules.CatalogManagement.Interfaces;
 using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace BackendMaster2.Modules.ProductManagement.Services
+namespace BackendMaster2.Modules.CatalogManagement.Services
 {
     /// <summary>
     /// Implementación de los casos de uso del módulo ProductManagement.

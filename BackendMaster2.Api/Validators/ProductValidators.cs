@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 using BackendMaster2.Shared.Domain;
-using BackendMaster2.Api.Models.Dtos;
+using BackendMaster2.Modules.CatalogManagement.Dtos;
 
 namespace BackendMaster2.Api.Validators;
 
