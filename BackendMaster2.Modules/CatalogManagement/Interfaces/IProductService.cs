@@ -13,10 +13,10 @@ namespace BackendMaster2.Modules.CatalogManagement.Interfaces
     /// </summary>
     public interface IProductService
     {
-        Task<IEnumerable<Product>> GetAllAsync();
-        Task<Product> GetByIdAsync(Guid id);
-        Task<Product> CreateAsync(ProductDto product);
-        Task<Product> UpdateAsync(ProductDto product);
+        Task<IEnumerable<ProductDto>> GetAllAsync();
+        Task<ProductDetailDto> GetByIdAsync(Guid id);
+        Task<ProductDto> CreateAsync(ProductDto product);
+        Task<ProductDto> UpdateAsync(ProductDto product);
         Task DeleteAsync(Guid id);
     }
 }

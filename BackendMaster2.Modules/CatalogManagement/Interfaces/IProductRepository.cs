@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace BackendMaster2.Modules.CatalogManagement.Interfaces
+namespace BackendMaster2.Modules.ProductManagement.Interface
 {
     // CONTRATO: qué operaciones de datos ofrece el módulo.
     // El service dependerá de ESTA interfaz, no de la clase:

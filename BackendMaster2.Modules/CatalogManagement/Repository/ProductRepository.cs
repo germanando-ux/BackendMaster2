@@ -2,6 +2,7 @@
 using BackendMaster2.Modules.Data;
 using BackendMaster2.Shared.Domain;
 using BackendMaster2.Modules.CatalogManagement.Interfaces;
+using BackendMaster2.Modules.ProductManagement.Interface;
 
 namespace BackendMaster2.Modules.CatalogManagement.Repository
 {
@@ -28,13 +29,19 @@ namespace BackendMaster2.Modules.CatalogManagement.Repository
         // (el tracker); si no está, va a BBDD. Por clave primaria es la vía rápida.
         public async Task<Product?> GetByIdAsync(Guid id)
         {
-            return await _context.Products.FindAsync(id);
+             return await _context.Products
+            .Include(p => p.ProductOptions)
+            .ThenInclude(po => po.Color)
+            .FirstOrDefaultAsync(p => p.Id == id);
         }
+        
 
         // BÚSQUEDA POR CAMPO NO CLAVE: se traduce a WHERE "Sku" = @p.
         public async Task<Product?> GetBySkuAsync(string sku)
         {
+
             return await _context.Products.FirstOrDefaultAsync(p => p.Sku == sku);
+
         }
 
         // INSERT: Add() marca el objeto como "pendiente de insertar";
