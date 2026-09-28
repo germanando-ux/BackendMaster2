@@ -1,3 +1,4 @@
+using AutoMapper;
 using BackendMaster2.Api.Interface;
 using BackendMaster2.Api.Middlewares;
 using BackendMaster2.Api.Services;
@@ -5,9 +6,11 @@ using BackendMaster2.Api.Settings;
 using BackendMaster2.Modules.Auth.Data;
 using BackendMaster2.Modules.Auth.Interface;
 using BackendMaster2.Modules.CatalogManagement.Interfaces;
+using BackendMaster2.Modules.CatalogManagement.Mappings;
 using BackendMaster2.Modules.CatalogManagement.Repository;
 using BackendMaster2.Modules.CatalogManagement.Services;
 using BackendMaster2.Modules.Data;
+using BackendMaster2.Modules.ProductManagement.Interface;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +20,8 @@ using Scalar.AspNetCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+
+
 
 namespace BackendMaster2.Api
 {
@@ -39,6 +44,11 @@ namespace BackendMaster2.Api
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
             builder.Services.AddScoped<ICatalogService, CatalogService>();
+
+
+            //automapper
+
+            builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(CatalogProfile).Assembly));
 
             // Registro de validadores de FluentValidation
             builder.Services.AddValidatorsFromAssemblyContaining<Program>();

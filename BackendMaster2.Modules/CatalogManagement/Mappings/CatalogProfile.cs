@@ -3,7 +3,7 @@ using BackendMaster2.Modules.CatalogManagement.Dtos;
 using BackendMaster2.Shared.Domain;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace BackendMaster2.Modules.CatalogManagement.Mappigs;
+namespace BackendMaster2.Modules.CatalogManagement.Mappings;
 
 public class CatalogProfile : Profile
 {

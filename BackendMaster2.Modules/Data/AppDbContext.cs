@@ -29,6 +29,13 @@ namespace BackendMaster2.Modules.Data
                 entity.Property(e => e.Sku).HasMaxLength(50).IsRequired();
                 entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
                 entity.HasIndex(e => e.Sku).IsUnique();   // SKU único blindado en BBDD
+
+                // Configuramos la relación desde aquí, ya que ProductOption ya no tiene navegación a Product.
+                // "WithOne()" sin argumentos le dice a EF: "el otro lado no tiene propiedad de navegación".
+                entity.HasMany(e => e.ProductOptions)
+                      .WithOne()
+                      .HasForeignKey(po => po.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<User>(entity =>
@@ -68,11 +75,8 @@ namespace BackendMaster2.Modules.Data
                 entity.HasKey(po => po.Id);
                 entity.HasIndex(po => new { po.ProductId, po.ColorId }).IsUnique();
 
-                entity.HasOne(po => po.Product)
-                      .WithMany(p => p.ProductOptions)
-                      .HasForeignKey(po => po.ProductId)
-                      .OnDelete(DeleteBehavior.Cascade);
-
+                // La relación con Color SÍ la configuramos aquí, porque ProductOption SÍ tiene 
+                // la propiedad de navegación 'Color' (la que añadimos para que funcione el Include).
                 entity.HasOne(po => po.Color)
                       .WithMany()
                       .HasForeignKey(po => po.ColorId)
