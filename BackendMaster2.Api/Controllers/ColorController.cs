@@ -17,7 +17,7 @@ public class ColorController : ControllerBase
 
     [Authorize]
     [HttpGet("GetAllColors")]
-    public async Task<ActionResult<IEnumerable<Product>>> GetAllColors()
+    public async Task<ActionResult<IEnumerable<Color>>> GetAllColors()
     {
         var colors = await _catalogService.GetAllColorsAsync();
         return Ok(colors);
@@ -26,7 +26,7 @@ public class ColorController : ControllerBase
 
     [Authorize]
     [HttpGet("GetColorById/{id}")]
-    public async Task<ActionResult<Product>> GetColorById(Guid id)
+    public async Task<ActionResult<Color?>> GetColorById(Guid id)
     {
         var color = await _catalogService.GetColorByIdAsync(id);
         return Ok(color);

@@ -1,4 +1,5 @@
-﻿using BackendMaster2.Shared.Common;
+﻿using BackendMaster2.Api.Models.Dtos;
+using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
 using System;
 using System.Collections.Generic;
@@ -14,8 +15,8 @@ namespace BackendMaster2.Modules.ProductManagement.Interface
     {
         Task<IEnumerable<Product>> GetAllAsync();
         Task<Product> GetByIdAsync(Guid id);
-        Task<Product> CreateAsync(Product product);
-        Task<Product> UpdateAsync(Product product);
+        Task<Product> CreateAsync(ProductDto product);
+        Task<Product> UpdateAsync(ProductDto product);
         Task DeleteAsync(Guid id);
     }
 }

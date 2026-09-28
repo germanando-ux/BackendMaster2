@@ -4,9 +4,12 @@ using BackendMaster2.Api.Services;
 using BackendMaster2.Api.Settings;
 using BackendMaster2.Modules.Auth.Data;
 using BackendMaster2.Modules.Auth.Interface;
+using BackendMaster2.Modules.CatalogManagement.Interfaces;
+using BackendMaster2.Modules.CatalogManagement.Repository;
+using BackendMaster2.Modules.CatalogManagement.Services;
 using BackendMaster2.Modules.Data;
-using BackendMaster2.Modules.ProductManagement.Repository;
 using BackendMaster2.Modules.ProductManagement.Interface;
+using BackendMaster2.Modules.ProductManagement.Repository;
 using BackendMaster2.Modules.ProductManagement.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -37,6 +40,8 @@ namespace BackendMaster2.Api
             builder.Services.AddScoped<IProductService, ProductService>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
+            builder.Services.AddScoped<ICatalogService, CatalogService>();
 
             // Registro de validadores de FluentValidation
             builder.Services.AddValidatorsFromAssemblyContaining<Program>();

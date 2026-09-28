@@ -1,5 +1,4 @@
 ﻿using BackendMaster2.Modules.CatalogManagement.Interfaces;
-using BackendMaster2.Modules.ProductManagement.Interface;
 using BackendMaster2.Shared.Domain;
 
 

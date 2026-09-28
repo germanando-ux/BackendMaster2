@@ -1,11 +1,11 @@
 ﻿using BackendMaster2.Modules.Data;
-using BackendMaster2.Modules.ProductManagement.Interface;
 using BackendMaster2.Shared.Domain;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using BackendMaster2.Modules.CatalogManagement.Interfaces;
 
 namespace BackendMaster2.Modules.CatalogManagement.Repository;
 

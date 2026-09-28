@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using BackendMaster2.Shared.Domain;
+using BackendMaster2.Api.Models.Dtos;
 
 namespace BackendMaster2.Api.Validators;
 
@@ -7,7 +8,7 @@ namespace BackendMaster2.Api.Validators;
 /// Validadores de los endpoints de Products.
 /// Agrupados por cohesión: cambian juntos y Update reutiliza las reglas de Create.
 /// </summary>
-public class CreateProductValidator : AbstractValidator<Product>
+public class CreateProductValidator : AbstractValidator<ProductDto>
 {
     public CreateProductValidator()
     {

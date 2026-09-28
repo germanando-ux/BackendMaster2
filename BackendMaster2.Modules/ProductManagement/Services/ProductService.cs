@@ -1,4 +1,5 @@
-﻿using BackendMaster2.Modules.ProductManagement.Interface;
+﻿using BackendMaster2.Api.Models.Dtos;
+using BackendMaster2.Modules.ProductManagement.Interface;
 using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
 using System;
@@ -36,47 +37,47 @@ namespace BackendMaster2.Modules.ProductManagement.Services
             return product;
         }
 
-        public async Task<Product> CreateAsync(Product product)
+        public async Task<Product> CreateAsync(ProductDto productDto)
         {
             // REGLA DE NEGOCIO: el SKU no puede estar duplicado.
-            var existing = await _repository.GetBySkuAsync(product.Sku);
+            var existing = await _repository.GetBySkuAsync(productDto.Sku);
             if (existing is not null)
             {
-                throw new DuplicateResourceException($"Ya existe un producto con el SKU '{product.Sku}'.");
+                throw new DuplicateResourceException($"Ya existe un producto con el SKU '{productDto.Sku}'.");
             }
 
-            await _repository.AddAsync(product);
-            return product;
+            await _repository.AddAsync(productDto);
+            return productDto;
         }
 
-        public async Task<Product> UpdateAsync(Product product)
+        public async Task<Product> UpdateAsync(ProductDto productDto)
         {
             // 1. Cargo la entidad RASTREADA (la que vive en la memoria del DbContext).
-            var existing = await _repository.GetByIdAsync(product.Id);
+            var existing = await _repository.GetByIdAsync(productDto.Id);
             if (existing is null)
             {
-                throw new NotFoundException($"No existe ningún producto con el id {product.Id}.");
+                throw new NotFoundException($"No existe ningún producto con el id {productDto.Id}.");
             }
 
             // 2. REGLA: si el SKU cambió, el nuevo también debe estar libre.
-            if (!string.Equals(existing.Sku, product.Sku, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(existing.Sku, productDto.Sku, StringComparison.OrdinalIgnoreCase))
             {
-                var skuOcupado = await _repository.GetBySkuAsync(product.Sku);
+                var skuOcupado = await _repository.GetBySkuAsync(productDto.Sku);
                 if (skuOcupado is not null)
                 {
-                    throw new DuplicateResourceException($"Ya existe un producto con el SKU '{product.Sku}'.");
+                    throw new DuplicateResourceException($"Ya existe un producto con el SKU '{productDto.Sku}'.");
                 }
             }
 
             // 3. Copio los cambios SOBRE la entidad rastreada: el tracker los
             //    detectará y el SaveChanges del repositorio generará el UPDATE.
 
-            existing.Sku = product.Sku;
-            existing.Name = product.Name;
-            existing.Description = product.Description;
-            existing.Price = product.Price;
-            existing.Stock = product.Stock;
-            existing.IsActive = product.IsActive;
+            existing.Sku = productDto.Sku;
+            existing.Name = productDto.Name;
+            existing.Description = productDto.Description;
+            existing.Price = productDto.Price;
+            existing.Stock = productDto.Stock;
+            existing.IsActive = productDto.IsActive;
             await _repository.UpdateAsync(existing);
             return existing;
         }
