@@ -1,0 +1,107 @@
+﻿@page "/colors"
+@using System.Net
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Services
+@inject IColorClient ColorClient
+@inject ISessionService SessionService
+@inject NavigationManager NavigationManager
+@inject ErrorHandler ErrorHandler
+
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h1 class="mb-1">Colores</h1>
+        <p class="text-muted mb-0">Gestión de colores</p>
+    </div>
+    <div>  </div>
+    <a href="/colors/crear" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Nuevo Color
+    </a>
+</div>
+
+@if (_cargando)
+{
+    <p class="text-muted">Cargando colores…</p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger" role="alert">@_error</div>
+}
+else
+{
+    <div class="card shadow mb-4">
+
+
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-encabezado-marca">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Hexadecimal/color</th>
+                    <th>Estado</th>
+                    <th class="text-center" style="width: 120px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var color in _colores)
+                {
+                <tr>
+                        <td class ="align-middle">@color.Name</td>
+                        <td >
+                            <div class="d-inline-flex align-items-center gap-2">
+                               <span> @color.HexCode </span> <div style="width: 20px; height: 20px; background-color: @color.HexCode; border: 1px solid #ccc; margin-left: 10px;"></div>
+                            </div>
+                        </td>
+                        <td>
+                            @if (color.IsActive)
+                            {
+                                <span class="badge text-bg-success">Activo</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Inactivo</span>
+                            }
+                        </td>
+                        <td class="text-center align-middle">
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="/colors/editar/@color.Id" class="btn btn-sm btn-outline-primary" title="Editar color">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar color" @onclick="() => ConfirmarEliminar(color.Id)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+
+    </div>
+}
+
+
+@code {
+
+    private bool _cargando = true;
+    private string? _error;
+    private List<ColorDto> _colores = new();
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await ColorClient.GetAllColorsAsync();
+        if (!result.IsSuccess)
+        {
+            _error = ErrorHandler.HandleError(result);
+            return;
+        }
+
+        _colores = result.Data ?? new List<ColorDto>();
+        _cargando = false;
+    }
+
+    private void ConfirmarEliminar(Guid id)
+    {
+        // Por ahora solo un placeholder - lo implementaremos después
+        Console.WriteLine($"Eliminar color {id}");
+    }
+
+    
+}

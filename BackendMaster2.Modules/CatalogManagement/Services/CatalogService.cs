@@ -24,6 +24,17 @@ public class CatalogService : ICatalogService
         return _mapper.Map<ColorDto>(newColor);
     }
 
+    public async Task DeleteColorAsync(Guid id)
+    {
+        var existing = await _CatalogRepository.GetColorByIdAsync(id);
+        if (existing is null)
+        {
+            throw new NotFoundException($"No existe ningún color con el id {id}.");
+        }
+
+        await _CatalogRepository.DeleteColorAsync(id);
+    }
+
     public async Task<IEnumerable<ColorDto>> GetAllColorsAsync()
     {
         IEnumerable<Color> colors = await _CatalogRepository.GetAllColorsAsync();

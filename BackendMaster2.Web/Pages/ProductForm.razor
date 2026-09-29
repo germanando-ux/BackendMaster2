@@ -1,0 +1,132 @@
+﻿@page "/productos/crear"
+@page "/productos/editar/{Id:guid}"
+
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Models.Dtos
+@using BackendMaster2.Web.Services
+@inject IProductsClient ProductsClient
+@inject NavigationManager Navigation
+@inject ErrorHandler ErrorHandler
+
+@if (isLoading)
+{
+    <div class="alert alert-info"> Cargando datos...</div>
+}
+else
+{
+    <form @onsubmit="HandleSubmit">
+        <div class="col-md-8 mb-3">
+            <label class="form-label">SKU</label>
+            <input type="text" class="form-control border-primary" @bind="dto.Sku" />
+        </div>
+
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control border-primary" @bind="dto.Name" />
+        </div>
+
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Descripción</label>
+            <textarea class="form-control border-primary" rows="3" @bind="dto.Description"></textarea>
+        </div>
+
+        <div class="col-6 mb-3">
+            <label class="form-label">Precio</label>
+            <input type="number" step="0.01" class="form-control" @bind="dto.Price"
+                   onkeydown="if(event.key === '.') { event.preventDefault(); this.value = this.value + ','; }"
+                   required />
+        </div>
+
+        <div class="col-6 mb-3">
+            <label class="form-label">Stock</label>
+            <input type="number" class="form-control" @bind="dto.Stock"
+                   onkeydown="if(event.key === '.') { event.preventDefault(); this.value = this.value + ','; }"
+                   required />
+        </div>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" @bind="dto.IsActive" />
+            <label class="form-check-label">Producto Activo</label>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
+        </div>
+
+    </form>
+}
+
+@code {
+    // 1. Recibimos el Id desde la URL. Si no viene, es nulo (modo Crear).
+    [Parameter] public Guid? Id { get; set; }
+
+    // 2. El objeto que va a "viajar" al backend.
+    private ProductDto dto = new();
+
+    // 3. Variables de estado para la UI (cargando, guardando, errores).
+    private bool isLoading = false;
+    private bool isSaving = false;
+    private string? errorMessage;
+
+    // 4. Propiedad calculada: ¿Estamos en modo edición?
+    private bool IsEdit => Id.HasValue;
+
+    // 1. Se ejecuta al entrar en la página. Si es edición, carga los datos.
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit)
+        {
+            isLoading = true;
+            var result = await ProductsClient.GetProductDetailByIdAsync(Id.Value);
+
+            if (result.IsSuccess && result.Data != null)
+            {
+                dto = result.Data.Product; // Rellenamos el formulario con los datos
+            }
+            else
+            {
+                errorMessage = "No se pudo cargar el producto.";
+            }
+            
+        }
+        isLoading = false;
+    }
+
+    // 2. Se ejecuta al pulsar "Guardar"
+    private async Task HandleSubmit()
+    {
+        isSaving = true;
+        errorMessage = null;
+
+        ApiResult<ProductDto> result;
+
+        // Decidimos si crear o actualizar según si tenemos un Id
+        if (IsEdit)
+        {
+            result = await ProductsClient.UpdateProductAsync(Id.Value, dto);
+        }
+        else
+        {
+            result = await ProductsClient.CreateProductAsync(dto);
+        }
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/productos"); // Vuelve al grid (ajusta la ruta si es distinta)
+        }
+        else
+        {
+            errorMessage = "Error al guardar. Revisa los datos.";
+        }
+
+        isSaving = false;
+    }
+
+    // 3. Acción para el botón Cancelar
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/productos");
+    }
+
+}

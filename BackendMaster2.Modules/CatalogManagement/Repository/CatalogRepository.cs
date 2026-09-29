@@ -25,6 +25,16 @@ public class CatalogRepository : ICatalogRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task DeleteColorAsync(Guid id)
+    {
+        var color = await GetColorByIdAsync(id);
+        if (color != null)
+        {
+            _context.Color.Remove(color);
+            await _context.SaveChangesAsync();
+        }
+    }
+
     public async Task<IEnumerable<Color>> GetAllColorsAsync()
     {
         return await _context.Color.ToListAsync();

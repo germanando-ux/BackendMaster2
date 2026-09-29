@@ -1,10 +1,12 @@
 ﻿@page "/productos"
+@using System.Net
 @using BackendMaster2.Web.Interfaces
 @using BackendMaster2.Web.Models.Dtos
-@using System.Net
+@using BackendMaster2.Web.Services
 @inject ISessionService SessionService
 @inject NavigationManager NavigationManager
 @inject IProductsClient ProductsClient
+@inject ErrorHandler ErrorHandler
 
 <h1 class="mb-1">Productos</h1>
 <p class="text-muted mb-4">Gestión de productos</p>
@@ -66,7 +68,7 @@ else
 
         if (!result.IsSuccess)
         {
-            ManejarError(result);
+            _error = ErrorHandler.HandleError(result);
             return;
         }
 
@@ -74,32 +76,5 @@ else
         _cargando = false;
     }
 
-    private void ManejarError(ApiResult<List<ProductDto>> result)
-    {
-        _cargando = false;
-
-        if (result.StatusCode == HttpStatusCode.Unauthorized)
-        {
-            // Sesión muerta: logout limpio, no se pinta nada.
-            SessionService.DeleteAsync();
-            NavigationManager.NavigateTo("/login");
-            return;
-        }
-
-        if (result.Error?.Title == "Sin conexión con la API")
-        {
-            _error = "Sin conexión con la API. Comprueba que el backend esté arrancado y vuelve a intentarlo.";
-        }
-        else if ((int)result.StatusCode >= 500)
-        {
-            // Bug de servidor: genérico para el usuario, detalle para ti en la consola (F12).
-            Console.WriteLine($"Error servidor {(int)result.StatusCode}: {result.Error?.Detail}");
-            _error = "No se pudo completar la operación. Inténtalo de nuevo en unos minutos.";
-        }
-        else
-        {
-            // 4xx: el mensaje de negocio del backend sí le sirve al usuario.
-            _error = result.Error?.Detail ?? result.Error?.Title ?? $"Error {(int)result.StatusCode} al cargar los productos.";
-        }
-    }
+ 
 }

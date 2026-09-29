@@ -18,9 +18,9 @@ public class ProductsClient: IProductsClient
        return await _apiClient.SendAsync<List<ProductDto>>(HttpMethod.Get, "api/products");
     }
 
-    public async Task<ApiResult<ProductDto>> GetProductByIdAsync(Guid id)
+    public async Task<ApiResult<ProductDetailDto>> GetProductDetailByIdAsync(Guid id)
     {
-        return await _apiClient.SendAsync<ProductDto>(HttpMethod.Get, $"api/products/{id}");
+        return await _apiClient.SendAsync<ProductDetailDto>(HttpMethod.Get, $"api/products/{id}");
     }
 
     public async Task<ApiResult<ProductDto>> CreateProductAsync(ProductDto product)
@@ -34,9 +34,9 @@ public class ProductsClient: IProductsClient
     }
 
 
-    public async Task<ApiResult<ProductDto>> DeleteProductAsync(Guid id)
+    public async Task<ApiResult<bool>> DeleteProductAsync(Guid id)
     {
-        return await _apiClient.SendAsync<ProductDto>(HttpMethod.Delete, $"api/products/{id}");
+        return await _apiClient.SendAsync<bool>(HttpMethod.Delete, $"api/products/{id}");
     }
 }
 

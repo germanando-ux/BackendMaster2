@@ -19,6 +19,22 @@
                 <NavLink href="/" class="sidebar-link" Match="NavLinkMatch.All"><i class="bi bi-house-door"></i><span class="link-texto">Inicio</span></NavLink>
                 <NavLink href="/productos" class="sidebar-link"><i class="bi bi-box-seam"></i><span class="link-texto">Productos</span></NavLink>
                 <NavLink href="/usuarios" class="sidebar-link"><i class="bi bi-people"></i><span class="link-texto">Usuarios</span></NavLink>
+                <div class="w-100">
+                    <button @onclick="AlternarCatalogo"
+                            class="sidebar-link d-flex align-items-center gap-2 w-100"
+                            style="background:transparent;border:none;cursor:pointer;font:inherit;text-align:left;">
+                        <i class="bi bi-collection"></i>
+                        <span class="link-texto">Catálogo</span>
+                        <i class="bi bi-chevron-down ms-auto"
+                           style="transition:transform .2s;transform:@(_catalogoAbierto ? "rotate(180deg)" : "rotate(0deg)");"></i>
+                    </button>
+                    @if (_catalogoAbierto)
+                    {
+                        <div style="background:rgba(0,0,0,.05);">
+                            <NavLink href="/colors" class="sidebar-link" style="padding-left:2.6rem;"> <i class="bi bi-palette"></i><span class="link-texto">Colores</span></NavLink>
+                        </div>
+                    }
+                </div>
             </nav>
         </aside>
         <main class="app-content">
@@ -28,6 +44,19 @@
 </div>
 
 @code {
+
+    private bool _catalogoAbierto;
+
+    private void AlternarCatalogo()
+    {
+        _catalogoAbierto = !_catalogoAbierto;
+    }
+
+    protected override void OnInitialized()
+    {
+        _catalogoAbierto = NavigationManager.Uri.Contains("/colors");
+    }
+
     /// <summary>
     /// Cada vez que termina de cargar la página en el layout, se comprueba si la sesión sigue activa. Si no los hay, se redirige a la página de login.
     /// </summary>

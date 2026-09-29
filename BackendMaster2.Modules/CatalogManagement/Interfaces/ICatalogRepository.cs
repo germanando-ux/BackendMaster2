@@ -8,6 +8,7 @@ namespace BackendMaster2.Modules.CatalogManagement.Interfaces;
 public interface ICatalogRepository
 {
     Task AddColorAsync(Color newColor);
+    Task DeleteColorAsync(Guid id);
     Task<IEnumerable<Color>> GetAllColorsAsync();
     Task<Color> GetColorByIdAsync(Guid id);
     Task<Color> UpdateColorAsync(Color existing);

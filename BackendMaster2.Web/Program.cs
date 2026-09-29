@@ -24,6 +24,8 @@ namespace BackendMaster2.Web
                 client.BaseAddress = new Uri(apiBaseUrl);
             }).AddHttpMessageHandler<AuthDelegatingHandler>(); ;
 
+            builder.Services.AddScoped<ErrorHandler>();
+
             // Cliente HTTP anónimo (sin portero) para llamadas de refresh y otros endpoints públicos. No pasa por AuthDelegatingHandler, no añade cabecera Authorization.
             builder.Services.AddHttpClient("ApiAnonimo", client =>
             {
@@ -34,6 +36,9 @@ namespace BackendMaster2.Web
             builder.Services.AddScoped<ISessionService, SessionService>();
             //cliente productos
             builder.Services.AddScoped<IProductsClient, ProductsClient>();
+            //cliente colores
+            builder.Services.AddScoped<IColorClient, ColorClient>();
+            
             // ApiClient recibe un HttpClient configurado como el cliente "Api" (BaseAddress + portero).
             builder.Services.AddHttpClient<IApiClient, ApiClient>("Api");
             // Registro del DelegatingHandler que añade el token a cada petición saliente.

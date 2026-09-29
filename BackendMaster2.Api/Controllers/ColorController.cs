@@ -41,23 +41,32 @@ public class ColorController : ControllerBase
 
     [Authorize]
     [HttpPost("CreateColor")]
-    public async Task<ActionResult<ColorDto>> Create(ColorDto color)
+    public async Task<ActionResult<ColorDto>> CreateColor(ColorDto color)
     {
         await _createColorValidator.ValidateAndThrowAsync(color);
 
         ColorDto created = await _catalogService.CreateColorAsync(color);
+        //devuelve el color creado con un código de estado 201 Created y la ubicación del recurso creado
         return CreatedAtAction(nameof(GetColorById), new { id = created.Id }, created);
     }
 
 
     [Authorize]
     [HttpPut("UpdateColor/{id}")]
-    public async Task<ActionResult<ColorDto>> Update(Guid id, ColorDto color)
+    public async Task<ActionResult<ColorDto>> UpdateColor(Guid id, ColorDto color)
     {
         await _createColorValidator.ValidateAndThrowAsync(color);
 
         ColorDto? updated = await _catalogService.UpdateColorAsync(color);
         return Ok(updated);
+    }
+
+    [Authorize]
+    [HttpDelete("DeleteColor/{id}")]
+    public async Task<ActionResult<bool>> DeleteColor(Guid id)
+    {
+        await _catalogService.DeleteColorAsync(id);
+        return Ok(true);
     }
 
 }

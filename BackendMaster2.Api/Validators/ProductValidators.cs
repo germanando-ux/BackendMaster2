@@ -6,7 +6,7 @@ namespace BackendMaster2.Api.Validators;
 
 /// <summary>
 /// Validadores de los endpoints de Products.
-/// Agrupados por cohesión: cambian juntos y Update reutiliza las reglas de Create.
+/// Agrupados por cohesión: cambian juntos y UpdateColor reutiliza las reglas de CreateColor.
 /// </summary>
 public class CreateProductValidator : AbstractValidator<ProductDto>
 {
