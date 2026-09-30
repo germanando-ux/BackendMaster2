@@ -1,11 +1,14 @@
 ﻿@page "/colors"
 @using System.Net
+@using BackendMaster2.Web.Components
 @using BackendMaster2.Web.Interfaces
 @using BackendMaster2.Web.Services
 @inject IColorClient ColorClient
 @inject ISessionService SessionService
 @inject NavigationManager NavigationManager
-@inject ErrorHandler ErrorHandler
+@inject IJSRuntime JS;
+@inherits FormBaseComponent //hereda de FormBaseComponent para manejar errores y variables de estado
+
 
 <div class="d-flex justify-content-between align-items-end mb-4">
     <div>
@@ -18,13 +21,13 @@
     </a>
 </div>
 
-@if (_cargando)
+@if (IsLoading)
 {
     <p class="text-muted">Cargando colores…</p>
 }
-else if (_error is not null)
+else if (ErrorMessage is not null)
 {
-    <div class="alert alert-danger" role="alert">@_error</div>
+    <div class="alert alert-danger" role="alert">@ErrorMessage</div>
 }
 else
 {
@@ -65,7 +68,7 @@ else
                                 <a href="/colors/editar/@color.Id" class="btn btn-sm btn-outline-primary" title="Editar color">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <button class="btn btn-sm btn-outline-danger" title="Eliminar color" @onclick="() => ConfirmarEliminar(color.Id)">
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar color" @onclick="() => DeleteColorAsync(color.Id, color.Name)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -81,27 +84,43 @@ else
 
 @code {
 
-    private bool _cargando = true;
-    private string? _error;
     private List<ColorDto> _colores = new();
     protected override async Task OnInitializedAsync()
+    {
+        await LoadColorsAsync();
+    }
+
+    private async Task LoadColorsAsync()
     {
         var result = await ColorClient.GetAllColorsAsync();
         if (!result.IsSuccess)
         {
-            _error = ErrorHandler.HandleError(result);
+            ErrorMessage = ErrorHandler.HandleError(result);
             return;
         }
 
         _colores = result.Data ?? new List<ColorDto>();
-        _cargando = false;
+        IsLoading = false;
     }
 
-    private void ConfirmarEliminar(Guid id)
+    private async Task DeleteColorAsync(Guid id, string name)
     {
-        // Por ahora solo un placeholder - lo implementaremos después
-        Console.WriteLine($"Eliminar color {id}");
-    }
+        if (await JS.InvokeAsync<bool>("confirm", $"¿Eliminar el color {name}?"))
+        {
 
-    
+            var result = await ColorClient.DeleteColorAsync(id);
+
+            if (result.IsSuccess)
+            {
+                await LoadColorsAsync();
+            }
+            else
+            {
+                ErrorMessage = $"No se pudo borrar el color {name}.";
+            }
+        }
+   
+    }
 }
+
+

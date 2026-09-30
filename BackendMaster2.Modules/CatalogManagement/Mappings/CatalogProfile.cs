@@ -9,8 +9,8 @@ public class CatalogProfile : Profile
 {
     public CatalogProfile()
     {
-        // 1. Color -> ColorDto (Mapeo directo, los nombres coinciden)
-        CreateMap<Color, ColorDto>();
+        // 1. Color <-> ColorDto (Mapeo directo, los nombres coinciden)
+        CreateMap<Color, ColorDto>().ReverseMap();
 
         // 2. Product -> ProductDto 
         // Necesitamos decirle explícitamente cómo sacar los ColorIds de la tabla puente.

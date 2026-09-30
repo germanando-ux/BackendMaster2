@@ -1,0 +1,106 @@
+﻿@page "/colors/crear"
+@page "/colors/editar/{Id:guid}"
+@using BackendMaster2.Web.Components
+@using BackendMaster2.Web.Interfaces
+@inject IColorClient ColorsClient
+@inject NavigationManager Navigation
+
+@inherits FormBaseComponent //hereda de FormBaseComponent para manejar errores y variables de estado
+
+
+
+@if (IsLoading)
+{
+    <div class="alert alert-info"> Cargando datos...</div>
+}
+else
+{
+    <form @onsubmit="HandleSubmit">
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control border-primary" @bind="dto.Name" />
+        </div>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" @bind="dto.IsActive" />
+            <label class="form-check-label">Color Activo</label>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <input type="color" class="form-control form-control-color" @bind="dto.HexCode" title="Selector de color" />
+            <input type="text" class="form-control font-monospace" style="max-width:120px;" @bind="dto.HexCode" readonly />
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
+        </div>
+
+    </form>
+}
+
+@code {
+
+    // 2. El objeto que va a "viajar" al backend.
+    private ColorDto dto = new();
+
+    // 2. Se ejecuta al pulsar "Guardar"
+    private async Task HandleSubmit()
+    {
+        IsSaving = true;
+        ErrorMessage = null;
+
+        ApiResult<ColorDto> result;
+
+        // Decidimos si crear o actualizar según si tenemos un Id
+        if (IsEdit)
+        {
+            result = await ColorsClient.UpdateColorAsync(Id.Value, dto);
+        }
+        else
+        {
+            result = await ColorsClient.CreateColorAsync(dto);
+        }
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/colors"); // Vuelve al grid (ajusta la ruta si es distinta)
+        }
+        else
+        {
+            ErrorMessage = "Error al guardar. Revisa los datos.";
+        }
+
+        IsSaving = false;
+
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit)
+        {
+            IsLoading = true;
+            var result = await ColorsClient.GetColorByIdAsync(Id.Value);
+
+            if (result.IsSuccess && result.Data != null)
+            {
+                dto = result.Data; // Rellenamos el formulario con los datos
+            }
+            else
+            {
+                ErrorMessage = "No se pudo cargar el color.";
+            }
+
+        }
+        else
+        {
+            dto.IsActive = true;
+        }
+        IsLoading = false;
+    }
+
+    // 3. Acción para el botón Cancelar
+    private async Task Cancel()
+    {
+        Navigation.NavigateTo("/colors");
+    }
+}

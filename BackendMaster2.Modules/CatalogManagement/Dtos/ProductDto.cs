@@ -9,7 +9,6 @@ public class ProductDto
     public decimal Price { get; set; }
     public int Stock { get; set; }
     public bool IsActive { get; set; } = true;
-
     public List<Guid> ColorIds { get; set; } = new();
 
 }

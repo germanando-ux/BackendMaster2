@@ -1,23 +1,33 @@
 ﻿@page "/productos"
 @using System.Net
+@using BackendMaster2.Web.Components
 @using BackendMaster2.Web.Interfaces
 @using BackendMaster2.Web.Models.Dtos
 @using BackendMaster2.Web.Services
 @inject ISessionService SessionService
 @inject NavigationManager NavigationManager
 @inject IProductsClient ProductsClient
-@inject ErrorHandler ErrorHandler
+@inject IJSRuntime JS;
 
-<h1 class="mb-1">Productos</h1>
-<p class="text-muted mb-4">Gestión de productos</p>
+@inherits FormBaseComponent //hereda de FormBaseComponent para manejar errores y variables de estado
 
-@if (_cargando)
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h1 class="mb-1">Productos</h1>
+        <p class="text-muted mb-4">Gestión de productos</p>
+    </div>
+    <a href="/productos/crear" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Nuevo Producto
+    </a>
+</div>
+
+@if (IsLoading)
 {
     <p class="text-muted">Cargando productos…</p>
 }
-else if (_error is not null)
+else if (ErrorMessage is not null)
 {
-    <div class="alert alert-danger" role="alert">@_error</div>
+    <div class="alert alert-danger" role="alert">@ErrorMessage</div>
 }
 else
 {
@@ -30,6 +40,7 @@ else
                     <th>Precio</th>
                     <th>Stock</th>
                     <th>Estado</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -50,6 +61,17 @@ else
                                 <span class="badge text-bg-secondary">Inactivo</span>
                             }
                         </td>
+                        <td class="text-center align-middle">
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="/productos/editar/@producto.Id" class="btn btn-sm btn-outline-primary" title="Editar Producto">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar producto" @onclick="() => DeleteProductAsync(producto.Id, producto.Name)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+
                     </tr>
                 }
             </tbody>
@@ -59,22 +81,45 @@ else
 
 @code {
     private List<ProductDto> _productos = new();
-    private bool _cargando = true;
-    private string? _error;
 
     protected override async Task OnInitializedAsync()
+    {
+        await LoadProductsAsync();
+    }
+
+    private async Task DeleteProductAsync(Guid id, string name)
+    {
+        if (await JS.InvokeAsync<bool>("confirm", $"¿Eliminar el producto {name}?"))
+        {
+
+            var result = await ProductsClient.DeleteProductAsync(id);
+
+            if (result.IsSuccess)
+            {
+                await LoadProductsAsync();
+            }
+            else
+            {
+                ErrorMessage = $"No se pudo borrar el producto {name}.";
+            }
+        }
+
+    }
+
+    private async Task LoadProductsAsync()
     {
         var result = await ProductsClient.GetAllProductsAsync();
 
         if (!result.IsSuccess)
         {
-            _error = ErrorHandler.HandleError(result);
+            ErrorMessage = ErrorHandler.HandleError(result);
             return;
         }
 
         _productos = result.Data ?? new List<ProductDto>();
-        _cargando = false;
+        IsLoading = false;
     }
+
 
  
 }
