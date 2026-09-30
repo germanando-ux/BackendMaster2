@@ -1,0 +1,57 @@
+﻿@if (Show)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal fade show" style="display:block;" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    @if (IsError)
+                    {
+                        <h5 class="modal-title text-danger">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>@Title
+                        </h5>
+                    }
+                    else
+                    {
+                        <h5 class="modal-title">@Title</h5>
+                    }
+                    <button type="button" class="btn-close" @onclick="() => OnCancel.InvokeAsync()"></button>
+                </div>
+                <div class="modal-body">
+                    @Message
+                </div>
+                <div class="modal-footer">
+                    @if (IsError)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="() => OnCancel.InvokeAsync()">Entendido</button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="() => OnCancel.InvokeAsync()">@CancelText</button>
+                        <button type="button" class="btn btn-danger" @onclick="() => OnConfirm.InvokeAsync()">@ConfirmText</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>El padre decide cuándo se ve el modal.</summary>
+    [Parameter] public bool Show { get; set; }
+
+    [Parameter] public string Title { get; set; } = "Confirmar acción";
+    [Parameter] public string Message { get; set; } = string.Empty;
+    [Parameter] public string ConfirmText { get; set; } = "Eliminar";
+    [Parameter] public string CancelText { get; set; } = "Cancelar";
+
+    /// <summary>
+    /// Si es true, el modal se muestra en modo error (solo botón "Entendido").
+    /// </summary>
+    [Parameter] public bool IsError { get; set; } = false;
+
+    /// <summary>El componente no borra nada: avisa al padre de qué botón se pulsó.</summary>
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+}

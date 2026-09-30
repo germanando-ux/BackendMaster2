@@ -1,5 +1,5 @@
-﻿@page "/productos/crear"
-@page "/productos/editar/{Id:guid}"
+﻿@page "/products/create"
+@page "/products/{Mode}/{Id:guid}"
 
 @using BackendMaster2.Web.Components
 @using BackendMaster2.Web.Interfaces
@@ -11,6 +11,7 @@
 
 @inherits FormBaseComponent //hereda de FormBaseComponent para manejar errores y variables de estado
 
+
 @if (IsLoading)
 {
     <div class="alert alert-info"> Cargando datos...</div>
@@ -18,37 +19,43 @@
 else
 {
     <form @onsubmit="HandleSubmit">
+        @if (IsReadOnly)
+        {
+            <div class="alert alert-info py-2 mb-3 small">
+                <i class="bi bi-eye me-2"></i>Modo consulta: campos de solo lectura.
+            </div>
+        }
         <div class="col-md-8 mb-3">
             <label class="form-label">SKU</label>
-            <input type="text" class="form-control border-primary" @bind="dto.Sku" />
+            <input type="text" class="form-control border-primary " @bind="dto.Sku" disabled="@IsReadOnly" />
         </div>
 
         <div class="col-md-8 mb-3">
             <label class="form-label">Nombre</label>
-            <input type="text" class="form-control border-primary" @bind="dto.Name" />
+            <input type="text" class="form-control border-primary" @bind="dto.Name" disabled="@IsReadOnly" />
         </div>
 
         <div class="col-md-8 mb-3">
             <label class="form-label">Descripción</label>
-            <textarea class="form-control border-primary" rows="3" @bind="dto.Description"></textarea>
+            <textarea class="form-control border-primary" rows="3" @bind="dto.Description" disabled="@IsReadOnly"></textarea>
         </div>
 
         <div class="col-6 mb-3">
             <label class="form-label ">Precio</label>
-            <input type="number" step="0.01" class="form-control border-primary" @bind="dto.Price"
+            <input type="number" step="0.01" class="form-control border-primary" @bind="dto.Price" disabled="@IsReadOnly"
                    onkeydown="if(event.key === '.') { event.preventDefault(); this.value = this.value + ','; }"
                    required />
         </div>
 
         <div class="col-6 mb-3">
             <label class="form-label">Stock</label>
-            <input type="number" class="form-control border-primary" @bind="dto.Stock"
+            <input type="number" class="form-control border-primary" @bind="dto.Stock" disabled="@IsReadOnly"
                    onkeydown="if(event.key === '.') { event.preventDefault(); this.value = this.value + ','; }"
                    required />
         </div>
 
         <div class="mb-4 form-check">
-            <input type="checkbox" class="form-check-input" @bind="dto.IsActive" />
+            <input type="checkbox" class="form-check-input" @bind="dto.IsActive" disabled="@IsReadOnly" />
             <label class="form-check-label">Producto Activo</label>
         </div>
 
@@ -62,7 +69,7 @@ else
                     var seleccionado = dto.ColorIds.Contains(color.Id);
 
                     <div class="d-flex align-items-center gap-2 border rounded p-2" @onclick="() => ToggleColor(color.Id)"
-                        style="cursor:pointer; border-color:@(seleccionado ? "#0d6efd" : "#dee2e6") !important;background:@(seleccionado ? "#e7f1ff" : "white");">
+                         style="cursor::@(IsReadOnly ? "default" : "pointer"); border-color:@(seleccionado ? "#0d6efd" : "#dee2e6") !important;background:@(seleccionado ? "#e7f1ff" : "white");">
                         <div style="width:28px; height:28px; background-color:@color.HexCode; border:1px solid #ccc; border-radius:4px;"></div>
                         <div>
                             <div class="small fw-semibold">@color.Name</div>
@@ -74,14 +81,18 @@ else
         </div>
 
         <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">Guardar</button>
-            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
+            @if (!IsReadOnly)
+            {
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            }
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">@(IsReadOnly ? "Volver" : "Cancelar")</button>
         </div>
 
     </form>
 }
 
 @code {
+
 
     // 2. El objeto que va a "viajar" al backend.
     private ProductDto dto = new();
@@ -94,7 +105,6 @@ else
     {
         if (IsEdit)
         {
-            IsLoading = true;
             var result = await ProductsClient.GetProductDetailByIdAsync(Id.Value);
 
             if (result.IsSuccess && result.Data != null)
@@ -104,15 +114,14 @@ else
             else
             {
                 ErrorMessage = "No se pudo cargar el producto.";
-            }
+            }                    
+        }
 
-            //cargamos todos los colores disponibles 
-            var colorsResult = await ColorClient.GetAllColorsAsync();
-            if (colorsResult.IsSuccess)
-            {
-                availableColors = colorsResult.Data ?? new();
-            }
-            
+        //cargamos todos los colores disponibles
+        var colorsResult = await ColorClient.GetAllColorsAsync();
+        if (colorsResult.IsSuccess)
+        {
+            availableColors = colorsResult.Data ?? new();
         }
         IsLoading = false;
     }
@@ -120,6 +129,9 @@ else
     // 2. Se ejecuta al pulsar "Guardar"
     private async Task HandleSubmit()
     {
+
+        if (IsReadOnly) return;//per si de cas
+
         IsSaving = true;
         ErrorMessage = null;
 
@@ -137,7 +149,7 @@ else
 
         if (result.IsSuccess)
         {
-            Navigation.NavigateTo("/productos"); // Vuelve al grid (ajusta la ruta si es distinta)
+            Navigation.NavigateTo("/products"); // Vuelve al grid (ajusta la ruta si es distinta)
         }
         else
         {
@@ -150,7 +162,7 @@ else
     // 3. Acción para el botón Cancelar
     private void Cancel()
     {
-        Navigation.NavigateTo("/productos");
+        Navigation.NavigateTo("/products");
     }
 
     /// <summary>
@@ -158,6 +170,8 @@ else
     /// </summary>
     private void ToggleColor(Guid colorId)
     {
+        if (IsReadOnly) return;
+
         if (dto.ColorIds.Contains(colorId))
         {
             dto.ColorIds.Remove(colorId);   // Ya estaba elegido → lo quitamos

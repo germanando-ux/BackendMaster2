@@ -1,4 +1,4 @@
-﻿@page "/productos"
+﻿@page "/products"
 @using System.Net
 @using BackendMaster2.Web.Components
 @using BackendMaster2.Web.Interfaces
@@ -16,7 +16,7 @@
         <h1 class="mb-1">Productos</h1>
         <p class="text-muted mb-4">Gestión de productos</p>
     </div>
-    <a href="/productos/crear" class="btn btn-primary">
+    <a href="/products/create" class="btn btn-primary">
         <i class="bi bi-plus-lg me-1"></i> Nuevo Producto
     </a>
 </div>
@@ -63,7 +63,10 @@ else
                         </td>
                         <td class="text-center align-middle">
                             <div class="d-flex justify-content-center gap-2">
-                                <a href="/productos/editar/@producto.Id" class="btn btn-sm btn-outline-primary" title="Editar Producto">
+                                <a href="/products/detail/@producto.Id" class="btn btn-sm btn-outline-info" title="Consultar producto">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="/products/edit/@producto.Id" class="btn btn-sm btn-outline-primary" title="Editar Producto">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <button class="btn btn-sm btn-outline-danger" title="Eliminar producto" @onclick="() => DeleteProductAsync(producto.Id, producto.Name)">

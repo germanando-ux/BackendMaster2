@@ -128,6 +128,21 @@ public class ExceptionMiddleware
                 problem.Type = "https://httpstatuses.com/401";
                 break;
 
+
+            // Violación de integridad referencial (clave foránea): Postgres error 23503 envuelto en DbUpdateException.
+            // Se mapea a 409 Conflict, ya que la petición es válida pero entra en conflicto con el estado actual de los datos.
+            case Microsoft.EntityFrameworkCore.DbUpdateException dbUpdateException
+                when dbUpdateException.InnerException is Npgsql.PostgresException pgEx && pgEx.SqlState == "23503":
+
+                // Violación de integridad referencial: el recurso está en uso
+                problem.Status = (int)HttpStatusCode.Conflict;
+                problem.Title = "No se puede eliminar el recurso";
+                problem.Detail = "El recurso está asociado a otros registros y no puede ser eliminado. Desasócialo primero o márcalo como inactivo.";
+                problem.Type = "https://httpstatuses.com/409";
+                problem.OwnError = false;  // Es un error de infraestructura (BD), no de lógica de negocio
+                problem.IsBdError = true;
+                break;
+
             default:
                 // Error inesperado: en Development exponemos el mensaje real para debugging,
                 // en Production devolvemos un mensaje genérico por seguridad

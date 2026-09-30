@@ -8,19 +8,22 @@ public class FormBaseComponent : ComponentBase
 {
     [Inject] protected ErrorHandler ErrorHandler { get; set; } = default!;
 
-    /// <summary>
-    /// Id del registro a editar. Si viene null, el formulario está en modo "crear".
-    /// Lo inyecta Blazor desde la ruta (ej: /colors/editar/{Id:guid}).
-    /// </summary>
-    [Parameter] public Guid? Id { get; set; }
+    
+    // Id del registro a editar. Si viene null, el formulario está en modo "crear".
+    // Lo inyecta Blazor desde la ruta (ej: /colors/edit/{Id:guid}).    
+    [Parameter] public Guid? Id { get; set; }    
+    // Verbo de la ruta por la que se ha entrado: "editar" o "detalle".
+    // En la ruta de crear viene null.    
+    [Parameter] public string? Mode { get; set; }
 
-    /// <summary>
-    /// True si estamos editando un registro existente, False si estamos creando uno nuevo.
-    /// </summary>
+    
+    // True si estamos editando un registro existente, False si estamos creando uno nuevo.    
     protected bool IsEdit => Id.HasValue;
     protected bool IsLoading { get; set; } = true;
     protected bool IsSaving { get; set; } = false;
     protected string? ErrorMessage { get; set; }
+    /// True si el formulario está en modo consulta (solo lectura).    
+    protected bool IsReadOnly => Mode == "detail";
 
     /// <summary>
     /// Maneja un error de API y lo almacena en ErrorMessage.

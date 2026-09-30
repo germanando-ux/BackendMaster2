@@ -16,7 +16,7 @@
         <p class="text-muted mb-0">Gestión de colores</p>
     </div>
     <div>  </div>
-    <a href="/colors/crear" class="btn btn-primary">
+    <a href="/colors/create" class="btn btn-primary">
         <i class="bi bi-plus-lg me-1"></i> Nuevo Color
     </a>
 </div>
@@ -65,10 +65,10 @@ else
                         </td>
                         <td class="text-center align-middle">
                             <div class="d-flex justify-content-center gap-2">
-                                <a href="/colors/editar/@color.Id" class="btn btn-sm btn-outline-primary" title="Editar color">
+                                <a href="/colors/edit/@color.Id" class="btn btn-sm btn-outline-primary" title="Editar color">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <button class="btn btn-sm btn-outline-danger" title="Eliminar color" @onclick="() => DeleteColorAsync(color.Id, color.Name)">
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar color" @onclick="() => PrepararBorradoColor(color.Id, color.Name)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -81,8 +81,22 @@ else
     </div>
 }
 
+<ConfirmModal Show="@(_colorIdPendiente.HasValue)"
+              IsError="@_modalEsError"
+              Title="@(_modalEsError ? "No se puede eliminar" : "Eliminar color")"
+              Message="@_colorNombrePendiente"
+              ConfirmText="Eliminar"
+              CancelText="Cancelar"
+              OnConfirm="ConfirmarBorradoColor"
+              OnCancel="CancelarBorradoColor" />
 
 @code {
+
+    // Guardan el Id y el nombre del color que el usuario quiere borrar.
+    // Si _colorIdPendiente es null, no hay ningún borrado en curso.
+    private Guid? _colorIdPendiente;
+    private string? _colorNombrePendiente;
+    private bool _modalEsError;
 
     private List<ColorDto> _colores = new();
     protected override async Task OnInitializedAsync()
@@ -103,23 +117,47 @@ else
         IsLoading = false;
     }
 
-    private async Task DeleteColorAsync(Guid id, string name)
+    /// <summary>
+    /// Se ejecuta si el usuario pulsa "Cancelar" o cierra el modal.
+    /// Simplemente limpia el estado para que el modal desaparezca.
+    /// </summary>
+    private void CancelarBorradoColor()
     {
-        if (await JS.InvokeAsync<bool>("confirm", $"¿Eliminar el color {name}?"))
+        _colorIdPendiente = null;
+        _colorNombrePendiente = null;
+    }
+
+    /// <summary>
+    /// Se ejecuta si el usuario pulsa "Eliminar". Realiza el borrado real.
+    /// </summary>
+    private async Task ConfirmarBorradoColor()
+    {
+        if (!_colorIdPendiente.HasValue) return;
+
+        var result = await ColorClient.DeleteColorAsync(_colorIdPendiente.Value);
+
+        if (result.IsSuccess)
         {
-
-            var result = await ColorClient.DeleteColorAsync(id);
-
-            if (result.IsSuccess)
-            {
-                await LoadColorsAsync();
-            }
-            else
-            {
-                ErrorMessage = $"No se pudo borrar el color {name}.";
-            }
+            await LoadColorsAsync(); // Refresca la tabla
+            CancelarBorradoColor();  // Cierra el modal solo si todo fue bien
         }
-   
+        else
+        {
+            // Transformamos el modal en modo error sin cerrarlo
+            _modalEsError = true;
+            _colorNombrePendiente = ErrorHandler.HandleError(result); // Reutilizamos el mensaje del backend
+        }
+    }
+
+    /// <summary>
+    /// Prepara los datos para mostrar el modal de confirmación.
+    /// </summary>
+    private void PrepararBorradoColor(Guid id, string nombre)
+    {
+        _colorIdPendiente = id;
+        _colorNombrePendiente = nombre;
+        _modalEsError = false; // Resetear el modo error
+
     }
 }
 
