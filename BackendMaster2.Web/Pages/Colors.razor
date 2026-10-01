@@ -2,20 +2,17 @@
 @using System.Net
 @using BackendMaster2.Web.Components
 @using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Models.Dtos
 @using BackendMaster2.Web.Services
 @inject IColorClient ColorClient
-@inject ISessionService SessionService
 @inject NavigationManager NavigationManager
-@inject IJSRuntime JS;
-@inherits FormBaseComponent //hereda de FormBaseComponent para manejar errores y variables de estado
-
+@inherits FormBaseComponent
 
 <div class="d-flex justify-content-between align-items-end mb-4">
     <div>
         <h1 class="mb-1">Colores</h1>
         <p class="text-muted mb-0">Gestión de colores</p>
     </div>
-    <div>  </div>
     <a href="/colors/create" class="btn btn-primary">
         <i class="bi bi-plus-lg me-1"></i> Nuevo Color
     </a>
@@ -32,8 +29,6 @@ else if (ErrorMessage is not null)
 else
 {
     <div class="card shadow mb-4">
-
-
         <table class="table table-bordered table-striped table-hover">
             <thead class="table-encabezado-marca">
                 <tr>
@@ -46,11 +41,12 @@ else
             <tbody>
                 @foreach (var color in _colores)
                 {
-                <tr>
-                        <td class ="align-middle">@color.Name</td>
-                        <td >
+                    <tr>
+                        <td class="align-middle">@color.Name</td>
+                        <td>
                             <div class="d-inline-flex align-items-center gap-2">
-                               <span> @color.HexCode </span> <div style="width: 20px; height: 20px; background-color: @color.HexCode; border: 1px solid #ccc; margin-left: 10px;"></div>
+                                <span>@color.HexCode</span>
+                                <div style="@($"width: 20px; height: 20px; background-color: {color.HexCode}; border: 1px solid #ccc; margin-left: 10px;")"></div>
                             </div>
                         </td>
                         <td>
@@ -68,16 +64,15 @@ else
                                 <a href="/colors/edit/@color.Id" class="btn btn-sm btn-outline-primary" title="Editar color">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <button class="btn btn-sm btn-outline-danger" title="Eliminar color" @onclick="() => PrepararBorradoColor(color.Id, color.Name)">
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar color" @onclick="() => PrepareColorDeletion(color.Id, color.Name)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
                         </td>
-                </tr>
+                    </tr>
                 }
             </tbody>
         </table>
-
     </div>
 }
 
@@ -87,18 +82,15 @@ else
               Message="@_colorNombrePendiente"
               ConfirmText="Eliminar"
               CancelText="Cancelar"
-              OnConfirm="ConfirmarBorradoColor"
-              OnCancel="CancelarBorradoColor" />
+              OnConfirm="ConfirmColorDeletionAsync"
+              OnCancel="CancelColorDeletion" />
 
 @code {
-
-    // Guardan el Id y el nombre del color que el usuario quiere borrar.
-    // Si _colorIdPendiente es null, no hay ningún borrado en curso.
+    private List<ColorDto> _colores = new();
     private Guid? _colorIdPendiente;
     private string? _colorNombrePendiente;
     private bool _modalEsError;
 
-    private List<ColorDto> _colores = new();
     protected override async Task OnInitializedAsync()
     {
         await LoadColorsAsync();
@@ -107,6 +99,7 @@ else
     private async Task LoadColorsAsync()
     {
         var result = await ColorClient.GetAllColorsAsync();
+
         if (!result.IsSuccess)
         {
             ErrorMessage = ErrorHandler.HandleError(result);
@@ -117,20 +110,21 @@ else
         IsLoading = false;
     }
 
-    /// <summary>
-    /// Se ejecuta si el usuario pulsa "Cancelar" o cierra el modal.
-    /// Simplemente limpia el estado para que el modal desaparezca.
-    /// </summary>
-    private void CancelarBorradoColor()
+    private void PrepareColorDeletion(Guid id, string name)
+    {
+        _colorIdPendiente = id;
+        _colorNombrePendiente = name;
+        _modalEsError = false;
+    }
+
+    private void CancelColorDeletion()
     {
         _colorIdPendiente = null;
         _colorNombrePendiente = null;
+        _modalEsError = false;
     }
 
-    /// <summary>
-    /// Se ejecuta si el usuario pulsa "Eliminar". Realiza el borrado real.
-    /// </summary>
-    private async Task ConfirmarBorradoColor()
+    private async Task ConfirmColorDeletionAsync()
     {
         if (!_colorIdPendiente.HasValue) return;
 
@@ -138,27 +132,13 @@ else
 
         if (result.IsSuccess)
         {
-            await LoadColorsAsync(); // Refresca la tabla
-            CancelarBorradoColor();  // Cierra el modal solo si todo fue bien
+            await LoadColorsAsync();
+            CancelColorDeletion();
         }
         else
         {
-            // Transformamos el modal en modo error sin cerrarlo
             _modalEsError = true;
-            _colorNombrePendiente = ErrorHandler.HandleError(result); // Reutilizamos el mensaje del backend
+            _colorNombrePendiente = ErrorHandler.HandleError(result);
         }
     }
-
-    /// <summary>
-    /// Prepara los datos para mostrar el modal de confirmación.
-    /// </summary>
-    private void PrepararBorradoColor(Guid id, string nombre)
-    {
-        _colorIdPendiente = id;
-        _colorNombrePendiente = nombre;
-        _modalEsError = false; // Resetear el modo error
-
-    }
 }
-
-

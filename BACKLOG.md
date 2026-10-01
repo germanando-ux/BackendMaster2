@@ -35,3 +35,11 @@
 - [ ] Tests de integración con Testcontainers
 - [ ] Tests de arquitectura
 - [ ] Dockerización completa y CI/CD
+
+## Deuda de front y UX (aparcados del chat)
+[x] Modal de confirmación Bootstrap para sustituir window.confirm en borrados (¡Hecho!)
+[ ] Componente reutilizable NumberInput.razor (input numérico con validación + decimal locale-aware)
+[ ] Refactor jerarquía PageBaseComponent / FormBaseComponent (grids vs formularios)
+[ ] Unificar estilo de rutas de endpoints (REST sustantivos vs verbos RPC)
+[ ] Toast de errores auto-ocultables en grids
+[ ] Si la consulta de producto crece (estadísticas, historial, relaciones), separarla a un componente ProductDetail propio en vez del modo solo-lectura del ProductForm

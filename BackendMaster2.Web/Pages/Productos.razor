@@ -7,9 +7,8 @@
 @inject ISessionService SessionService
 @inject NavigationManager NavigationManager
 @inject IProductsClient ProductsClient
-@inject IJSRuntime JS;
 
-@inherits FormBaseComponent //hereda de FormBaseComponent para manejar errores y variables de estado
+@inherits FormBaseComponent
 
 <div class="d-flex justify-content-between align-items-end mb-4">
     <div>
@@ -66,15 +65,14 @@ else
                                 <a href="/products/detail/@producto.Id" class="btn btn-sm btn-outline-info" title="Consultar producto">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a href="/products/edit/@producto.Id" class="btn btn-sm btn-outline-primary" title="Editar Producto">
+                                <a href="/products/edit/@producto.Id" class="btn btn-sm btn-outline-primary" title="Editar producto">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <button class="btn btn-sm btn-outline-danger" title="Eliminar producto" @onclick="() => DeleteProductAsync(producto.Id, producto.Name)">
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar producto" @onclick="() => PrepareProductDeletion(producto.Id, producto.Name)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
                         </td>
-
                     </tr>
                 }
             </tbody>
@@ -82,31 +80,24 @@ else
     </div>
 }
 
+<ConfirmModal Show="@(_pendingProductId.HasValue)"
+              IsError="@_isErrorModal"
+              Title="@(_isErrorModal ? "No se puede eliminar" : "Eliminar producto")"
+              Message="@_pendingProductName"
+              ConfirmText="Eliminar"
+              CancelText="Cancelar"
+              OnConfirm="ConfirmProductDeletionAsync"
+              OnCancel="CancelProductDeletion" />
+
 @code {
     private List<ProductDto> _productos = new();
+    private Guid? _pendingProductId;
+    private string? _pendingProductName;
+    private bool _isErrorModal;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadProductsAsync();
-    }
-
-    private async Task DeleteProductAsync(Guid id, string name)
-    {
-        if (await JS.InvokeAsync<bool>("confirm", $"¿Eliminar el producto {name}?"))
-        {
-
-            var result = await ProductsClient.DeleteProductAsync(id);
-
-            if (result.IsSuccess)
-            {
-                await LoadProductsAsync();
-            }
-            else
-            {
-                ErrorMessage = $"No se pudo borrar el producto {name}.";
-            }
-        }
-
     }
 
     private async Task LoadProductsAsync()
@@ -123,6 +114,35 @@ else
         IsLoading = false;
     }
 
+    private void PrepareProductDeletion(Guid id, string name)
+    {
+        _pendingProductId = id;
+        _pendingProductName = name;
+        _isErrorModal = false;
+    }
 
- 
+    private void CancelProductDeletion()
+    {
+        _pendingProductId = null;
+        _pendingProductName = null;
+        _isErrorModal = false;
+    }
+
+    private async Task ConfirmProductDeletionAsync()
+    {
+        if (!_pendingProductId.HasValue) return;
+
+        var result = await ProductsClient.DeleteProductAsync(_pendingProductId.Value);
+
+        if (result.IsSuccess)
+        {
+            await LoadProductsAsync();
+            CancelProductDeletion();
+        }
+        else
+        {
+            _isErrorModal = true;
+            _pendingProductName = ErrorHandler.HandleError(result);
+        }
+    }
 }
