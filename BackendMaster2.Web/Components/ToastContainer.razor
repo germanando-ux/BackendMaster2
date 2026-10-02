@@ -1,0 +1,30 @@
+﻿@using BackendMaster2.Web.Services
+@inject ToastService ToastService
+@implements IDisposable
+
+<div class="toast-container position-fixed  bottom-0 start-50 translate-middle-x p-3" style="z-index: 1055;">
+    @foreach (var mensaje in ToastService.Mensajes)
+    {
+        <div class="toast show align-items-center text-bg-danger border-0 mb-2" role="alert">
+            <div class="toast-body text-center" style="white-space: pre-wrap;">
+                @mensaje
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Nos "suscribimos" al evento del servicio.
+        // Cuando el servicio dispare OnChange, este componente se repintará (StateHasChanged).
+        ToastService.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        // CRUCIAL: Nos "desuscribimos" cuando el componente se destruye.
+        // Si no hacemos esto, el servicio seguiría intentando avisar a un componente que ya no existe (fuga de memoria).
+        ToastService.OnChange -= StateHasChanged;
+    }
+}

@@ -20,6 +20,7 @@ using Scalar.AspNetCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Mvc;
 
 
 
@@ -33,6 +34,12 @@ namespace BackendMaster2.Api
 
             // ANTES del Build: registra los servicios de MVC (model binding, JSON, [ApiController]...)
             builder.Services.AddControllers();
+
+            // Desactivamos la validación automática de [apicontroller] para que FluentValidation sea el único responsable
+            builder.Services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
+            });
 
             // Configurar la cadena de conexión a PostgreSQL
             builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

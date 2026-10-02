@@ -38,7 +38,9 @@ namespace BackendMaster2.Web
             builder.Services.AddScoped<IProductsClient, ProductsClient>();
             //cliente colores
             builder.Services.AddScoped<IColorClient, ColorClient>();
-            
+            //mesajes de error con toast
+            builder.Services.AddScoped<ToastService>();
+
             // ApiClient recibe un HttpClient configurado como el cliente "Api" (BaseAddress + portero).
             builder.Services.AddHttpClient<IApiClient, ApiClient>("Api");
             // Registro del DelegatingHandler que añade el token a cada petición saliente.

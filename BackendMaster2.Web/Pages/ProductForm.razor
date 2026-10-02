@@ -4,10 +4,12 @@
 @using BackendMaster2.Web.Components
 @using BackendMaster2.Web.Interfaces
 @using BackendMaster2.Web.Models.Dtos
+@using BackendMaster2.Web.Services
 
 @inject IProductsClient ProductsClient
 @inject NavigationManager Navigation
 @inject IColorClient ColorClient
+@inject ToastService ToastService
 
 @inherits FormBaseComponent //hereda de FormBaseComponent para manejar errores y variables de estado
 
@@ -18,7 +20,8 @@
 }
 else
 {
-    <form @onsubmit="HandleSubmit">
+     <EditForm Model="dto" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
         @if (IsReadOnly)
         {
             <div class="alert alert-info py-2 mb-3 small">
@@ -28,30 +31,31 @@ else
         <div class="col-md-8 mb-3">
             <label class="form-label">SKU</label>
             <input type="text" class="form-control border-primary " @bind="dto.Sku" disabled="@IsReadOnly" />
+            <ValidationMessage For="@(() => dto.Sku)" class="text-danger small" />
         </div>
 
         <div class="col-md-8 mb-3">
             <label class="form-label">Nombre</label>
             <input type="text" class="form-control border-primary" @bind="dto.Name" disabled="@IsReadOnly" />
+            <ValidationMessage For="@(() => dto.Name)" class="text-danger small" />
         </div>
 
         <div class="col-md-8 mb-3">
             <label class="form-label">Descripción</label>
             <textarea class="form-control border-primary" rows="3" @bind="dto.Description" disabled="@IsReadOnly"></textarea>
+            <ValidationMessage For="@(() => dto.Description)" class="text-danger small" />
         </div>
 
         <div class="col-6 mb-3">
-            <label class="form-label ">Precio</label>
-            <input type="number" step="0.01" class="form-control border-primary" @bind="dto.Price" disabled="@IsReadOnly"
-                   onkeydown="if(event.key === '.') { event.preventDefault(); this.value = this.value + ','; }"
-                   required />
+            <label class="form-label">Precio</label>
+            <NumberInput @bind-Value="dto.Price" CssClass="form-control border-primary" required />
+            <ValidationMessage For="@(() => dto.Price)" class="text-danger small" />
         </div>
 
         <div class="col-6 mb-3">
             <label class="form-label">Stock</label>
-            <input type="number" class="form-control border-primary" @bind="dto.Stock" disabled="@IsReadOnly"
-                   onkeydown="if(event.key === '.') { event.preventDefault(); this.value = this.value + ','; }"
-                   required />
+            <input type="number" class="form-control border-primary" @bind="dto.Stock" required />
+            <ValidationMessage For="@(() => dto.Stock)" class="text-danger small" />
         </div>
 
         <div class="mb-4 form-check">
@@ -88,7 +92,7 @@ else
             <button type="button" class="btn btn-secondary" @onclick="Cancel">@(IsReadOnly ? "Volver" : "Cancelar")</button>
         </div>
 
-    </form>
+    </EditForm>
 }
 
 @code {
@@ -132,31 +136,50 @@ else
 
         if (IsReadOnly) return;//per si de cas
 
-        IsSaving = true;
-        ErrorMessage = null;
-
-        ApiResult<ProductDto> result;
-
-        // Decidimos si crear o actualizar según si tenemos un Id
-        if (IsEdit)
+        if (FormValidation())
         {
-            result = await ProductsClient.UpdateProductAsync(Id.Value, dto);
-        }
-        else
-        {
-            result = await ProductsClient.CreateProductAsync(dto);
-        }
 
-        if (result.IsSuccess)
-        {
-            Navigation.NavigateTo("/products"); // Vuelve al grid (ajusta la ruta si es distinta)
-        }
-        else
-        {
-            ErrorMessage = "Error al guardar. Revisa los datos.";
-        }
+            IsSaving = true;
 
-        IsSaving = false;
+            ApiResult<ProductDto> result;
+
+            // Decidimos si crear o actualizar según si tenemos un Id
+            if (IsEdit)
+            {
+                result = await ProductsClient.UpdateProductAsync(Id.Value, dto);
+            }
+            else
+            {
+                result = await ProductsClient.CreateProductAsync(dto);
+            }
+
+            if (result.IsSuccess)
+            {
+                Navigation.NavigateTo("/products"); // Vuelve al grid (ajusta la ruta si es distinta)
+            }
+            else
+            {
+                ToastService.ShowError(ErrorHandler.HandleError(result));
+            }
+
+            IsSaving = false;
+        }
+    }
+
+    private bool FormValidation()
+    {
+        string error = "";
+        //validamos que el produto tenga al menos un color
+        if  (dto.ColorIds.Count() == 0)
+        {
+            error += "El producto debe tener al menos un color \n";
+        }
+        if (!string.IsNullOrEmpty(error))
+        {
+            ToastService.ShowError(error);
+            return false;
+        }
+        return true;
     }
 
     // 3. Acción para el botón Cancelar

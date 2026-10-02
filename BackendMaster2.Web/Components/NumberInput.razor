@@ -1,0 +1,41 @@
+﻿@inherits Microsoft.AspNetCore.Components.Forms.InputBase<decimal>
+
+<input @attributes="AdditionalAttributes"
+       type="text"
+       inputmode="decimal"
+       class="@CssClass"
+       @bind="CurrentValueAsString" />
+
+@code {
+    @code {
+        protected override bool TryParseValueFromString(string? value, out decimal result, out string? validationErrorMessage)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                result = 0;
+                validationErrorMessage = null;
+                return true;
+            }
+
+            // 1. Normalizamos: si el usuario puso un punto, lo cambiamos por coma.
+            var normalized = value.Replace('.', ',');
+
+            // 2. Intentamos parsear forzando la cultura española.
+            if (decimal.TryParse(normalized, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.GetCultureInfo("es-ES"), out result))
+            {
+                validationErrorMessage = null;
+                return true; // ¡Éxito! Lo entendimos.
+            }
+
+            // 3. Si no es un número válido (ej: escribió "hola"), devolvemos error.
+            result = 0;
+            validationErrorMessage = "El valor introducido no tiene un formato numérico válido.";
+            return false;
+        }
+
+        protected override string? FormatValueAsString(decimal value)
+        {              
+            return value.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("es-ES"));
+        }
+    }
+}

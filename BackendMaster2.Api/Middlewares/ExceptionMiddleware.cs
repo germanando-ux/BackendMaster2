@@ -95,7 +95,11 @@ public class ExceptionMiddleware
             case ValidationException validationException:
                 problem.Status = (int)HttpStatusCode.BadRequest;
                 problem.Title = "Error de validación";
-                problem.Detail = "El request no supera las reglas de validación.";
+
+                // Extraemos solo los mensajes de error, sin el prefijo "Validation failed"
+                var errores = validationException.Errors.Select(e => e.ErrorMessage).ToList();
+
+                problem.Detail = string.Join("\n", errores);
                 problem.Type = "https://httpstatuses.com/400";
                 problem.Errors = validationException.Errors.GroupBy(e => e.PropertyName).ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
                 break;
