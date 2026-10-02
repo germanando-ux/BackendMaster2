@@ -1,7 +1,7 @@
 ﻿using BackendMaster2.Api.Validators;
 using BackendMaster2.Modules.CatalogManagement.Dtos;
-using BackendMaster2.Modules.CatalogManagement.Interfaces;
 using BackendMaster2.Modules.CatalogManagement.Services;
+using BackendMaster2.Modules.Interfaces;
 using BackendMaster2.Shared.Domain;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;

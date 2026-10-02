@@ -1,5 +1,5 @@
-﻿using BackendMaster2.Modules.CatalogManagement.Interfaces;
-using BackendMaster2.Modules.Data;
+﻿using BackendMaster2.Modules.Data;
+using BackendMaster2.Modules.Interfaces;
 using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
 using Microsoft.EntityFrameworkCore;

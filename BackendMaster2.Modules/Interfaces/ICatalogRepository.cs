@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace BackendMaster2.Modules.CatalogManagement.Interfaces;
+namespace BackendMaster2.Modules.Interfaces;
 
 public interface ICatalogRepository
 {
