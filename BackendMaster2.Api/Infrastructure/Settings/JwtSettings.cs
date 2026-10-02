@@ -1,4 +1,4 @@
-﻿namespace BackendMaster2.Api.Settings
+﻿namespace BackendMaster2.Api.Infrastructure.Settings
 {
     /// <summary>
     /// Configuración de JWT para la autenticación y autorización.

@@ -5,7 +5,7 @@ using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
 
 
-namespace BackendMaster2.Modules.CatalogManagement.Services;
+namespace BackendMaster2.Modules.Services;
 
 public class CatalogService : ICatalogService
 {

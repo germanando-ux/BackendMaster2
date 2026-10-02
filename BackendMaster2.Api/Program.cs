@@ -1,18 +1,20 @@
 using AutoMapper;
+using BackendMaster2.Api.Hubs;
+using BackendMaster2.Api.Infrastructure.Middlewares;
+using BackendMaster2.Api.Infrastructure.Services;
+using BackendMaster2.Api.Infrastructure.Settings;
 using BackendMaster2.Api.Interface;
-using BackendMaster2.Api.Middlewares;
-using BackendMaster2.Api.Services;
-using BackendMaster2.Api.Settings;
 using BackendMaster2.Modules.Auth.Data;
 using BackendMaster2.Modules.Auth.Interface;
 using BackendMaster2.Modules.CatalogManagement.Interfaces;
 using BackendMaster2.Modules.CatalogManagement.Mappings;
 using BackendMaster2.Modules.CatalogManagement.Repository;
-using BackendMaster2.Modules.CatalogManagement.Services;
 using BackendMaster2.Modules.Data;
 using BackendMaster2.Modules.ProductManagement.Interface;
+using BackendMaster2.Modules.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -20,7 +22,6 @@ using Scalar.AspNetCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Mvc;
 
 
 
@@ -85,6 +86,8 @@ namespace BackendMaster2.Api
 
             // Configuración de scallar/OpenAPI
             builder.Services.AddOpenApi();
+            // Configuración de SignalR
+            builder.Services.AddSignalR();
 
             //CORS
             builder.Services.AddCors(options =>
@@ -140,7 +143,8 @@ namespace BackendMaster2.Api
             // DESPUÉS del Build: mapea las rutas de los attributes ([HttpGet], [Route]...) al pipeline
             app.MapControllers();
 
-            app.MapGet("/", () => "Hello World!");
+
+            app.MapHub<AiTaskHub>("/aitaskhub");
 
             app.Run();
         }

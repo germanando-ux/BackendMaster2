@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace BackendMaster2.Modules.CatalogManagement.Services
+namespace BackendMaster2.Modules.Services
 {
     /// <summary>
     /// Implementación de los casos de uso del módulo ProductManagement.

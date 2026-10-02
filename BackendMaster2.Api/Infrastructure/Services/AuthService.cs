@@ -1,5 +1,5 @@
-﻿using BackendMaster2.Api.Interface;
-using BackendMaster2.Api.Settings;
+﻿using BackendMaster2.Api.Infrastructure.Settings;
+using BackendMaster2.Api.Interface;
 using BackendMaster2.Modules.Auth.Data;
 using BackendMaster2.Modules.Auth.Interface;
 using BackendMaster2.Modules.Data;
@@ -12,7 +12,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace BackendMaster2.Api.Services;
+namespace BackendMaster2.Api.Infrastructure.Services;
 /// <summary>
 /// Fábrica y guardián de tokens: firma access tokens (JWT) y gestiona
 /// refresh tokens hasheados en base de datos.

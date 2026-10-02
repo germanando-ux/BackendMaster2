@@ -6,7 +6,7 @@ using Npgsql;
 using System.Net;
 using System.Text.Json;
 
-namespace BackendMaster2.Api.Middlewares;
+namespace BackendMaster2.Api.Infrastructure.Middlewares;
 
 /// <summary>
 /// Middleware de manejo centralizado de errores HTTP.

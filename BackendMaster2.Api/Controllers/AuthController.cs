@@ -1,9 +1,6 @@
 ﻿using BackendMaster2.Api.Interface;
 using BackendMaster2.Api.Models.Dtos;
-using BackendMaster2.Api.Services;
-using BackendMaster2.Modules.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BackendMaster2.Api.Controllers
 {
