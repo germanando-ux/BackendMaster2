@@ -44,7 +44,9 @@ namespace BackendMaster2.Web
             // ApiClient recibe un HttpClient configurado como el cliente "Api" (BaseAddress + portero).
             builder.Services.AddHttpClient<IApiClient, ApiClient>("Api");
             // Registro del DelegatingHandler que añade el token a cada petición saliente.
-            builder.Services.AddTransient<BackendMaster2.Web.Services.AuthDelegatingHandler>();
+            builder.Services.AddTransient<AuthDelegatingHandler>();
+            // Registro del servicio de SignalR como Singleton para que la conexión se comparta en toda la app
+            builder.Services.AddSingleton<INotificationClientService, NotificationClientService>();
 
             await builder.Build().RunAsync();
 

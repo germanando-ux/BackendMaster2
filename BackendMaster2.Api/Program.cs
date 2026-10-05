@@ -159,8 +159,6 @@ namespace BackendMaster2.Api
             app.MapControllers();
 
 
-            app.MapHub<NotificationHub>("/aitaskhub");
-
             app.Run();
         }
     }

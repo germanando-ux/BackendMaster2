@@ -40,16 +40,23 @@ else
             <ValidationMessage For="@(() => dto.Name)" class="text-danger small" />
         </div>
 
-        <div class="col-md-8 mb-3">
+        <div class=" col-md-8 mb-3 gap-3">
             <label class="form-label">Descripción</label>
-            <textarea class="form-control border-primary" rows="3" @bind="dto.Description" disabled="@IsReadOnly"></textarea>
-            <ValidationMessage For="@(() => dto.Description)" class="text-danger small" />
+            <div class="d-flex gap-3 align-items-center">
+                @* <div class="flex-grow-1"> *@
+                    <textarea class="form-control border-primary" rows="3" @bind="dto.Description" disabled="@IsReadOnly"></textarea>
+                    <ValidationMessage For="@(() => dto.Description)" class="text-danger small" />
+                @* </div> *@
+                <button type="button" class="btn btn-primary" @onclick="RequestAiEnhancementAsync">Mejorar descripción (IA)</button>
+            </div>
         </div>
 
         <div class="col-6 mb-3">
             <label class="form-label">Precio</label>
-            <NumberInput @bind-Value="dto.Price" CssClass="form-control border-primary" required />
-            <ValidationMessage For="@(() => dto.Price)" class="text-danger small" />
+            <div class="gap-3">
+                <NumberInput @bind-Value="dto.Price" CssClass="form-control" class="border-primary" required />
+                <ValidationMessage For="@(() => dto.Price)" class="text-danger small" />
+            </div>
         </div>
 
         <div class="col-6 mb-3">
@@ -204,4 +211,18 @@ else
             dto.ColorIds.Add(colorId);      // No estaba → lo añadimos
         }
     }
+
+    private async Task RequestAiEnhancementAsync()
+    {
+        var request = new EnrichDescriptionRequestDto
+        {
+            CurrentDescription = dto.Description,
+            Colors = availableColors.Where(c => dto.ColorIds.Contains(c.Id)).Select(c => c.Name).ToList(),
+            Price = dto.Price,
+            SRConnectionId = new Guid().ToString()
+        };  
+
+        var result = await ProductsClient.EnrichDescriptionAsync(request);
+
+    }    
 }

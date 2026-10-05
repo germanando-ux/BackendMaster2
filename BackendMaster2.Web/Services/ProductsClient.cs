@@ -38,5 +38,10 @@ public class ProductsClient: IProductsClient
     {
         return await _apiClient.SendAsync<bool>(HttpMethod.Delete, $"api/products/{id}");
     }
+
+    public async Task<ApiResult<string>> EnrichDescriptionAsync(EnrichDescriptionRequestDto request)
+    {
+        return await _apiClient.SendAsync<string>(HttpMethod.Post, $"api/products/EnrichDescription", request);
+    }   
 }
 

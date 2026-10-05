@@ -8,5 +8,6 @@ public interface IProductsClient
     Task<ApiResult<ProductDetailDto>> GetProductDetailByIdAsync(Guid id);
     Task<ApiResult<ProductDto>> CreateProductAsync(ProductDto product);
     Task<ApiResult<ProductDto>> UpdateProductAsync(Guid id, ProductDto product);
+    Task<ApiResult<string>> EnrichDescriptionAsync(EnrichDescriptionRequestDto request);
     Task<ApiResult<bool>> DeleteProductAsync(Guid id);
 }
