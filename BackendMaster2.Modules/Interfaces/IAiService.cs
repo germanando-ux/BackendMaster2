@@ -7,8 +7,5 @@ namespace BackendMaster2.Modules.Interfaces;
 
 public interface IAiService
 {
-    /// <summary>
-    /// Genera y envía el prompt para mejorar la descripción de un producto.
-    /// </summary>
-    Task<string> EnhanceProductDescriptionAsync(EnhanceProductDescriptionRequestDto enhanceDescriptionRequest,CancellationToken cancellationToken = default);
+    Task<string> GenerateTextAsync(string prompt, CancellationToken cancellationToken = default);
 }
