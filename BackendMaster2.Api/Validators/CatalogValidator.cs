@@ -1,4 +1,4 @@
-﻿using BackendMaster2.Modules.CatalogManagement.Dtos;
+﻿using BackendMaster2.Modules.Dtos;
 using FluentValidation;
 
 namespace BackendMaster2.Api.Validators;

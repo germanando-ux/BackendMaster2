@@ -1,4 +1,4 @@
-﻿using BackendMaster2.Modules.CatalogManagement.Dtos;
+﻿using BackendMaster2.Modules.Dtos;
 using BackendMaster2.Shared.Domain;
 using System;
 using System.Collections.Generic;

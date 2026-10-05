@@ -6,10 +6,10 @@ using BackendMaster2.Api.Infrastructure.Settings;
 using BackendMaster2.Api.Interface;
 using BackendMaster2.Modules.Auth.Data;
 using BackendMaster2.Modules.Auth.Interface;
-using BackendMaster2.Modules.CatalogManagement.Mappings;
-using BackendMaster2.Modules.CatalogManagement.Repository;
 using BackendMaster2.Modules.Data;
 using BackendMaster2.Modules.Interfaces;
+using BackendMaster2.Modules.Mappings;
+using BackendMaster2.Modules.Repository;
 using BackendMaster2.Modules.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,6 +17,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Services;
 using Scalar.AspNetCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -44,6 +46,9 @@ namespace BackendMaster2.Api
             // Configurar la cadena de conexión a PostgreSQL
             builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            //servicios de SignalR
+            builder.Services.AddSignalR();
+
             //registro de inyección de dependencias 
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<IProductService, ProductService>();
@@ -51,9 +56,10 @@ namespace BackendMaster2.Api
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
             builder.Services.AddScoped<ICatalogService, CatalogService>();
+            builder.Services.AddScoped<IAiService, AiService>();
+            //registro de servicios de notificación SignalR
+            builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 
-
-            //automapper
 
             builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(CatalogProfile).Assembly));
 
@@ -100,7 +106,17 @@ namespace BackendMaster2.Api
                 });
             });
 
+            // Configuración de Semantic Kernel
+            builder.Services.AddKernel()
+                .AddOpenAIChatCompletion(
+                    modelId: builder.Configuration["AiSettings:ModelId"]!,
+                    apiKey: builder.Configuration["AiSettings:ApiKey"]!,
+                    endpoint: new Uri(builder.Configuration["AiSettings:Endpoint"]!)
+                );
             var app = builder.Build();
+
+            // 2. Mapear la ruta del Hub (junto a MapControllers)
+            app.MapHub<NotificationHub>("/hubs/notifications");
 
             app.UseHttpsRedirection(); //redirección de http a https
             app.UseCors("FrontLocal");
@@ -143,7 +159,7 @@ namespace BackendMaster2.Api
             app.MapControllers();
 
 
-            app.MapHub<AiTaskHub>("/aitaskhub");
+            app.MapHub<NotificationHub>("/aitaskhub");
 
             app.Run();
         }

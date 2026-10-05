@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BackendMaster2.Modules.CatalogManagement.Repository;
+namespace BackendMaster2.Modules.Repository;
 
 public class CatalogRepository : ICatalogRepository
 {

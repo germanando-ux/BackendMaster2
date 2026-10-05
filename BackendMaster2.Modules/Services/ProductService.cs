@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
-using BackendMaster2.Modules.CatalogManagement.Dtos;
+using BackendMaster2.Modules.Dtos;
 using BackendMaster2.Modules.Interfaces;
 using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 
 namespace BackendMaster2.Modules.Services
 {
@@ -16,12 +14,16 @@ namespace BackendMaster2.Modules.Services
     {
         private readonly IProductRepository _productRepository;
         private readonly IMapper _mapper;
+        private readonly IAiService _aiService;
+        private readonly INotificationService _notificationService;
 
         // Depende del CONTRATO, no de la clase: el repositorio real lo inyecta el DI.
-        public ProductService(IProductRepository productRepository, IMapper mapper)
+        public ProductService(IProductRepository productRepository, IMapper mapper, IAiService aiService, INotificationService notificationService)
         {
             _productRepository = productRepository;
             _mapper = mapper;
+            _aiService = aiService;
+            _notificationService = notificationService;
         }
 
         public async Task<IEnumerable<ProductDto>> GetAllAsync()
@@ -120,6 +122,46 @@ namespace BackendMaster2.Modules.Services
             }
 
             await _productRepository.DeleteAsync(id);
+        }
+
+        public async Task ProcessEnrichDescriptionAsync(EnrichDescriptionRequestDto dto, CancellationToken cancellationToken = default)
+        {
+            // 1. Construimos el prompt usando el método privado
+            var prompt = BuildEnrichmentPrompt(dto);
+
+            // 2. Llamamos al servicio de IA
+            var enrichedDescription = await _aiService.GenerateTextAsync(prompt, cancellationToken);
+
+            // 3. Notificar por SignalR al cliente (Paso posterior)
+            await _notificationService.NotifyClientAsync(dto.SRConnectionId,"ReceiveEnrichedDescription",enrichedDescription,cancellationToken);
+        }
+
+
+        /// <summary>
+        /// Construye el prompt para la IA a partir de la información del DTO.
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
+        private string BuildEnrichmentPrompt(EnrichDescriptionRequestDto dto)
+        {
+            var colorsText = dto.Colors.Any()
+                ? string.Join(", ", dto.Colors)
+                : "No especificados";
+
+            return $"""
+            Eres un experto en redactar fichas de producto de comercio electrónico.
+            Mejora y enriquece la siguiente descripción comercial para un producto.
+
+            Información del producto:
+            - Descripción actual: {dto.CurrentDescription}
+            - Colores disponibles: {colorsText}
+            - Precio: {dto.Price:C}
+
+            Requisitos:
+            - Devuelve un texto atractivo, profesional y optimizado para ventas.
+            - Resalta el valor del producto manteniendo la coherencia con su precio y colores.
+            - Devuelve ÚNICAMENTE el texto enriquecido sin introducciones ni comentarios adicionales.
+            """;
         }
     }
 }

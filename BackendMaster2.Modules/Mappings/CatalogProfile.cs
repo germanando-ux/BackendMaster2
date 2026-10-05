@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
-using BackendMaster2.Modules.CatalogManagement.Dtos;
+using BackendMaster2.Modules.Dtos;
 using BackendMaster2.Shared.Domain;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace BackendMaster2.Modules.CatalogManagement.Mappings;
+namespace BackendMaster2.Modules.Mappings;
 
 public class CatalogProfile : Profile
 {

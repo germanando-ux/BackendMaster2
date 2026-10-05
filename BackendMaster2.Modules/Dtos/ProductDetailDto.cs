@@ -1,4 +1,4 @@
-﻿namespace BackendMaster2.Modules.CatalogManagement.Dtos;
+﻿namespace BackendMaster2.Modules.Dtos;
 
 public class ProductDetailDto
 {    

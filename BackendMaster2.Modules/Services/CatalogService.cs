@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using BackendMaster2.Modules.CatalogManagement.Dtos;
+using BackendMaster2.Modules.Dtos;
 using BackendMaster2.Modules.Interfaces;
 using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;

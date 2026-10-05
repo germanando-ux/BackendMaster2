@@ -1,6 +1,7 @@
 ﻿using BackendMaster2.Api.Validators;
-using BackendMaster2.Modules.CatalogManagement.Dtos;
+using BackendMaster2.Modules.Dtos;
 using BackendMaster2.Modules.Interfaces;
+using BackendMaster2.Modules.Services;
 using BackendMaster2.Shared.Domain;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -62,6 +63,17 @@ public class ProductsController : ControllerBase
     {
         await _productService.DeleteAsync(id);
         return NoContent();
+    }
+
+    [Authorize]
+    [HttpPost("EnrichDescription")]
+    public async Task<ActionResult> EnrichDescription([FromBody] EnrichDescriptionRequestDto dto, CancellationToken cancellationToken)
+    {        
+        await _productService.ProcessEnrichDescriptionAsync(dto, cancellationToken);
+
+        // Devolvemos 202 Accepted indicando que el procesamiento ha comenzado
+        // y que la respuesta final llegará vía SignalR al SRConnectionId indicado.
+        return Accepted(new { message = "El proceso de enriquecimiento ha sido iniciado. Se notificará por SignalR al finalizar." });
     }
 
     //[Authorize]

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BackendMaster2.Modules.CatalogManagement.Dtos;
+namespace BackendMaster2.Modules.Dtos;
 
 public class EnrichDescriptionRequestDto
 {

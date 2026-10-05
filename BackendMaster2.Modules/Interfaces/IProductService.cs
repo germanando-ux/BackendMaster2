@@ -1,4 +1,4 @@
-﻿using BackendMaster2.Modules.CatalogManagement.Dtos;
+﻿using BackendMaster2.Modules.Dtos;
 using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
 using System;
@@ -18,5 +18,6 @@ namespace BackendMaster2.Modules.Interfaces
         Task<ProductDto> CreateAsync(ProductDto product);
         Task<ProductDto> UpdateAsync(ProductDto product);
         Task DeleteAsync(Guid id);
+        Task ProcessEnrichDescriptionAsync(EnrichDescriptionRequestDto dto, CancellationToken cancellationToken = default);
     }
 }
