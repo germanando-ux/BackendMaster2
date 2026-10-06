@@ -10,6 +10,7 @@
 @inject NavigationManager Navigation
 @inject IColorClient ColorClient
 @inject ToastService ToastService
+@inject INotificationClientService NotificationService
 
 @inherits FormBaseComponent //hereda de FormBaseComponent para manejar errores y variables de estado
 
@@ -102,6 +103,16 @@ else
     </EditForm>
 }
 
+<ConfirmModal Show="@(AiDescription != string.Empty)"
+              IsError="false"
+              Title="Descripción generada por IA"
+              Message="@AiDescription"
+              ConfirmText="Aceptar"
+              CancelText="Cancelar"
+              OnConfirm="ConfirmAiDescription"
+              OnCancel="CancelProductDeletion" />
+
+
 @code {
 
 
@@ -109,7 +120,7 @@ else
     private ProductDto dto = new();
 
     private List<ColorDto> availableColors = new();
-
+    private string AiDescription = string.Empty;
 
     // 1. Se ejecuta al entrar en la página. Si es edición, carga los datos.
     protected override async Task OnInitializedAsync()
@@ -121,6 +132,12 @@ else
             if (result.IsSuccess && result.Data != null)
             {
                 dto = result.Data.Product; // Rellenamos el formulario con los datos
+
+                // 1. Iniciamos la conexión de SignalR
+                await NotificationService.StartAsync();
+
+                // 2. Nos suscribimos al evento de finalización
+                NotificationService.OnTaskCompleted += OnAiTaskCompleted;
             }
             else
             {
@@ -219,10 +236,40 @@ else
             CurrentDescription = dto.Description,
             Colors = availableColors.Where(c => dto.ColorIds.Contains(c.Id)).Select(c => c.Name).ToList(),
             Price = dto.Price,
-            SRConnectionId = new Guid().ToString()
+            SRConnectionId = Guid.NewGuid().ToString()
         };  
 
         var result = await ProductsClient.EnrichDescriptionAsync(request);
 
     }    
+
+# region EventosDeSignalR
+
+    private void OnAiTaskCompleted(string taskId, string enhancedDescription)
+    {
+        // Actualizamos la descripción en el DTO
+        AiDescription = enhancedDescription;
+
+
+        // CRÍTICO: Forzar la actualización de la interfaz de usuario
+         _= InvokeAsync(StateHasChanged);
+    }
+
+    //se ejecuta al salir de la página para desuscribirse del evento y evitar memory leaks
+    public void DisposeAsync()
+    {
+        NotificationService.OnTaskCompleted -= OnAiTaskCompleted;
+    }
+
+#endregion
+
+    private void ConfirmAiDescription()
+    {
+        dto.Description = AiDescription;
+        AiDescription = string.Empty;
+    }
+    private void CancelProductDeletion()
+    {
+        AiDescription = string.Empty;
+    }
 }
