@@ -231,13 +231,18 @@ else
 
     private async Task RequestAiEnhancementAsync()
     {
+        // Generamos un ID único para esta tarea
+        //var taskId = Guid.NewGuid().ToString();
+
         var request = new EnrichDescriptionRequestDto
-        {
+        {          
             CurrentDescription = dto.Description,
             Colors = availableColors.Where(c => dto.ColorIds.Contains(c.Id)).Select(c => c.Name).ToList(),
             Price = dto.Price,
-            SRConnectionId = Guid.NewGuid().ToString()
-        };  
+            // CORRECCIÓN CRÍTICA: Usamos el ConnectionId real del servicio, no un Guid nuevo
+            SRConnectionId = NotificationService.GetConnectionId() ?? string.Empty
+        };
+
 
         var result = await ProductsClient.EnrichDescriptionAsync(request);
 
@@ -245,7 +250,7 @@ else
 
 # region EventosDeSignalR
 
-    private void OnAiTaskCompleted(string taskId, string enhancedDescription)
+    private void OnAiTaskCompleted(string enhancedDescription)
     {
         // Actualizamos la descripción en el DTO
         AiDescription = enhancedDescription;

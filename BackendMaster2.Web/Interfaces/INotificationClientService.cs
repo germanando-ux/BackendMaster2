@@ -15,7 +15,7 @@ public interface INotificationClientService : IAsyncDisposable
     /// Evento que se dispara cuando la IA termina de procesar una tarea.
     /// Parámetros: TaskId, Resultado (texto).
     /// </summary>
-    event Action<string, string>? OnTaskCompleted;
+    event Action<string>? OnTaskCompleted;
 
     /// <summary>
     /// Evento que se dispara cuando hay un error en el procesamiento.

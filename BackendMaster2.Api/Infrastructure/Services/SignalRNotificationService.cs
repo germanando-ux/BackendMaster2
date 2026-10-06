@@ -22,12 +22,13 @@ public class SignalRNotificationService : INotificationService
         _hubContext = hubContext;
     }
 
-    public async Task NotifyClientAsync(string connectionId,string method,object payload,CancellationToken cancellationToken = default)
+    public async Task NotifyClientAsync(string connectionId, string method, string description, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(connectionId))
         {
             return;
-        }
-        await _hubContext.Clients.Client(connectionId).SendAsync(method, payload, cancellationToken);
+        }        
+        await _hubContext.Clients.Client(connectionId).SendAsync(method, description, cancellationToken);
+
     }
 }

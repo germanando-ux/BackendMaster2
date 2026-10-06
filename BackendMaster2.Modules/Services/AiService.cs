@@ -16,9 +16,24 @@ public class AiService : IAiService
     }
     public async Task<string> GenerateTextAsync(string prompt, CancellationToken cancellationToken = default)
     {
-        // InvokePromptAsync envía la cadena directamente al modelo registrado en el Kernel (Groq)
-        var result = await _kernel.InvokePromptAsync(prompt, cancellationToken: cancellationToken);
+        try
+        {
+            Console.WriteLine(">>> ANTES de InvokePromptAsync");
 
-        return result.GetValue<string>() ?? string.Empty;
+            var result = await _kernel.InvokePromptAsync(prompt, cancellationToken: cancellationToken);
+
+            Console.WriteLine(">>> DESPUÉS de InvokePromptAsync");
+            return result.GetValue<string>() ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            // ESTO ES CRÍTICO: nos dirá si hay un error de red, clave o configuración
+            Console.WriteLine($">>> ERROR EN SEMANTIC KERNEL: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($">>> INNER EXCEPTION: {ex.InnerException.Message}");
+            }
+            throw; // Relanzamos para que el flujo falle visiblemente
+        }
     }
 }

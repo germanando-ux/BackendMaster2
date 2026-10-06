@@ -11,7 +11,7 @@ public class NotificationClientService : INotificationClientService
 
     // Ajusta esta URL a la URL real de tu API (ej: "https://localhost:7001")
 
-    public event Action<string, string>? OnTaskCompleted;
+    public event Action<string>? OnTaskCompleted;
     public event Action<string, string>? OnTaskFailed;
 
     public NotificationClientService(IConfiguration configuration)
@@ -26,9 +26,9 @@ public class NotificationClientService : INotificationClientService
             .Build();
 
         // Suscribirse a los eventos que emite el backend
-        _hubConnection.On<string, string>("OnTaskCompleted", (taskId, result) =>
+        _hubConnection.On<string>("OnTaskCompleted", (result) =>
         {
-            OnTaskCompleted?.Invoke(taskId, result);
+            OnTaskCompleted?.Invoke(result);
         });
 
         _hubConnection.On<string, string>("OnTaskFailed", (taskId, error) =>

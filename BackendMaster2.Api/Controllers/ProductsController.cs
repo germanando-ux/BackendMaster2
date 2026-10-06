@@ -68,8 +68,12 @@ public class ProductsController : ControllerBase
     [Authorize]
     [HttpPost("EnrichDescription")]
     public async Task<ActionResult> EnrichDescription([FromBody] EnrichDescriptionRequestDto dto, CancellationToken cancellationToken)
-    {        
-        await _productService.ProcessEnrichDescriptionAsync(dto, cancellationToken);
+    {
+        // Lanzamos en segundo plano para no bloquear la respuesta HTTP
+        _ = Task.Run(async () =>
+        {
+            await _productService.ProcessEnrichDescriptionAsync(dto, CancellationToken.None);
+        }, cancellationToken);
 
         // Devolvemos 202 Accepted indicando que el procesamiento ha comenzado
         // y que la respuesta final llegará vía SignalR al SRConnectionId indicado.

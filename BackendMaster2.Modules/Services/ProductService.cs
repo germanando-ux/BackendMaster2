@@ -132,8 +132,9 @@ namespace BackendMaster2.Modules.Services
             // 2. Llamamos al servicio de IA
             var enrichedDescription = await _aiService.GenerateTextAsync(prompt, cancellationToken);
 
-            // 3. Notificar por SignalR al cliente (Paso posterior)
-            await _notificationService.NotifyClientAsync(dto.SRConnectionId,"ReceiveEnrichedDescription",enrichedDescription,cancellationToken);
+            // 3. Notificar por SignalR al cliente (Paso posterior)            
+            // En ProcessEnrichDescriptionAsync:            
+            await _notificationService.NotifyClientAsync(dto.SRConnectionId,"OnTaskCompleted",enrichedDescription,cancellationToken);
         }
 
 
