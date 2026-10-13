@@ -11,6 +11,7 @@
 - [ ] Características (decidir JSONB vs EAV cuando llegue el C8)
 
 ## Procesamiento asíncrono y tiempo real
+- [x] Endpoint en backend para mejorar descripción de producto con IA (modelo ligero vía API) + Modal de confirmación en front + Toast de feedback (¡Hecho!)
 - [ ] Importaciones masivas con progreso en tiempo real vía SignalR
 - [ ] BackgroundServices para tareas periódicas
 - [ ] Gestor de trabajos (Hangfire o similar)
@@ -24,7 +25,7 @@
 - [ ] UCP (Universal Commerce Protocol) como micro-proyecto de comercio agéntico
 
 ## Inteligencia Artificial
-- [ ] Endpoint en backend para mejorar descripción de producto con IA (modelo ligero vía API) + Modal de confirmación en front
+- [x] Endpoint en backend para mejorar descripción de producto con IA (modelo ligero vía API) + Modal de confirmación en front (¡Hecho!)
 - [ ] (Futuro) Agente conversacional sobre la API (requerirá Semantic Kernel)
 - [ ] (Futuro) Asistente integrado en el front Blazor
 
@@ -35,9 +36,17 @@
 - [ ] Dockerización completa y CI/CD
 
 ## Deuda de front y UX (aparcados del chat)
-[x] Modal de confirmación Bootstrap para sustituir window.confirm en borrados (¡Hecho!)
-[x] Componente reutilizable NumberInput.razor (input numérico con validación + decimal locale-aware) (¡Hecho!)
-[x] Toast de errores auto-ocultables en grids y formularios (¡Hecho!)
-[ ] Refactor jerarquía PageBaseComponent / FormBaseComponent (grids vs formularios)
-[ ] Unificar estilo de rutas de endpoints (REST sustantivos vs verbos RPC)
-[ ] Si la consulta de producto crece, separarla a un componente ProductDetail propio
+- [x] Modal de confirmación Bootstrap para sustituir window.confirm en borrados (¡Hecho!)
+- [x] Componente reutilizable NumberInput.razor (input numérico con validación + decimal locale-aware) (¡Hecho!)
+- [x] Toast de errores auto-ocultables en grids y formularios (¡Hecho!)
+- [ ] Refactor jerarquía PageBaseComponent / FormBaseComponent (grids vs formularios)
+- [ ] Unificar estilo de rutas de endpoints (REST sustantivos vs verbos RPC)
+- [ ] Si la consulta de producto crece, separarla a un componente ProductDetail propio
+
+## Arquitectura y Evolución (NUEVO)
+- [ ] **Migración a DDD canónico (4 capas)**:
+  - Fase 1: Separar Domain de Data (pasar a modelo tipo "Store" de 3 capas)
+  - Fase 2: Crear capa Application independiente (casos de uso, DTOs, interfaces)
+  - Fase 3: Enriquecer Domain (mover reglas de FluentValidation a entidades)
+  - Fase 4: (Opcional) CQRS con MediatR
+- [ ] (Futuro) Evaluar migración a Servicio Centralizado de Notificaciones (SignalR + Redis/RabbitMQ) para desacoplar Hubs de APIs de negocio

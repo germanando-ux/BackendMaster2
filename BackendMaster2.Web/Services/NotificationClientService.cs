@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.SignalR.Client;
 
 namespace BackendMaster2.Web.Services;
 
+/// <summary>
+/// Clase para la gestión de SignalR
+/// </summary>
 public class NotificationClientService : INotificationClientService
 {
     private readonly HubConnection _hubConnection;
@@ -14,10 +17,14 @@ public class NotificationClientService : INotificationClientService
     public event Action<string>? OnTaskCompleted;
     public event Action<string, string>? OnTaskFailed;
 
+    /// <summary>
+    /// Arranque del servicio indicando datos del servidor en el backend
+    /// </summary>
+    /// <param name="configuration"></param>
     public NotificationClientService(IConfiguration configuration)
     {
 
-        _apiBaseUrl = configuration.GetValue<string>("ApiSettings:BaseUrl")
+        _apiBaseUrl = configuration.GetValue<string>("ApiBaseUrl")
                       ?? "https://localhost:7001";
 
         _hubConnection = new HubConnectionBuilder()

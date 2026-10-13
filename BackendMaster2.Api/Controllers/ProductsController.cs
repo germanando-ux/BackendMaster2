@@ -67,7 +67,7 @@ public class ProductsController : ControllerBase
 
     [Authorize]
     [HttpPost("EnrichDescription")]
-    public async Task<ActionResult> EnrichDescription([FromBody] EnrichDescriptionRequestDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<string>> EnrichDescription([FromBody] EnrichDescriptionRequestDto dto, CancellationToken cancellationToken)
     {
         // Lanzamos en segundo plano para no bloquear la respuesta HTTP
         _ = Task.Run(async () =>
@@ -77,7 +77,9 @@ public class ProductsController : ControllerBase
 
         // Devolvemos 202 Accepted indicando que el procesamiento ha comenzado
         // y que la respuesta final llegará vía SignalR al SRConnectionId indicado.
-        return Accepted(new { message = "El proceso de enriquecimiento ha sido iniciado. Se notificará por SignalR al finalizar." });
+        //return Accepted("El proceso de enriquecimiento ha sido iniciado. Se notificará por SignalR al finalizar.");
+        return StatusCode(202, "\"Description enrichment process started\"");
+
     }
 
     //[Authorize]

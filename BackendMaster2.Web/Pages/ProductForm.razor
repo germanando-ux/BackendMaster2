@@ -133,10 +133,7 @@ else
             {
                 dto = result.Data.Product; // Rellenamos el formulario con los datos
 
-                // 1. Iniciamos la conexión de SignalR
-                await NotificationService.StartAsync();
-
-                // 2. Nos suscribimos al evento de finalización
+                // Nos suscribimos al evento de finalización de la mejora de descripción
                 NotificationService.OnTaskCompleted += OnAiTaskCompleted;
             }
             else
@@ -232,26 +229,45 @@ else
     private async Task RequestAiEnhancementAsync()
     {
         // Generamos un ID único para esta tarea
-        //var taskId = Guid.NewGuid().ToString();
 
-        var request = new EnrichDescriptionRequestDto
+        try
+        {
+            var request = new EnrichDescriptionRequestDto
         {          
             CurrentDescription = dto.Description,
             Colors = availableColors.Where(c => dto.ColorIds.Contains(c.Id)).Select(c => c.Name).ToList(),
             Price = dto.Price,
-            // CORRECCIÓN CRÍTICA: Usamos el ConnectionId real del servicio, no un Guid nuevo
             SRConnectionId = NotificationService.GetConnectionId() ?? string.Empty
         };
 
+            Console.WriteLine(">>> Enviando petición a la IA...");
+            var result = await ProductsClient.EnrichDescriptionAsync(request);
+            Console.WriteLine(">>> Petición completada. IsSuccess: " + result.IsSuccess);
 
-        var result = await ProductsClient.EnrichDescriptionAsync(request);
+            if (result.IsSuccess)
+            {
+                ToastService.ShowInfo("Se ha solicitado la mejora de la descripción. Se avisará cuando el proceso termine.");
+            }
+            else
+            {
+                ToastService.ShowError("No se pudo solicitar la mejora de la descripción.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // ESTO ES CRÍTICO: nos dirá por qué falla la llamada HTTP
+            Console.WriteLine($">>> ERROR EN REQUEST: {ex.Message}");
+            ToastService.ShowError($"Error inesperado: {ex.Message}");
+        }
 
     }    
 
-# region EventosDeSignalR
+    # region EventosDeSignalR
 
     private void OnAiTaskCompleted(string enhancedDescription)
     {
+        ToastService.HideMessage();
+
         // Actualizamos la descripción en el DTO
         AiDescription = enhancedDescription;
 

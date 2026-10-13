@@ -2,12 +2,12 @@
 @inject ToastService ToastService
 @implements IDisposable
 
-<div class="toast-container position-fixed  bottom-0 start-50 translate-middle-x p-3" style="z-index: 1055;">
-    @foreach (var mensaje in ToastService.Mensajes)
+<div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3" style="z-index: 1055;">
+    @foreach (var item in ToastService.Mensajes)
     {
-        <div class="toast show align-items-center text-bg-danger border-0 mb-2" role="alert">
+        <div class="toast show align-items-center @(item.IsError ? "text-bg-danger" : "text-bg-info") border-0 mb-2" role="alert">
             <div class="toast-body text-center" style="white-space: pre-wrap;">
-                @mensaje
+                @item.Message
             </div>
         </div>
     }
