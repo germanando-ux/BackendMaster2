@@ -15,7 +15,7 @@ public class ProductsClient: IProductsClient
 
     public async Task<ApiResult<List<ProductDto>>> GetAllProductsAsync()
     {        
-       return await _apiClient.SendAsync<List<ProductDto>>(HttpMethod.Get, "api/products");
+       return await _apiClient.SendAsync<List<ProductDto>>(HttpMethod.Get, "api/products/GetAllProducts");
     }
 
     public async Task<ApiResult<ProductDetailDto>> GetProductDetailByIdAsync(Guid id)

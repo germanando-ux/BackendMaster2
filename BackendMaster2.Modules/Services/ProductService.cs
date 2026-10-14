@@ -26,9 +26,9 @@ namespace BackendMaster2.Modules.Services
             _notificationService = notificationService;
         }
 
-        public async Task<IEnumerable<ProductDto>> GetAllAsync()
+        public async Task<IEnumerable<ProductDto>> GetAllProductsAsync(ProductQueryDto query)
         {
-            var products = await _productRepository.GetAllAsync();
+            var products = await _productRepository.GetAllProductsAsync(query);
             return products.Select(p => _mapper.Map<ProductDto>(p));
         }
 

@@ -25,10 +25,10 @@ public class ProductsController : ControllerBase
         _updateValidator = updateValidator;
     }
     [Authorize]
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetAll()
+    [HttpGet("GetAllProducts")]
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllProducts([FromQuery] ProductQueryDto query)
     {
-        var products = await _productService.GetAllAsync();
+        var products = await _productService.GetAllProductsAsync(query);
         return Ok(products);
     }
     [Authorize]

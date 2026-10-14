@@ -1,4 +1,5 @@
-﻿using BackendMaster2.Shared.Domain;
+﻿using BackendMaster2.Modules.Dtos;
+using BackendMaster2.Shared.Domain;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,7 +12,7 @@ namespace BackendMaster2.Modules.Interfaces
     // sin tocar una sola línea del service.
     public interface IProductRepository
     {
-        Task<IEnumerable<Product>> GetAllAsync();
+        Task<IEnumerable<Product>> GetAllProductsAsync(ProductQueryDto query);
         Task<Product?> GetByIdAsync(Guid id);
         Task<Product?> GetBySkuAsync(string sku);
         Task AddAsync(Product product);
