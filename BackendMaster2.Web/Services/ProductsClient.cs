@@ -1,5 +1,6 @@
 ﻿using BackendMaster2.Web.Interfaces;
 using BackendMaster2.Web.Models.Dtos;
+using System.Reflection;
 
 namespace BackendMaster2.Web.Services;
 
@@ -13,10 +14,11 @@ public class ProductsClient: IProductsClient
         _apiClient = apiClient;
     }
 
-    public async Task<ApiResult<List<ProductDto>>> GetAllProductsAsync()
-    {        
-       return await _apiClient.SendAsync<List<ProductDto>>(HttpMethod.Get, "api/products/GetAllProducts");
-    }
+    public async Task<ApiResult<List<ProductDto>>> GetAllProductsAsync(ProductQueryDto? query = null)
+    {
+        string urlParameters = _apiClient.CreateUrlParameters(query);
+        return await _apiClient.SendAsync<List<ProductDto>>(HttpMethod.Get, $"api/products/GetAllProducts{urlParameters}");
+     }
 
     public async Task<ApiResult<ProductDetailDto>> GetProductDetailByIdAsync(Guid id)
     {

@@ -33,13 +33,22 @@ else
     <div class="card shadow mb-4">
         <table class="table table-bordered table-striped table-hover">
             <thead class="table-encabezado-marca">
-                <tr>
-                    <th>SKU</th>
-                    <th>Nombre</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
+                <tr>                    
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSort("Sku"))">SKU
+                        <i class="bi @GetSortIcon("Sku")"></i>
+                     </th>
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSort("Name"))">Nombre
+                        <i class="bi @GetSortIcon("Name")"></i>
+                        </th>
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSort("Price"))">Precio
+                        <i class="bi @GetSortIcon("Price")"></i>
+                    </th>
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSort("Stock"))">Stock
+                        <i class="bi @GetSortIcon("Stock")"></i></th>
                     <th>Estado</th>
                     <th>Acciones</th>
+
+
                 </tr>
             </thead>
             <tbody>
@@ -94,6 +103,8 @@ else
     private Guid? _pendingProductId;
     private string? _pendingProductName;
     private bool _isErrorModal;
+    private string _currentSortBy = "Name";
+    private bool _currentSortAscending = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -102,18 +113,30 @@ else
 
     private async Task LoadProductsAsync()
     {
-        var result = await ProductsClient.GetAllProductsAsync();
+  
+        IsLoading = true;
+        ErrorMessage = null; // Limpiamos errores anteriores
+
+        ProductQueryDto query = new ProductQueryDto
+        {
+            SortBy = _currentSortBy,
+            SortAscending = _currentSortAscending
+        };
+
+        var result = await ProductsClient.GetAllProductsAsync(query);
 
         if (!result.IsSuccess)
         {
             ErrorMessage = ErrorHandler.HandleError(result);
+            IsLoading = false;
             return;
         }
 
         _productos = result.Data ?? new List<ProductDto>();
+   
         IsLoading = false;
+        
     }
-
     private void PrepareProductDeletion(Guid id, string name)
     {
         _pendingProductId = id;
@@ -145,4 +168,32 @@ else
             _pendingProductName = ErrorHandler.HandleError(result);
         }
     }
+
+    #region ordenacion
+
+    private async Task ToggleSort(string columnName)
+    {
+        if (_currentSortBy == columnName)
+        {
+            _currentSortAscending = !_currentSortAscending;
+        }
+        else
+        {
+            _currentSortBy = columnName;
+            _currentSortAscending = true;
+        }
+
+        await LoadProductsAsync();
+    }
+
+    private string GetSortIcon(string columnName)
+    {
+        if (_currentSortBy != columnName)
+        {
+            return "bi-arrow-down-up";
+        }
+
+        return _currentSortAscending ? "bi-sort-up" : "bi-sort-down";
+    }
+    #endregion
 }

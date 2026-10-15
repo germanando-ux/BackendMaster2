@@ -42,7 +42,9 @@ public class ApiClient : IApiClient
         {
             request.Content = JsonContent.Create(body, options: JsonOptions);
         }
-        return await SendRequestAsync<T>(request);
+        var response = await SendRequestAsync<T>(request);
+        return response;
+        //return await SendRequestAsync<T>(request);
     }
     /// <summary>
     /// /// Envía un <see cref="HttpRequestMessage"/> ya construido por el llamante y devuelve
@@ -97,4 +99,29 @@ public class ApiClient : IApiClient
 
         }
     }
+
+    /// <summary>
+    /// Monta los parámetros de consulta a partir de un objeto anónimo o DTO, para añadirlos a la URL.
+    /// </summary>
+    /// <param name="query"></param>
+    /// <returns></returns>
+    public string CreateUrlParameters(object? query)
+    {
+        if (query is null)
+        {
+            return string.Empty;
+        }
+        var properties = query.GetType().GetProperties();
+        var parameters = new List<string>();
+        foreach (var property in properties)
+        {
+            var value = property.GetValue(query);
+            if (value != null)
+            {
+                parameters.Add($"{property.Name}={Uri.EscapeDataString(value.ToString()!)}");
+            }
+        }
+        return parameters.Count > 0 ? "?" + string.Join("&", parameters) : string.Empty;
+    }
+
 }
