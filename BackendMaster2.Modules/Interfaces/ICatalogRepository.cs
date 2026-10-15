@@ -10,7 +10,7 @@ public interface ICatalogRepository
 {
     Task AddColorAsync(Color newColor);
     Task DeleteColorAsync(Guid id);
-    Task<IEnumerable<Color>> GetAllColorsAsync(ColorsQueryDto query);
+    Task<IEnumerable<Color>> GetAllColorsAsync(BaseQueryDto query);
     Task<Color> GetColorByIdAsync(Guid id);
     Task<Color> UpdateColorAsync(Color existing);
 }

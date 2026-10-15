@@ -43,7 +43,7 @@ public class CatalogRepository : ICatalogRepository
         }
     }
 
-    public async Task<IEnumerable<Color>> GetAllColorsAsync(ColorsQueryDto query)
+    public async Task<IEnumerable<Color>> GetAllColorsAsync(BaseQueryDto query)
     {
         IQueryable<Color> colorsQuery = _context.Color.AsQueryable();
 

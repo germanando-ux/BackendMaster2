@@ -37,7 +37,7 @@ namespace BackendMaster2.Modules.Repository
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<Product>> GetAllProductsAsync(ProductQueryDto query)
+        public async Task<IEnumerable<Product>> GetAllProductsAsync(BaseQueryDto query)
         {
             IQueryable<Product> productsQuery = _context.Products.AsQueryable();
 

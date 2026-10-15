@@ -26,7 +26,7 @@ public class ProductsController : ControllerBase
     }
     [Authorize]
     [HttpGet("GetAllProducts")]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllProducts([FromQuery] ProductQueryDto query)
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllProducts([FromQuery] BaseQueryDto query)
     {
         var products = await _productService.GetAllProductsAsync(query);
         return Ok(products);

@@ -12,7 +12,7 @@ namespace BackendMaster2.Modules.Interfaces
     // sin tocar una sola línea del service.
     public interface IProductRepository
     {
-        Task<IEnumerable<Product>> GetAllProductsAsync(ProductQueryDto query);
+        Task<IEnumerable<Product>> GetAllProductsAsync(BaseQueryDto query);
         Task<Product?> GetByIdAsync(Guid id);
         Task<Product?> GetBySkuAsync(string sku);
         Task AddAsync(Product product);

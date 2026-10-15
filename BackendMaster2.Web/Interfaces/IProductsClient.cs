@@ -4,7 +4,7 @@ namespace BackendMaster2.Web.Interfaces;
 
 public interface IProductsClient
 {
-    Task<ApiResult<List<ProductDto>>> GetAllProductsAsync(ProductQueryDto? query = null);                                      
+    Task<ApiResult<List<ProductDto>>> GetAllProductsAsync(BaseQueryDto? query = null);                                      
     Task<ApiResult<ProductDetailDto>> GetProductDetailByIdAsync(Guid id);
     Task<ApiResult<ProductDto>> CreateProductAsync(ProductDto product);
     Task<ApiResult<ProductDto>> UpdateProductAsync(Guid id, ProductDto product);

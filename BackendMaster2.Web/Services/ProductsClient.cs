@@ -14,7 +14,7 @@ public class ProductsClient: IProductsClient
         _apiClient = apiClient;
     }
 
-    public async Task<ApiResult<List<ProductDto>>> GetAllProductsAsync(ProductQueryDto? query = null)
+    public async Task<ApiResult<List<ProductDto>>> GetAllProductsAsync(BaseQueryDto? query = null)
     {
         string urlParameters = _apiClient.CreateUrlParameters(query);
         return await _apiClient.SendAsync<List<ProductDto>>(HttpMethod.Get, $"api/products/GetAllProducts{urlParameters}");

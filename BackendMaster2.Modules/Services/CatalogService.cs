@@ -35,7 +35,7 @@ public class CatalogService : ICatalogService
         await _CatalogRepository.DeleteColorAsync(id);
     }
 
-    public async Task<IEnumerable<ColorDto>> GetAllColorsAsync(ColorsQueryDto query)
+    public async Task<IEnumerable<ColorDto>> GetAllColorsAsync(BaseQueryDto query)
     {
         IEnumerable<Color> colors = await _CatalogRepository.GetAllColorsAsync(query);
         return colors.Select(c => _mapper.Map<ColorDto>(c));
