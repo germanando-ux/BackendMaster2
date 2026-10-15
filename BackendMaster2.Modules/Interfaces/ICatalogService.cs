@@ -10,7 +10,7 @@ public interface ICatalogService
 {
     Task<ColorDto> CreateColorAsync(ColorDto color);
     Task DeleteColorAsync(Guid id);
-    Task<IEnumerable<ColorDto>> GetAllColorsAsync();
+    Task<IEnumerable<ColorDto>> GetAllColorsAsync(ColorsQueryDto query);
     Task<ColorDto?> GetColorByIdAsync(Guid id);
     Task<ColorDto?> UpdateColorAsync(ColorDto color);
 }

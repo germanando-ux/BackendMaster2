@@ -32,4 +32,34 @@ public class FormBaseComponent : ComponentBase
     {
         ErrorMessage = ErrorHandler.HandleError(result);
     }
+
+    #region ordenacion
+
+    // Estado compartido de ordenación
+    protected string CurrentSortBy { get; set; } = "Name";
+    protected bool CurrentSortAscending { get; set; } = true;
+
+    
+    protected void ToggleSort(string columnName)
+    {
+        if (CurrentSortBy == columnName)
+        {
+            CurrentSortAscending = !CurrentSortAscending;
+        }
+        else
+        {
+            CurrentSortBy = columnName;
+            CurrentSortAscending = true;
+        }        
+    }
+
+
+    protected string GetSortIcon(string columnName)
+    {
+        if (CurrentSortBy != columnName) return "bi-arrow-down-up";
+        return CurrentSortAscending ? "bi-sort-up" : "bi-sort-down";
+    }
+#endregion
 }
+
+

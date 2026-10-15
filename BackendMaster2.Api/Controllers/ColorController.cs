@@ -23,9 +23,9 @@ public class ColorController : ControllerBase
 
     [Authorize]
     [HttpGet("GetAllColors")]
-    public async Task<ActionResult<IEnumerable<ColorDto>>> GetAllColors()
+    public async Task<ActionResult<IEnumerable<ColorDto>>> GetAllColors([FromQuery] ColorsQueryDto query)
     {
-        var colors = await _catalogService.GetAllColorsAsync();
+        var colors = await _catalogService.GetAllColorsAsync(query);
         return Ok(colors);
     }
 

@@ -32,7 +32,10 @@ else
         <table class="table table-bordered table-striped table-hover">
             <thead class="table-encabezado-marca">
                 <tr>
-                    <th>Nombre</th>
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSortLocal("Name"))">
+                        Nombre
+                        <i class="bi @GetSortIcon("Name")"></i>
+                    </th>
                     <th>Hexadecimal/color</th>
                     <th>Estado</th>
                     <th class="text-center" style="width: 120px;">Acciones</th>
@@ -98,11 +101,20 @@ else
 
     private async Task LoadColorsAsync()
     {
-        var result = await ColorClient.GetAllColorsAsync();
+        IsLoading = true;
+
+        ColorsQueryDto query = new ColorsQueryDto
+        {
+            SortBy = CurrentSortBy,
+            SortAscending = CurrentSortAscending
+        };
+
+        var result = await ColorClient.GetAllColorsAsync(query);
 
         if (!result.IsSuccess)
         {
             ErrorMessage = ErrorHandler.HandleError(result);
+            IsLoading = false;
             return;
         }
 
@@ -140,5 +152,11 @@ else
             _modalEsError = true;
             _colorNombrePendiente = ErrorHandler.HandleError(result);
         }
+    }
+
+    private async Task ToggleSortLocal(string columnName)
+    {
+        ToggleSort(columnName);
+        await LoadColorsAsync();
     }
 }

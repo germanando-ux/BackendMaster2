@@ -21,9 +21,10 @@ public class ColorClient : IColorClient
         return await _apiClient.SendAsync<bool>(HttpMethod.Delete, $"api/color/DeleteColor/{id}");
     }
 
-    public async Task<ApiResult<List<ColorDto>>> GetAllColorsAsync()
+    public async Task<ApiResult<List<ColorDto>>> GetAllColorsAsync(ColorsQueryDto? query = null)
     {
-        return await _apiClient.SendAsync<List<ColorDto>>(HttpMethod.Get, "api/color/GetAllColors");
+        string urlParameters = _apiClient.CreateUrlParameters(query);
+        return await _apiClient.SendAsync<List<ColorDto>>(HttpMethod.Get, $"api/color/GetAllColors{urlParameters}");
     }
 
     public async Task<ApiResult<ColorDto>> GetColorByIdAsync(Guid id)

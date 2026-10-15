@@ -4,7 +4,7 @@ namespace BackendMaster2.Web.Interfaces;
 
 public interface IColorClient
 {
-    Task<ApiResult<List<ColorDto>>> GetAllColorsAsync();
+    Task<ApiResult<List<ColorDto>>> GetAllColorsAsync(ColorsQueryDto? query = null);
     Task<ApiResult<ColorDto>> GetColorByIdAsync(Guid id);
     Task<ApiResult<ColorDto>> CreateColorAsync(ColorDto color);
     Task<ApiResult<ColorDto>> UpdateColorAsync(Guid id, ColorDto color);

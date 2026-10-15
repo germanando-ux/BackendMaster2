@@ -34,16 +34,16 @@ else
         <table class="table table-bordered table-striped table-hover">
             <thead class="table-encabezado-marca">
                 <tr>                    
-                    <th style="cursor: pointer;" @onclick="@(() => ToggleSort("Sku"))">SKU
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSortLocal("Sku"))">SKU
                         <i class="bi @GetSortIcon("Sku")"></i>
                      </th>
-                    <th style="cursor: pointer;" @onclick="@(() => ToggleSort("Name"))">Nombre
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSortLocal("Name"))">Nombre
                         <i class="bi @GetSortIcon("Name")"></i>
                         </th>
-                    <th style="cursor: pointer;" @onclick="@(() => ToggleSort("Price"))">Precio
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSortLocal("Price"))">Precio
                         <i class="bi @GetSortIcon("Price")"></i>
                     </th>
-                    <th style="cursor: pointer;" @onclick="@(() => ToggleSort("Stock"))">Stock
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSortLocal("Stock"))">Stock
                         <i class="bi @GetSortIcon("Stock")"></i></th>
                     <th>Estado</th>
                     <th>Acciones</th>
@@ -102,9 +102,7 @@ else
     private List<ProductDto> _productos = new();
     private Guid? _pendingProductId;
     private string? _pendingProductName;
-    private bool _isErrorModal;
-    private string _currentSortBy = "Name";
-    private bool _currentSortAscending = true;
+    private bool _isErrorModal;   
 
     protected override async Task OnInitializedAsync()
     {
@@ -119,8 +117,8 @@ else
 
         ProductQueryDto query = new ProductQueryDto
         {
-            SortBy = _currentSortBy,
-            SortAscending = _currentSortAscending
+            SortBy = CurrentSortBy,
+            SortAscending = CurrentSortAscending
         };
 
         var result = await ProductsClient.GetAllProductsAsync(query);
@@ -169,31 +167,11 @@ else
         }
     }
 
-    #region ordenacion
-
-    private async Task ToggleSort(string columnName)
+    private async Task ToggleSortLocal(string columnName)
     {
-        if (_currentSortBy == columnName)
-        {
-            _currentSortAscending = !_currentSortAscending;
-        }
-        else
-        {
-            _currentSortBy = columnName;
-            _currentSortAscending = true;
-        }
-
+        ToggleSort(columnName);
         await LoadProductsAsync();
     }
 
-    private string GetSortIcon(string columnName)
-    {
-        if (_currentSortBy != columnName)
-        {
-            return "bi-arrow-down-up";
-        }
-
-        return _currentSortAscending ? "bi-sort-up" : "bi-sort-down";
-    }
-    #endregion
+   
 }

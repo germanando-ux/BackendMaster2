@@ -3,7 +3,9 @@ using BackendMaster2.Modules.Data;
 using BackendMaster2.Shared.Domain;
 using BackendMaster2.Modules.Interfaces;
 using System.Reflection;
-using System.Linq.Expressions;
+using System.Linq.Dynamic.Core;
+using BackendMaster2.Shared.Extensions;
+using BackendMaster2.Modules.Dtos;
 
 namespace BackendMaster2.Modules.Repository
 {
@@ -12,6 +14,14 @@ namespace BackendMaster2.Modules.Repository
     public class ProductRepository: IProductRepository
     {
         private readonly AppDbContext _context;
+
+        //obtenemos la lista de propiedades públicas de la clase Color que son de tipo simple (string, int, etc.)
+        //y las guardamos en un HashSet para validación rápida, es estática y se calcula una sola vez al inicio de la aplicación
+        private static readonly HashSet<string> AllowedSortColumns = typeof(Product)
+         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+         .Where(p => TypeValidationExtensions.IsSimpleType(p.PropertyType))
+         .Select(p => p.Name)
+         .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         // El DbContext llega INYECTADO: el repositorio no crea conexiones,
         // recibe la sesión ya configurada (connection string, provider).
@@ -27,28 +37,20 @@ namespace BackendMaster2.Modules.Repository
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<Product>> GetAllProductsAsync(Dtos.ProductQueryDto query)
+        public async Task<IEnumerable<Product>> GetAllProductsAsync(ProductQueryDto query)
         {
             IQueryable<Product> productsQuery = _context.Products.AsQueryable();
-            if (!string.IsNullOrEmpty(query.SortBy))
+
+            if (!string.IsNullOrEmpty(query.SortBy) && AllowedSortColumns.Contains(query.SortBy))
             {
-                //Busca en la clase property el campo que coincida con el nombre proporcionado en SortBy, ignorando mayúsculas y minúsculas
-                PropertyInfo? propertyInfo = typeof(Product).GetProperty(query.SortBy, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                if (propertyInfo != null && IsSimpleType(propertyInfo.PropertyType))
-                {
-
-                    //creamos una expresión lambda para acceder a la propiedad de ordenamiento
-                    ParameterExpression parameter = Expression.Parameter(typeof(Product), "p");
-                    MemberExpression propertyAccess = Expression.Property(parameter, propertyInfo);
-                    LambdaExpression lambda = Expression.Lambda(propertyAccess, parameter);
-                    //aplicamos el ordenamiento dinámico usando OrderBy o OrderByDescending según corresponda
-                    string methodName = query.SortAscending ? "OrderBy" : "OrderByDescending";
-                    MethodInfo method = typeof(Queryable).GetMethods()
-                        .First(m => m.Name == methodName && m.GetParameters().Length == 2)
-                        .MakeGenericMethod(typeof(Product), propertyInfo.PropertyType);
-
-                    productsQuery = (IQueryable<Product>)method.Invoke(null, new object[] { productsQuery, lambda });
-                }
+                // Si pasa el filtro, es 100% seguro usar Dynamic.Core
+                string direction = query.SortAscending ? "ascending" : "descending";
+                productsQuery = productsQuery.OrderBy($"{query.SortBy} {direction}");
+            }
+            else
+            {
+                // Si viene vacío, o intentaron inyectar una propiedad de navegación/no existente
+                productsQuery = productsQuery.OrderBy(p => p.Name); // Orden por defecto
             }
 
             return await productsQuery.ToListAsync();
@@ -102,22 +104,6 @@ namespace BackendMaster2.Modules.Repository
             }
         }
 
-        /// <summary>
-        /// Verifica si un tipo es "simple" (string, números, fechas, bool, Guid).
-        /// Esto evita que se ordene por propiedades de navegación complejas.
-        /// </summary>
-        private bool IsSimpleType(Type propertyType)
-        {
-            Type underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
-
-            return underlyingType.IsPrimitive
-                || underlyingType.IsEnum
-                || underlyingType == typeof(string)
-                || underlyingType == typeof(decimal)
-                || underlyingType == typeof(DateTime)
-                || underlyingType == typeof(DateTimeOffset)
-                || underlyingType == typeof(TimeSpan)
-                || underlyingType == typeof(Guid);
-        }
+   
     }
 }
