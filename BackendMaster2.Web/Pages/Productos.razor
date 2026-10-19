@@ -30,7 +30,53 @@ else if (ErrorMessage is not null)
 }
 else
 {
+    @* Cuadro de búsqueda *@
     <div class="card shadow mb-4">
+        <div class="card mb-3 p-3 bg-light">
+            <div class="row g-3 aling-intems-end"> 
+                <!-- 3. Primera columna: Ocupa 3 de las 12 partes del ancho (25%) -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Buscar por</label>
+                    <!-- Desplegable estándar de Bootstrap -->
+                    <select class="form-select" @bind="_pendingSearchBy">
+                        <option value="Name">Nombre</option>
+                        <option value="Sku">SKU</option>
+                    </select>
+                </div>
+                <!-- 4. Segunda columna: Ocupa 4 de las 12 partes (33%, un poco más ancha para el texto) -->
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Término de búsqueda</label>
+                    <!-- Input de texto estándar de Bootstrap -->
+                    <input type="text" class="form-control" placeholder="Ej: rojo, 123..." @bind="_pendingSearchTerm" />
+                </div>
+                <!-- 5. Tercera columna: Ocupa 3 de las 12 partes -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Estado</label>
+                    <select class="form-select" @bind="_pendingStatus">
+                        <option value="Todos">Todos</option>
+                        <option value="Activos">Activos</option>
+                        <option value="Inactivos">Inactivos</option>
+                    </select>
+                </div>
+                <!-- 6. Cuarta columna: Ocupa las 2 partes restantes (2+3+4+3 = 12). 'd-flex' y 'gap-2' ponen los botones en fila con un pequeño espacio entre ellos -->
+                <div class="col-md-2 d-flex flex-column gap-2">
+                    <!-- Label fantasma: invisible pero ocupa el mismo espacio que los otros labels -->
+                    <label class="form-label mb-0" style="visibility: hidden;">Acciones</label>
+
+                    <!-- Botones sin width ni height fijos -->
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-danger flex-fill" @onclick="LimpiarFiltros">
+                            <i class="bi bi-x-circle me-1"></i> Limpiar
+                        </button>
+                        <button class="btn btn-primary flex-fill" @onclick="AplicarFiltros">
+                            <i class="bi bi-search me-1"></i> Aplicar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        
         <table class="table table-bordered table-striped table-hover">
             <thead class="table-encabezado-marca">
                 <tr>                    
@@ -102,7 +148,10 @@ else
     private List<ProductDto> _productos = new();
     private Guid? _pendingProductId;
     private string? _pendingProductName;
-    private bool _isErrorModal;   
+    private bool _isErrorModal;
+    private string? _pendingSearchBy;
+    private string? _pendingSearchTerm;
+    private string? _pendingStatus;
 
     protected override async Task OnInitializedAsync()
     {
@@ -111,14 +160,29 @@ else
 
     private async Task LoadProductsAsync()
     {
-  
+        bool? estadoFiltro = null;
+
         IsLoading = true;
         ErrorMessage = null; // Limpiamos errores anteriores
+
+        if (_pendingStatus == "Activos")
+        {
+            estadoFiltro = true;
+        }
+        else if (_pendingStatus == "Inactivos")
+        {
+            estadoFiltro = false;
+        }
+
+
 
         BaseQueryDto query = new BaseQueryDto
         {
             SortBy = CurrentSortBy,
-            SortAscending = CurrentSortAscending
+            SortAscending = CurrentSortAscending,
+            SearchBy = _pendingSearchBy,
+            SearchTerm = _pendingSearchTerm,
+            IsActive = estadoFiltro
         };
 
         var result = await ProductsClient.GetAllProductsAsync(query);
@@ -131,9 +195,9 @@ else
         }
 
         _productos = result.Data ?? new List<ProductDto>();
-   
+
         IsLoading = false;
-        
+
     }
     private void PrepareProductDeletion(Guid id, string name)
     {
@@ -173,5 +237,19 @@ else
         await LoadProductsAsync();
     }
 
-   
+
+
+    private async Task LimpiarFiltros()
+    {
+        _pendingSearchBy = "Name";
+        _pendingSearchTerm = "";
+        _pendingStatus = "Todos";
+
+        await LoadProductsAsync();
+    }
+
+    private async Task  AplicarFiltros()
+    {
+        await LoadProductsAsync();
+    }
 }

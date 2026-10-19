@@ -47,6 +47,15 @@ public class CatalogRepository : ICatalogRepository
     {
         IQueryable<Color> colorsQuery = _context.Color.AsQueryable();
 
+        //Si tiene para filtrar y está entre las columnas de la tabla
+        if (!string.IsNullOrWhiteSpace(query.SearchTerm) && !string.IsNullOrWhiteSpace(query.SearchBy) && AllowedSortColumns.Contains(query.SearchBy))
+        {
+            colorsQuery = colorsQuery.Where($"{query.SearchBy}.ToLower().Contains(@0)", query.SearchTerm.ToLower());
+        }
+        if (query.IsActive.HasValue)
+        {
+            colorsQuery = colorsQuery.Where(p => p.IsActive == query.IsActive.Value);
+        }
         if (!string.IsNullOrEmpty(query.SortBy) && AllowedSortColumns.Contains(query.SortBy))
         {
             // Si pasa el filtro, es 100% seguro usar Dynamic.Core

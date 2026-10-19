@@ -17,7 +17,7 @@ namespace BackendMaster2.Modules.Repository
 
         //obtenemos la lista de propiedades públicas de la clase Color que son de tipo simple (string, int, etc.)
         //y las guardamos en un HashSet para validación rápida, es estática y se calcula una sola vez al inicio de la aplicación
-        private static readonly HashSet<string> AllowedSortColumns = typeof(Product)
+        private static readonly HashSet<string> AllowedColumns = typeof(Product)
          .GetProperties(BindingFlags.Public | BindingFlags.Instance)
          .Where(p => TypeValidationExtensions.IsSimpleType(p.PropertyType))
          .Select(p => p.Name)
@@ -40,10 +40,17 @@ namespace BackendMaster2.Modules.Repository
         public async Task<IEnumerable<Product>> GetAllProductsAsync(BaseQueryDto query)
         {
             IQueryable<Product> productsQuery = _context.Products.AsQueryable();
-
-            if (!string.IsNullOrEmpty(query.SortBy) && AllowedSortColumns.Contains(query.SortBy))
+            //Si tiene para filtrar y está entre las columnas de la tabla
+            if (!string.IsNullOrWhiteSpace(query.SearchTerm) && !string.IsNullOrWhiteSpace(query.SearchBy) && AllowedColumns.Contains(query.SearchBy))
             {
-                // Si pasa el filtro, es 100% seguro usar Dynamic.Core
+                productsQuery = productsQuery.Where($"{query.SearchBy}.ToLower().Contains(@0)", query.SearchTerm.ToLower());
+            }
+            if (query.IsActive.HasValue)
+            {
+                productsQuery = productsQuery.Where(p => p.IsActive == query.IsActive.Value);
+            }
+            if (!string.IsNullOrEmpty(query.SortBy) && AllowedColumns.Contains(query.SortBy))
+            {
                 string direction = query.SortAscending ? "ascending" : "descending";
                 productsQuery = productsQuery.OrderBy($"{query.SortBy} {direction}");
             }

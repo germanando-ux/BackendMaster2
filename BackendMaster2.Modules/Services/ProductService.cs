@@ -3,6 +3,7 @@ using BackendMaster2.Modules.Dtos;
 using BackendMaster2.Modules.Interfaces;
 using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
+using BackendMaster2.Shared.Extensions;
 
 
 namespace BackendMaster2.Modules.Services
