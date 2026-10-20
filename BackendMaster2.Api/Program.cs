@@ -171,9 +171,9 @@ namespace BackendMaster2.Api
             app.MapControllers();
 
             // Generar hash temporal para Admin123!
-            var hashTemporal = BCrypt.Net.BCrypt.HashPassword("Admin123!", workFactor: 11);
-            Console.WriteLine($"=== HASH PARA ADMIN: {hashTemporal} ===");
-            app.Run();
+            //var hashTemporal = BCrypt.Net.BCrypt.HashPassword("Admin123!", workFactor: 11);
+            //Console.WriteLine($"=== HASH PARA ADMIN: {hashTemporal} ===");
+            //app.Run();
         }
     }
 }
