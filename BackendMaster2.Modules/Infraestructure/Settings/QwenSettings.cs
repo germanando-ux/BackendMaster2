@@ -6,8 +6,8 @@ namespace BackendMaster2.Modules.Infraestructure.Settings;
 
 public class QwenSettings
 {
-    public const string SectionName = "Qwen";
+    public const string SectionName = "AiSettings:Qwen";
     public string ApiKey { get; set; } = string.Empty;
-    public string Endpoint { get; set; } = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
-    public string Model { get; set; } = "qwen-turbo";
+    public string Endpoint { get; set; } = string.Empty;
+    public string Model { get; set; } = "text-embedding-v3";
 }

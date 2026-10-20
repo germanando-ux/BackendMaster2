@@ -28,7 +28,9 @@ namespace BackendMaster2.Modules.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Sku).HasMaxLength(50).IsRequired();
                 entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+                entity.Property(p => p.Embedding).HasColumnType("vector(1536)");
                 entity.HasIndex(e => e.Sku).IsUnique();   // SKU único blindado en BBDD
+                
 
                 // Configuramos la relación desde aquí, ya que ProductOption ya no tiene navegación a Product.
                 // "WithOne()" sin argumentos le dice a EF: "el otro lado no tiene propiedad de navegación".
@@ -66,7 +68,10 @@ namespace BackendMaster2.Modules.Data
                 entity.HasKey(c => c.Id);
                 entity.Property(c => c.Name).HasMaxLength(50).IsRequired();
                 entity.Property(c => c.HexCode).HasMaxLength(9).IsRequired();
+                entity.Property(c => c.Embedding).HasColumnType("vector(1536)");
                 entity.HasIndex(c => c.Name).IsUnique();
+                
+
             });
 
             modelBuilder.Entity<ProductOption>(entity =>

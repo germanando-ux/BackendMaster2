@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Pgvector;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,5 +11,6 @@ public class Color
     public string Name { get; set; } = null!;
     public string HexCode { get; set; } = null!;
     public bool IsActive { get; set; }
+    public Vector? Embedding { get; set; }
 
 }

@@ -23,6 +23,8 @@ using Scalar.AspNetCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.SemanticKernel.Embeddings;
+using Microsoft.Extensions.DependencyInjection;
 
 
 
@@ -44,7 +46,11 @@ namespace BackendMaster2.Api
             });
 
             // Configurar la cadena de conexión a PostgreSQL
-            builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddDbContext<AppDbContext>(options => 
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), npgsqlOptions =>
+                {
+                    npgsqlOptions.UseVector();
+                }));
 
             //servicios de SignalR
             builder.Services.AddSignalR();
@@ -106,13 +112,19 @@ namespace BackendMaster2.Api
                 });
             });
 
-            // Configuración de Semantic Kernel
+#pragma warning disable SKEXP0010
             builder.Services.AddKernel()
                 .AddOpenAIChatCompletion(
                     modelId: builder.Configuration["AiSettings:ModelId"]!,
                     apiKey: builder.Configuration["AiSettings:ApiKey"]!,
-                    endpoint: new Uri(builder.Configuration["AiSettings:Endpoint"]!)
-                );
+                    endpoint: new Uri(builder.Configuration["AiSettings:Endpoint"]!))
+
+            .AddOpenAIEmbeddingGenerator(
+                modelId: builder.Configuration["AiSettings:QwenEmbeddingModelId"]!,
+                apiKey: builder.Configuration["AiSettings:QwenEmbeddingApiKey"]!,
+                httpClient: new HttpClient { BaseAddress = new Uri(builder.Configuration["AiSettings:QwenEmbeddingEndpoint"]!) });
+#pragma warning restore SKEXP0010
+
             var app = builder.Build();
 
             // 2. Mapear la ruta del Hub (junto a MapControllers)
@@ -158,7 +170,9 @@ namespace BackendMaster2.Api
             // DESPUÉS del Build: mapea las rutas de los attributes ([HttpGet], [Route]...) al pipeline
             app.MapControllers();
 
-
+            // Generar hash temporal para Admin123!
+            var hashTemporal = BCrypt.Net.BCrypt.HashPassword("Admin123!", workFactor: 11);
+            Console.WriteLine($"=== HASH PARA ADMIN: {hashTemporal} ===");
             app.Run();
         }
     }

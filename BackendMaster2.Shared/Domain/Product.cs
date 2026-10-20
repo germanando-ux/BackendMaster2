@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Pgvector;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -19,5 +20,6 @@ namespace BackendMaster2.Shared.Domain
         public int Stock { get; set; }
         public bool IsActive { get; set; } = true;           // Permite desactivar sin borrar
         public ICollection<ProductOption> ProductOptions { get; set; } = new List<ProductOption>();
+        public Vector? Embedding { get; set; }
     }
 }
