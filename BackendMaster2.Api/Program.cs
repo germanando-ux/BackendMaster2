@@ -62,7 +62,7 @@ namespace BackendMaster2.Api
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
             builder.Services.AddScoped<ICatalogService, CatalogService>();
-            builder.Services.AddSingleton<IAiService, AiService>();
+            builder.Services.AddScoped<IAiService, AiService>();
             //registro de servicios de notificación SignalR
             builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 
@@ -93,6 +93,8 @@ namespace BackendMaster2.Api
                 };
             });
 
+
+            builder.Services.AddHttpClient();
             builder.Services.AddAuthorization();
 
             // Configuración de scallar/OpenAPI
@@ -112,22 +114,22 @@ namespace BackendMaster2.Api
                 });
             });
 
-#pragma warning disable SKEXP0010
-            builder.Services.AddKernel()
-                .AddOpenAIChatCompletion(
+            //semantic kernel para usar en un futuro
+            builder.Services.AddKernel().AddOpenAIChatCompletion(
                     modelId: builder.Configuration["AiSettings:ModelId"]!,
                     apiKey: builder.Configuration["AiSettings:ApiKey"]!,
-                    endpoint: new Uri(builder.Configuration["AiSettings:Endpoint"]!))
+                    endpoint: new Uri(builder.Configuration["AiSettings:Endpoint"]!));
 
-            .AddOpenAIEmbeddingGenerator(
-                modelId: builder.Configuration["AiSettings:QwenEmbeddingModelId"]!,
-                apiKey: builder.Configuration["AiSettings:QwenEmbeddingApiKey"]!,
-                httpClient: new HttpClient { BaseAddress = new Uri(builder.Configuration["AiSettings:QwenEmbeddingEndpoint"]!) });
-#pragma warning restore SKEXP0010
+            // MEAI para el servicio de chat de OpenAI
+            builder.Services.AddOpenAIChatClient(
+                    modelId: builder.Configuration["AiSettings:ModelId"]!,
+                    apiKey: builder.Configuration["AiSettings:ApiKey"]!,
+                    endpoint: new Uri(builder.Configuration["AiSettings:Endpoint"]!));
+
 
             var app = builder.Build();
 
-            // 2. Mapear la ruta del Hub (junto a MapControllers)
+            // SignalR: Mapear la ruta del Hub (junto a MapControllers)
             app.MapHub<NotificationHub>("/hubs/notifications");
 
             app.UseHttpsRedirection(); //redirección de http a https
@@ -173,7 +175,7 @@ namespace BackendMaster2.Api
             // Generar hash temporal para Admin123!
             //var hashTemporal = BCrypt.Net.BCrypt.HashPassword("Admin123!", workFactor: 11);
             //Console.WriteLine($"=== HASH PARA ADMIN: {hashTemporal} ===");
-            //app.Run();
+            app.Run();
         }
     }
 }

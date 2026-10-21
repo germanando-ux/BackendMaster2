@@ -11,17 +11,22 @@ public class CatalogService : ICatalogService
 {
     private readonly ICatalogRepository _CatalogRepository;
     private readonly IMapper _mapper;
-    public CatalogService( ICatalogRepository CatalogRepository, IMapper mapper)
+    private readonly IAiService _aiService;
+    public CatalogService( ICatalogRepository CatalogRepository, IMapper mapper, IAiService aiService)
     {
         _CatalogRepository = CatalogRepository;
         _mapper = mapper;
+        _aiService = aiService;
     }
 
     public async Task<ColorDto> CreateColorAsync(ColorDto colorDto)
     {
         Color newColor = _mapper.Map<Color>(colorDto);
+        //genero vector embedding para el nombre del color
+        newColor.Embedding = await _aiService.GenerateEmbeddingAsync(newColor.Name);
         await _CatalogRepository.AddColorAsync(newColor);
         return _mapper.Map<ColorDto>(newColor);
+        
     }
 
     public async Task DeleteColorAsync(Guid id)
@@ -50,7 +55,15 @@ public class CatalogService : ICatalogService
     {
         // 1. Cargo la entidad RASTREADA (la que vive en la memoria del DbContext).
         Color? existing = await _CatalogRepository.GetColorByIdAsync(color.Id);
+
+        if (existing is null)
+        {
+            throw new NotFoundException($"No existe ningún color con el id {color.Id}.");
+        }
+
         existing.Name = color.Name;
+        //genero vector embedding para el nombre actualizado
+        existing.Embedding = await _aiService.GenerateEmbeddingAsync(existing.Name);
         existing.HexCode = color.HexCode;
         existing.IsActive = color.IsActive;
 

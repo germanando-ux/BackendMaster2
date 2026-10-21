@@ -27,12 +27,23 @@ namespace BackendMaster2.Modules.Services
             _notificationService = notificationService;
         }
 
+        /// <summary>
+        /// consulta general
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
         public async Task<IEnumerable<ProductDto>> GetAllProductsAsync(BaseQueryDto query)
         {
             var products = await _productRepository.GetAllProductsAsync(query);
             return products.Select(p => _mapper.Map<ProductDto>(p));
         }
 
+        /// <summary>
+        /// Consulta por id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="NotFoundException"></exception>
         public async Task<ProductDetailDto> GetByIdAsync(Guid id)
         {
             var product = await _productRepository.GetByIdAsync(id);
@@ -44,6 +55,12 @@ namespace BackendMaster2.Modules.Services
             return _mapper.Map<ProductDetailDto>(product);
         }
 
+        /// <summary>
+        /// Creación de producto
+        /// </summary>
+        /// <param name="productDto"></param>
+        /// <returns></returns>
+        /// <exception cref="DuplicateResourceException"></exception>
         public async Task<ProductDto> CreateAsync(ProductDto productDto)
         {
             // REGLA DE NEGOCIO: el SKU no puede estar duplicado.
@@ -55,7 +72,8 @@ namespace BackendMaster2.Modules.Services
 
             // 1. Mapeamos los campos básicos (Sku, Name, Price, etc.) a la entidad
             Product newProduct = _mapper.Map<Product>(productDto);
-
+            //generamos el embedding de la descripción usando el servicio de IA
+            newProduct.Embedding = await _aiService.GenerateEmbeddingAsync(productDto.Description);
             // 2. Traducimos la lista de ColorIds del DTO a entidades ProductOption
             newProduct.ProductOptions = productDto.ColorIds.Select(colorId => new ProductOption
             {
@@ -93,6 +111,8 @@ namespace BackendMaster2.Modules.Services
 
             existing.Sku = productDto.Sku;
             existing.Name = productDto.Name;
+            // Generamos el embedding de la descripción usando el servicio de IA
+            existing.Embedding = await _aiService.GenerateEmbeddingAsync(productDto.Description);
             existing.Description = productDto.Description;
             existing.Price = productDto.Price;
             existing.Stock = productDto.Stock;
