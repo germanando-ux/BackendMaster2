@@ -19,5 +19,6 @@ namespace BackendMaster2.Modules.Interfaces
         Task<ProductDto> UpdateAsync(ProductDto product);
         Task DeleteAsync(Guid id);
         Task ProcessEnrichDescriptionAsync(EnrichDescriptionRequestDto dto, CancellationToken cancellationToken = default);
+        Task<IEnumerable<ProductSearchHybridDto>> GetAllProductsHybridSearchAsync(string query, CancellationToken cancellationToken = default);
     }
 }

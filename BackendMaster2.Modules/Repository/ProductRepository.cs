@@ -1,11 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
-using BackendMaster2.Modules.Data;
-using BackendMaster2.Shared.Domain;
-using BackendMaster2.Modules.Interfaces;
-using System.Reflection;
-using System.Linq.Dynamic.Core;
-using BackendMaster2.Shared.Extensions;
+﻿using BackendMaster2.Modules.Data;
 using BackendMaster2.Modules.Dtos;
+using BackendMaster2.Modules.Interfaces;
+using BackendMaster2.Shared.Domain;
+using BackendMaster2.Shared.Extensions;
+using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
+using System.Linq.Dynamic.Core;
+using System.Reflection;
 
 namespace BackendMaster2.Modules.Repository
 {
@@ -63,7 +64,91 @@ namespace BackendMaster2.Modules.Repository
             return await productsQuery.ToListAsync();
         }
 
-    
+
+        /// <summary>
+        /// Busca en productos y colores por similitud semántica usando vectores.
+        /// Aplica filtros duros (precio, stock) y devuelve un DTO con el score de similitud.
+        /// Devuelve solo los productos que superen un umbral de similitud (0.6, 60%) y limita la cantidad de resultados según el parámetro topK.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<ProductSearchHybridResult>> GetAllProductsHybridSearchAsync(QueryHybridProductDto query)
+        {
+            int limit = query.topK ?? 10;
+
+            // 1. Query base con las relaciones necesarias para el DTO de detalle
+            IQueryable<Product> dbQuery = _context.Products
+                .Include(p => p.ProductOptions)
+                    .ThenInclude(po => po.Color);
+
+
+            // Buscamos los 3 colores más cercanos semánticamente al vector del usuario
+
+            List<Guid> matchedColorIds = new List<Guid>();
+            if (query.ColorVector != null)
+            {
+                matchedColorIds = await _context.Color
+                    .OrderBy(c => c.Embedding == null ? 1.0 : c.Embedding.CosineDistance(query.ColorVector))
+                    .Take(3) // Traemos los 3 mejores "matches" de color (ej: malva, morado, violeta)
+                    .Select(c => c.Id)
+                    .ToListAsync();
+
+                // Si encontramos colores, filtramos los productos para que SOLO incluyan estos colores
+                if (matchedColorIds.Any())
+                {
+                    dbQuery = dbQuery.Where(p => p.ProductOptions.Any(po => matchedColorIds.Contains(po.ColorId)));
+                }
+            }
+
+            // 2. Aplicar filtros duros (solo si tienen valor)
+            if (query.MaxPrice.HasValue)
+            {
+                dbQuery = dbQuery.Where(p => p.Price <= query.MaxPrice.Value);
+            }
+
+            if (query.MinStock.HasValue)
+            {
+                dbQuery = dbQuery.Where(p => p.Stock >= query.MinStock.Value);
+            }
+
+            // 3. Ordenación por similitud semántica (Distancia Coseno)
+            // Npgsql traduce .CosineDistance() automáticamente al operador <=> de pgvector
+            if (query.ProductVector != null)
+            {
+                //dbQuery = dbQuery.OrderBy(p =>
+                //    p.Embedding == null ? 1.0 : p.Embedding.CosineDistance(query.ProductVector)
+                //);
+
+                dbQuery = dbQuery
+                    .Where(p => p.Embedding != null)
+                    .OrderBy(p => p.Embedding.CosineDistance(query.ProductVector));
+            }
+            else
+            {
+                // Fallback: si no hay vector, ordenamos por precio ascendente
+                dbQuery = dbQuery.OrderBy(p => p.Price);
+            }
+
+            // EJECUTAMOS LA QUERY, TRAEMOS LOS CANDIDATOS A MEMORIA 
+            List<Product> candidatos = await dbQuery.Take(limit).ToListAsync();
+
+            // Hacemos el filtro por similitud semántica (Entity framework se hacía la picha un lío )
+            // y proyectamos a la entidad Product a ProductSearchHybridResult que es Product + Score de similitud
+            var resultadosFinales = candidatos
+                .Select(p => new ProductSearchHybridResult(
+                    p,
+                    p.Embedding.CalculateCosineSimilarity(query.ProductVector)
+                ))
+                .Where(r => r.SimilarityScore >= 0.55) // <-- UMBRAL: Descarta lo que tenga menos del 60%
+                .OrderByDescending(r => r.SimilarityScore) // Ordenamos de mayor a menor puntuación
+                .Take(limit) // Nos quedamos solo con los 'limit' mejores
+                .ToList();
+
+            return resultadosFinales;
+
+
+        }
+
 
         // BÚSQUEDA POR CLAVE: FindAsync mira primero en la memoria de EF
         // (el tracker); si no está, va a BBDD. Por clave primaria es la vía rápida.
@@ -111,6 +196,6 @@ namespace BackendMaster2.Modules.Repository
             }
         }
 
-   
+      
     }
 }

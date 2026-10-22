@@ -82,6 +82,19 @@ public class ProductsController : ControllerBase
 
     }
 
+    [Authorize]
+    [HttpGet("GetAllProductsHybridSearch")]
+    public async Task<ActionResult<IEnumerable<ProductSearchHybridDto>>> GetAllProductsHybridSearch(string query, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return BadRequest("La consulta no puede estar vacía.");
+        }
+
+        IEnumerable<ProductSearchHybridDto> products = await _productService.GetAllProductsHybridSearchAsync(query, cancellationToken);
+        return Ok(products);
+    }
+
     //[Authorize]
     //[HttpGet("GetProductDetails")]
     //public async Task<ActionResult<ProductDetailDto>> GetProductDetails(Guid id)

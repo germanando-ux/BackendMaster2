@@ -1,4 +1,5 @@
 ﻿using Azure;
+using BackendMaster2.Modules.Dtos;
 using BackendMaster2.Modules.Interfaces;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
@@ -69,6 +70,7 @@ public class AiService : IAiService
         return new Vector(result.Embedding.Values);
     }
 
+
     public async Task<string> GenerateTextAsync(string prompt, CancellationToken cancellationToken = default)
     {
 
@@ -77,5 +79,25 @@ public class AiService : IAiService
             return result.Text ?? string.Empty;
     }
 
+    /// <summary>
+    /// Traducimos a un json la consulta del usuario por medio de un chat de ia
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task<SearchProductIntentDto> GenerateProductSearchIntent(string text, CancellationToken cancellationToken = default)
+    {
+        string prompt = $@"Analiza el siguiente texto y determina la intención de búsqueda de producto. 
+                        Devuelve un JSON con las propiedades: ProductQuery (string), ColorQuery (string), MaxPrice (decimal), MinStock (int). Texto: {text}.
+                        Devuelve SOLO el objeto JSON válido, sin texto adicional, sin explicaciones y sin etiquetas markdown";
 
+        ChatResponse result = await _chatClient.GetResponseAsync(prompt, cancellationToken: cancellationToken);
+
+        // Blindaje contra markdown residual (```json ... ```)
+        string cleanJson = result.Text.Replace("```json", "").Replace("```", "").Trim();
+
+        var intent = JsonSerializer.Deserialize<SearchProductIntentDto>(cleanJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        return intent ?? new SearchProductIntentDto();
+    }
 }

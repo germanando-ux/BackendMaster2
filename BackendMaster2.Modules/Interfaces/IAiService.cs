@@ -1,4 +1,5 @@
-﻿using Pgvector;
+﻿using BackendMaster2.Modules.Dtos;
+using Pgvector;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,5 +11,6 @@ public interface IAiService
     Task<string> GenerateTextAsync(string prompt, CancellationToken cancellationToken = default);
     // Convierte un texto en un vector
     Task<Vector?> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default);
+    Task<SearchProductIntentDto> GenerateProductSearchIntent(string text, CancellationToken cancellationToken = default);
 
 }

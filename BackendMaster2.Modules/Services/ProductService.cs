@@ -158,6 +158,55 @@ namespace BackendMaster2.Modules.Services
             await _notificationService.NotifyClientAsync(dto.SRConnectionId,"OnTaskCompleted",enrichedDescription,cancellationToken);
         }
 
+        /// <summary>
+        /// LLama al servicio de chat de IA para traducir la consulta del usuario a un JSON con la intención de búsqueda de producto.
+        /// Convierte en vectores la consulta de texto y la de color
+        /// Llama al repositorio para hacer la búsqueda híbrida.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<ProductSearchHybridDto>> GetAllProductsHybridSearchAsync(string query, CancellationToken cancellationToken = default)
+        {
+            QueryHybridProductDto queryHybrid = new QueryHybridProductDto
+            {
+                topK = 5,
+                ColorVector = null,
+                ProductVector = null,
+                MaxPrice = null,
+                MinStock = null
+            };
+
+            // 1. Llamamos al servicio de IA para traducir la consulta del usuario a un JSON con la intención de búsqueda de producto.
+            SearchProductIntentDto searchIntent = await _aiService.GenerateProductSearchIntent(query, cancellationToken);
+
+            // 2. Convertimos en vectores la descripción de producto y la de color usando el servicio de IA
+            if (!string.IsNullOrWhiteSpace(searchIntent.ProductQuery))
+            {
+                queryHybrid.ProductVector = await _aiService.GenerateEmbeddingAsync(searchIntent.ProductQuery, cancellationToken);
+            }
+            if (!string.IsNullOrWhiteSpace(searchIntent.ColorQuery))
+            {
+                queryHybrid.ColorVector = await _aiService.GenerateEmbeddingAsync(searchIntent.ColorQuery, cancellationToken);
+            }
+            queryHybrid.MaxPrice = searchIntent.MaxPrice;
+            queryHybrid.MinStock = searchIntent.MinStock;
+
+            //LLamamos al repositorio para hacer la búsqueda híbrida.
+            IEnumerable<ProductSearchHybridResult> products = await _productRepository.GetAllProductsHybridSearchAsync(queryHybrid);
+
+
+
+            //Mapeamos los resultados a ProductDto y asignamos el score de similitud a cada registro 
+            //porque devolvemos un DTO de respuesta para el endpoint de búsqueda híbrida: ProductSearchHybridDto
+            return products.Select(r =>
+            {
+                // mapper  para transformar la entidad Product en ProductDto 
+                var dto = _mapper.Map<ProductDto>(r.Product);
+                // Asignamos manualmente el score que el mapper no tiene 
+                return new ProductSearchHybridDto(dto, r.SimilarityScore);
+               
+            });
+        }
 
         /// <summary>
         /// Construye el prompt para la IA a partir de la información del DTO.

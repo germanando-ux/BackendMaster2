@@ -13,6 +13,7 @@ namespace BackendMaster2.Modules.Interfaces
     public interface IProductRepository
     {
         Task<IEnumerable<Product>> GetAllProductsAsync(BaseQueryDto query);
+        Task<IEnumerable<ProductSearchHybridResult>> GetAllProductsHybridSearchAsync(QueryHybridProductDto query);
         Task<Product?> GetByIdAsync(Guid id);
         Task<Product?> GetBySkuAsync(string sku);
         Task AddAsync(Product product);
