@@ -16,6 +16,7 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 - Validación con FluentValidation
 - Scalar/OpenAPI para documentación interactiva
 - CORS configurado para desarrollo
+- ✅ Búsqueda híbrida semántica con `pgvector` e IA (extracción de intención + umbral de similitud)
 
 **Bloque C (Frontend):** 🚧 En progreso
 - Blazor WebAssembly standalone
@@ -28,6 +29,8 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 ### Backend
 - **.NET 8** con ASP.NET Core
 - **Entity Framework Core** + PostgreSQL dockerizado
+- **Npgsql + Pgvector**: Búsqueda vectorial y operadores de distancia de coseno (`<=>`)
+- **Microsoft.Extensions.AI**: Extracción de intención de búsqueda en lenguaje natural y generación de embeddings
 - **FluentValidation** para validación de entrada
 - **BCrypt** para hashing de contraseñas
 - **JWT Bearer** para autenticación
@@ -95,6 +98,7 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 **Coste asumido:** Los componentes ricos (tablas con ordenación, diálogos, toasts) se construyen a mano sobre clases de Bootstrap. Más markup propio, a cambio de entender cada línea.
 
 **Consecuencia:** El sistema de tema vive centralizado en `wwwroot/css/app.css` (token `--color-marca`, override parcial de variables de Bootstrap y extensiones puntuales como `.table-encabezado-marca`).
+
 ### 5. Autenticación JWT
 
 JWT con access tokens cortos (15 min) y refresh tokens en base de datos (7 días) con capacidad de revocación. Patrón estándar de la industria.
@@ -109,10 +113,19 @@ JWT con access tokens cortos (15 min) y refresh tokens en base de datos (7 días
 - Reduce el acoplamiento entre dominios diferentes
 - Más fácil de navegar: todo lo relacionado con "productos" está junto, no disperso en Controllers/Services/Repositories
 
+### 7. Búsqueda Híbrida y Umbral de Similitud
+
+**Decisión:** La búsqueda combina filtros duros (precio, stock) en la base de datos con ordenación semántica (`pgvector`), aplicando un umbral de similitud (ej. 60%) en memoria para descartar resultados irrelevantes ("ruido").
+
+**Por qué esta elección:**
+- Evita devolver "lo menos malo" cuando no hay coincidencias reales en el dataset.
+- El cálculo del `SimilarityScore` se delega a una extensión C# pura (`VectorExtensions.CalculateCosineSimilarity` en `Shared`) para evitar errores de traducción de EF Core y mantener el código limpio, testeable y reutilizable.
+- Los DTOs de respuesta de búsqueda (`ProductSearchHybridDto`) están aislados en un archivo de soporte (`SupportDtos.cs`) para no ensuciar los DTOs de dominio principales con campos *ad-hoc*.
+
 ## 🗺️ Roadmap
 
 ### Completado
-- ✅ **Bloque A:** Backend completo con autenticación JWT, gestión de productos, middleware de errores
+- ✅ **Bloque A:** Backend completo con autenticación JWT, gestión de productos, middleware de errores y búsqueda semántica
 - ✅ **Bloque A.5:** Validación JWT en endpoints protegidos
 - ✅ **Configuración:** PostgreSQL dockerizado, EF Core, migraciones, seeds
 
@@ -161,5 +174,4 @@ JWT con access tokens cortos (15 min) y refresh tokens en base de datos (7 días
 
 ## 📋 Backlog vivo
 
-Los pendientes concretos, detectados en conversación o derivados del roadmap, viven en [`BACKLOG.md`](BACKLOG.md). Ese fichero se actualiza en cada sesión de trabajo: lo que se apunta entra, lo que se cierra sale.
-
+Los pendientes concretos, detectados en conversación o derivados del roadmap, viven en `BACKLOG.md`. Ese fichero se actualiza en cada sesión de trabajo: lo que se apunta entra, lo que se cierra sale.

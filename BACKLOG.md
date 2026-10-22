@@ -1,6 +1,6 @@
 ## Pendientes técnicos detectados
 - [ ] Paginación real de servidor en la API (skip/take) cuando los datos crezcan
-- [ ] Sustituir entidad `Product` como payload de wire por un `ProductDto` (reduce acople)
+- [x] Creación de DTOs específicos para respuestas complejas (ej. `ProductSearchHybridDto`) evitando ensuciar entidades de dominio con datos ad-hoc (¡Hecho!)
 - [ ] Limpieza C10: borrar `NavMenu.razor` y su css huérfanos, css viejos de la plantilla, splash de arranque del index.html
 - [ ] Alta conjunta User+Person desde el front (formulario del perforador)
 - [x] Validación de cliente con anotaciones + pintado de ProblemDetails del middleware en el front (¡Hecho!)
@@ -24,8 +24,12 @@
 - [ ] Evolución a multitenant (TenantId + filtros globales de EF + claim de tenant)
 - [ ] UCP (Universal Commerce Protocol) como micro-proyecto de comercio agéntico
 
-## Inteligencia Artificial
+## Inteligencia Artificial y Búsqueda Avanzada
 - [x] Endpoint en backend para mejorar descripción de producto con IA (modelo ligero vía API) + Modal de confirmación en front (¡Hecho!)
+- [x] Búsqueda híbrida semántica (`pgvector` + filtros duros) con umbral de similitud configurable (ej. 60%) para descartar ruido
+- [x] Extracción de intención de búsqueda en lenguaje natural mediante IA (traducción a JSON estructurado `SearchProductIntentDto`)
+- [x] Seed de datos mejorado: generación de 200+ productos mock con idempotencia y descripciones ricas para embeddings de calidad
+- [x] Extensión `VectorExtensions.CalculateCosineSimilarity` en `Shared` para cálculo seguro en memoria, evitando errores de traducción de EF Core
 - [ ] (Futuro) Agente conversacional sobre la API (requerirá Semantic Kernel)
 - [ ] (Futuro) Asistente integrado en el front Blazor
 
