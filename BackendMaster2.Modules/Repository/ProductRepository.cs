@@ -64,7 +64,6 @@ namespace BackendMaster2.Modules.Repository
             return await productsQuery.ToListAsync();
         }
 
-
         /// <summary>
         /// Busca en productos y colores por similitud semántica usando vectores.
         /// Aplica filtros duros (precio, stock) y devuelve un DTO con el score de similitud.
@@ -139,7 +138,7 @@ namespace BackendMaster2.Modules.Repository
                     p,
                     p.Embedding.CalculateCosineSimilarity(query.ProductVector)
                 ))
-                .Where(r => r.SimilarityScore >= 0.55) // <-- UMBRAL: Descarta lo que tenga menos del 60%
+                .Where(r => r.SimilarityScore >= 0.50) // <-- UMBRAL: Descarta lo que tenga menos del 60%
                 .OrderByDescending(r => r.SimilarityScore) // Ordenamos de mayor a menor puntuación
                 .Take(limit) // Nos quedamos solo con los 'limit' mejores
                 .ToList();

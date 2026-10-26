@@ -44,6 +44,11 @@ public class ProductsClient: IProductsClient
     public async Task<ApiResult<string>> EnrichDescriptionAsync(EnrichDescriptionRequestDto request)
     {
         return await _apiClient.SendAsync<string>(HttpMethod.Post, $"api/products/EnrichDescription", request);
-    }   
+    }
+
+    public async Task<ApiResult<List<ProductSearchHybridDto>>> GetAllProductsHybridSearch(string query)
+    {
+        return await _apiClient.SendAsync <List<ProductSearchHybridDto>>(HttpMethod.Get, $"api/products/GetAllProductsHybridSearch/?query={Uri.EscapeDataString(query)}");
+    }
 }
 

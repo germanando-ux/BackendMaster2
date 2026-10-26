@@ -74,7 +74,7 @@ public class AiService : IAiService
     public async Task<string> GenerateTextAsync(string prompt, CancellationToken cancellationToken = default)
     {
 
-            ChatResponse result = await _chatClient.GetResponseAsync(prompt, cancellationToken: cancellationToken);
+            ChatResponse result = await _chatClient.GetResponseAsync(prompt, new ChatOptions { Temperature = 0.2f },  cancellationToken: cancellationToken);
 
             return result.Text ?? string.Empty;
     }
@@ -87,11 +87,22 @@ public class AiService : IAiService
     /// <returns></returns>
     public async Task<SearchProductIntentDto> GenerateProductSearchIntent(string text, CancellationToken cancellationToken = default)
     {
-        string prompt = $@"Analiza el siguiente texto y determina la intención de búsqueda de producto. 
-                        Devuelve un JSON con las propiedades: ProductQuery (string), ColorQuery (string), MaxPrice (decimal), MinStock (int). Texto: {text}.
-                        Devuelve SOLO el objeto JSON válido, sin texto adicional, sin explicaciones y sin etiquetas markdown";
+        //string prompt = $@"Analiza el siguiente texto y determina la intención de búsqueda de producto. 
+        //                Devuelve un JSON con las propiedades: ProductQuery (string), ColorQuery (string), MaxPrice (decimal), MinStock (int). Texto: {text}.
+        //                Devuelve SOLO el objeto JSON válido, sin texto adicional, sin explicaciones y sin etiquetas markdown";
 
-        ChatResponse result = await _chatClient.GetResponseAsync(prompt, cancellationToken: cancellationToken);
+        string prompt = $@"Analiza el siguiente texto de búsqueda de un usuario en una tienda online.
+                        Devuelve un JSON con las propiedades: 
+                        - ProductQuery (string): El término principal del producto. CONSERVA adjetivos descriptivos como 'calentito', 'ligero', 'impermeable', etc. NO los normalices ni los elimines.
+                        - ColorQuery (string): El color mencionado, si lo hay.
+                        - MaxPrice (decimal|null): Precio máximo si se menciona.
+                        - MinStock (int|null): Stock mínimo si se menciona.
+
+                        Texto del usuario: ""{text}""
+
+                        Devuelve SOLO el objeto JSON válido, sin markdown, sin explicaciones.";
+
+        ChatResponse result = await _chatClient.GetResponseAsync(prompt, new ChatOptions { Temperature = 0.0f }, cancellationToken: cancellationToken);
 
         // Blindaje contra markdown residual (```json ... ```)
         string cleanJson = result.Text.Replace("```json", "").Replace("```", "").Trim();

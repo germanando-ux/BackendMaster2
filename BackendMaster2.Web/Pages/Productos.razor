@@ -30,7 +30,29 @@ else if (ErrorMessage is not null)
 }
 else
 {
-    @* Cuadro de búsqueda *@
+    @* Cuadro de búsqueda inteligente *@
+    <div class="card  shadow-sm mb-4">
+        <div class="card mb-3 p-3 bg-light">
+            <div class="row g-3 aling-items-end">
+                <div class="col-md-11">
+                    <label class="form-label fw-bold">Busqueda inteligente de productos</label>
+                    <input type="text" class="form-control" placeholder="Ej: zapatillas running rojas por menos de 100€..." @bind="_smartSearchQuery" />
+                </div>
+                <div class="col-md-1 d-flex flex-column gap-2">
+                    <!-- Label fantasma: invisible pero ocupa el mismo espacio que los otros labels -->
+                    <label class="form-label mb-0" style="visibility: hidden;">Acciones</label>
+
+                    <!-- Botones sin width ni height fijos -->
+                    <div class="d-flex gap-1">                 
+                        <button class="btn btn-primary flex-fill" @onclick="SmartSearch">
+                            <i class="bi bi-search me-1"></i> Búsqueda IA
+                        </button>
+                    
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="card shadow mb-4">
         <div class="card mb-3 p-3 bg-light">
             <div class="row g-3 aling-items-end"> 
@@ -79,7 +101,11 @@ else
         
         <table class="table table-bordered table-striped table-hover">
             <thead class="table-encabezado-marca">
-                <tr>                    
+                <tr>            
+                    @if (_mostrarScore)
+                    {
+                        <th>Exactitud de búsqueda</th>
+                    }
                     <th style="cursor: pointer;" @onclick="@(() => ToggleSortLocal("Sku"))">SKU
                         <i class="bi @GetSortIcon("Sku")"></i>
                      </th>
@@ -98,15 +124,32 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var producto in _productos)
+
+                @foreach (var item in _productsSmartSearch)
+
                 {
+
                     <tr>
-                        <td>@producto.Sku</td>
-                        <td>@producto.Name</td>
-                        <td>@producto.Price.ToString("N2")</td>
-                        <td>@producto.Stock</td>
+                        @if (_mostrarScore)
+                        {
+                            <td style="width: 140px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <!-- La "píldora" de color: estilo 100% inline, cero dependencias -->
+                                    <div style="width: 80px; height: 8px; border-radius: 4px; background-color: @GetScoreHex(item.SimilarityScore);">
+                                    </div>
+                                    <!-- El porcentaje numérico -->
+                                    <span class="text-muted fw-bold" style="font-size: 0.75rem; min-width: 35px;">
+                                        @((item.SimilarityScore * 100).ToString("F0"))%
+                                    </span>
+                                </div>
+                            </td>
+                        }
+                        <td>@item.Product.Sku</td>
+                        <td>@item.Product.Name</td>
+                        <td>@item.Product.Price.ToString("N2")</td>
+                        <td>@item.Product.Stock</td>
                         <td>
-                            @if (producto.IsActive)
+                            @if (item.Product.IsActive)
                             {
                                 <span class="badge text-bg-success">Activo</span>
                             }
@@ -117,13 +160,13 @@ else
                         </td>
                         <td class="text-center align-middle">
                             <div class="d-flex justify-content-center gap-2">
-                                <a href="/products/detail/@producto.Id" class="btn btn-sm btn-outline-info" title="Consultar producto">
+                                <a href="/products/detail/@item.Product.Id" class="btn btn-sm btn-outline-info" title="Consultar producto">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a href="/products/edit/@producto.Id" class="btn btn-sm btn-outline-primary" title="Editar producto">
+                                <a href="/products/edit/@item.Product.Id" class="btn btn-sm btn-outline-primary" title="Editar producto">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <button class="btn btn-sm btn-outline-danger" title="Eliminar producto" @onclick="() => PrepareProductDeletion(producto.Id, producto.Name)">
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar producto" @onclick="() => PrepareProductDeletion(item.Product.Id, item.Product.Name)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -145,56 +188,84 @@ else
               OnCancel="CancelProductDeletion" />
 
 @code {
-    private List<ProductDto> _productos = new();
+    private List<ProductDto> _products = new();
+    private List<ProductSearchHybridDto> _productsSmartSearch = new();
     private Guid? _pendingProductId;
     private string? _pendingProductName;
     private bool _isErrorModal;
     private string? _pendingSearchBy;
     private string? _pendingSearchTerm;
     private string? _pendingStatus;
+    private string? _smartSearchQuery;
+    private bool _mostrarScore = false;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadProductsAsync();
     }
 
-    private async Task LoadProductsAsync()
+    private async Task LoadProductsAsync(bool smartSearch = false)
     {
+
         bool? estadoFiltro = null;
 
-        IsLoading = true;
-        ErrorMessage = null; // Limpiamos errores anteriores
-
-        if (_pendingStatus == "Activos")
+        if (!smartSearch) //búsqueda normal
         {
-            estadoFiltro = true;
+            _mostrarScore = false;
+            IsLoading = true;
+            ErrorMessage = null; // Limpiamos errores anteriores
+
+            if (_pendingStatus == "Activos")
+            {
+                estadoFiltro = true;
+            }
+            else if (_pendingStatus == "Inactivos")
+            {
+                estadoFiltro = false;
+            }
+
+
+
+            BaseQueryDto query = new BaseQueryDto
+            {
+                SortBy = CurrentSortBy,
+                SortAscending = CurrentSortAscending,
+                SearchBy = _pendingSearchBy,
+                SearchTerm = _pendingSearchTerm,
+                IsActive = estadoFiltro
+            };
+
+            var result = await ProductsClient.GetAllProductsAsync(query);
+
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = ErrorHandler.HandleError(result);
+                IsLoading = false;
+                return;
+            }
+            _products = result.Data ?? new List<ProductDto>();
+            _productsSmartSearch = _products.Select(p => new ProductSearchHybridDto { Product = p, SimilarityScore = 0 }).ToList(); 
         }
-        else if (_pendingStatus == "Inactivos")
+        else //búsqueda inteligente
         {
-            estadoFiltro = false;
+            _mostrarScore = true;
+
+            if (!string.IsNullOrEmpty(_smartSearchQuery.Trim()))
+            {
+                IsLoading = true;
+                ErrorMessage = null; // Limpiamos errores anteriores
+
+                var result = await ProductsClient.GetAllProductsHybridSearch(_smartSearchQuery);
+
+                if (!result.IsSuccess)
+                {
+                    ErrorMessage = ErrorHandler.HandleError(result);
+                    IsLoading = false;
+                    return;
+                }
+                _productsSmartSearch = result.Data ?? new List<ProductSearchHybridDto>();
+            }
         }
-
-
-
-        BaseQueryDto query = new BaseQueryDto
-        {
-            SortBy = CurrentSortBy,
-            SortAscending = CurrentSortAscending,
-            SearchBy = _pendingSearchBy,
-            SearchTerm = _pendingSearchTerm,
-            IsActive = estadoFiltro
-        };
-
-        var result = await ProductsClient.GetAllProductsAsync(query);
-
-        if (!result.IsSuccess)
-        {
-            ErrorMessage = ErrorHandler.HandleError(result);
-            IsLoading = false;
-            return;
-        }
-
-        _productos = result.Data ?? new List<ProductDto>();
 
         IsLoading = false;
 
@@ -244,6 +315,7 @@ else
         _pendingSearchBy = "Name";
         _pendingSearchTerm = "";
         _pendingStatus = "Todos";
+        _mostrarScore = false;
 
         await LoadProductsAsync();
     }
@@ -251,5 +323,42 @@ else
     private async Task  AplicarFiltros()
     {
         await LoadProductsAsync();
+    }
+
+    private async Task SmartSearch()
+    {
+        await LoadProductsAsync(true);
+    }
+
+    private string GetScoreColor(double score)
+    {
+        if (score >= 0.8)
+        {
+            return "bg-success";      // Verde: Alta coincidencia
+        }
+        else if (score >= 0.6) 
+        {
+            return "bg-warning";      // Amarillo: Coincidencia media
+        }
+        else 
+        {
+        return "bg-danger";           // Rojo: Baja coincidencia (cerca del umbral)
+        }
+    }
+
+    private string GetScoreHex(double score)
+    {
+        if (score >= 0.8)
+        {
+            return "#28a745";      // Verde: Alta coincidencia
+        }
+        else if (score >= 0.6) 
+        {
+            return "#ffc107";      // Amarillo: Coincidencia media
+        }
+        else 
+        {
+            return "#dc3545";           // Rojo: Baja coincidencia (cerca del umbral)
+        }
     }
 }

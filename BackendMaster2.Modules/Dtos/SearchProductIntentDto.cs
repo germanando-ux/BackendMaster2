@@ -24,5 +24,5 @@ public class SearchProductIntentDto
     
     // Filtro duro de stock mínimo. Por defecto 1 (solo mostrar productos disponibles).
     
-    public int MinStock { get; set; } = 1;
+    public int? MinStock { get; set; } = 1;
 }

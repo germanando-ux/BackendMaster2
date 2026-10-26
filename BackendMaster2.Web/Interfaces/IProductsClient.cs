@@ -10,4 +10,5 @@ public interface IProductsClient
     Task<ApiResult<ProductDto>> UpdateProductAsync(Guid id, ProductDto product);
     Task<ApiResult<string>> EnrichDescriptionAsync(EnrichDescriptionRequestDto request);
     Task<ApiResult<bool>> DeleteProductAsync(Guid id);
+    Task<ApiResult<List<ProductSearchHybridDto>>> GetAllProductsHybridSearch(string query);
 }
