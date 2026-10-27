@@ -29,7 +29,7 @@ public class CatalogRepository : ICatalogRepository
 
     public async Task AddColorAsync(Color color)
     {
-        _context.Color.Add(color);
+        await _context.Color.AddAsync(color);
         await _context.SaveChangesAsync();
     }
 

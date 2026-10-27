@@ -28,7 +28,7 @@ else if (ErrorMessage is not null)
 }
 else
 {
-       @* Cuadro de búsqueda *@
+    @* Cuadro de búsqueda *@
     <div class="card shadow mb-4">
         <div class="card mb-3 p-3 bg-light">
             <div class="row g-3 aling-items-end"> 
@@ -73,6 +73,8 @@ else
             </div>
         </div>
     </div>
+
+    @* grid *@
     <div class="card shadow mb-4">
         <table class="table table-bordered table-striped table-hover">
             <thead class="table-encabezado-marca">
@@ -112,7 +114,7 @@ else
                                 <a href="/colors/edit/@color.Id" class="btn btn-sm btn-outline-primary" title="Editar color">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <button class="btn btn-sm btn-outline-danger" title="Eliminar color" @onclick="() => PrepareColorDeletion(color.Id, color.Name)">
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar color" @onclick="() => PrepareDeletion(color.Id, color.Name)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -130,8 +132,8 @@ else
               Message="@_colorNombrePendiente"
               ConfirmText="Eliminar"
               CancelText="Cancelar"
-              OnConfirm="ConfirmColorDeletionAsync"
-              OnCancel="CancelColorDeletion" />
+              OnConfirm="ConfirmDeletionAsync"
+              OnCancel="CancelDeletion" />
 
 @code {
     private List<ColorDto> _colores = new();
@@ -185,21 +187,21 @@ else
         IsLoading = false;
     }
 
-    private void PrepareColorDeletion(Guid id, string name)
+    private void PrepareDeletion(Guid id, string name)
     {
         _colorIdPendiente = id;
         _colorNombrePendiente = name;
         _modalEsError = false;
     }
 
-    private void CancelColorDeletion()
+    private void CancelDeletion()
     {
         _colorIdPendiente = null;
         _colorNombrePendiente = null;
         _modalEsError = false;
     }
 
-    private async Task ConfirmColorDeletionAsync()
+    private async Task ConfirmDeletionAsync()
     {
         if (!_colorIdPendiente.HasValue) return;
 
@@ -208,7 +210,7 @@ else
         if (result.IsSuccess)
         {
             await LoadColorsAsync();
-            CancelColorDeletion();
+            CancelDeletion();
         }
         else
         {

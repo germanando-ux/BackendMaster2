@@ -1,0 +1,238 @@
+﻿@page "/marketplace"
+@using BackendMaster2.Web.Models.Dtos
+@using BackendMaster2.Web.Components
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Services
+@inject IMarketplaceClient MarketplaceClient
+@inherits FormBaseComponent
+
+
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h1 class="mb-1">Marketplaces</h1>
+        <p class="text-muted mb-0">Gestión de Marketplace</p>
+    </div>
+    <a href="/marketplace/create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Nuevo Marketplace
+    </a>
+</div>
+
+@if (IsLoading)
+{
+    <p class="text-muted">Cargando marketplaces…</p>
+}
+else if (ErrorMessage is not null)
+{
+    <div class="alert alert-danger" role="alert">@ErrorMessage</div>
+}
+else
+{
+    @* Cuadro de búsqueda *@
+    <div class="card shadow mb-4">
+        <div class="card mb-3 p-3 bg-light">
+            <div class="row g-3 aling-items-end">
+                <!-- 3. Primera columna: Ocupa 3 de las 12 partes del ancho (25%) -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Buscar por</label>
+                    <!-- Desplegable estándar de Bootstrap -->
+                    <select class="form-select" @bind="_pendingSearchBy">
+                        <option value="Name">Nombre</option>
+                        <option value="Code">Código</option>
+                    </select>
+                </div>
+                <!-- 4. Segunda columna: Ocupa 4 de las 12 partes (33%, un poco más ancha para el texto) -->
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Término de búsqueda</label>
+                    <!-- Input de texto estándar de Bootstrap -->
+                    <input type="text" class="form-control" placeholder="Ej: rojo, 123..." @bind="_pendingSearchTerm" />
+                </div>
+                <!-- 5. Tercera columna: Ocupa 3 de las 12 partes -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Estado</label>
+                    <select class="form-select" @bind="_pendingStatus">
+                        <option value="Todos">Todos</option>
+                        <option value="Activos">Activos</option>
+                        <option value="Inactivos">Inactivos</option>
+                    </select>
+                </div>
+                <!-- 6. Cuarta columna: Ocupa las 2 partes restantes (2+3+4+3 = 12). 'd-flex' y 'gap-2' ponen los botones en fila con un pequeño espacio entre ellos -->
+                <div class="col-md-2 d-flex flex-column gap-2">
+                    <!-- Label fantasma: invisible pero ocupa el mismo espacio que los otros labels -->
+                    <label class="form-label mb-0" style="visibility: hidden;">Acciones</label>
+
+                    <!-- Botones sin width ni height fijos -->
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-danger flex-fill" @onclick="LimpiarFiltros">
+                            <i class="bi bi-x-circle me-1"></i> Limpiar
+                        </button>
+                        <button class="btn btn-primary flex-fill" @onclick="AplicarFiltros">
+                            <i class="bi bi-search me-1"></i> Aplicar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* grid *@
+    <div class="card shadow mb-4">
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-encabezado-marca">
+                <tr>
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSortLocal("Name"))">
+                        Nombre
+                        <i class="bi @GetSortIcon("Name")"></i>
+                    </th>
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSortLocal("Code"))">
+                        Código
+                        <i class="bi @GetSortIcon("Code")"></i>
+                    </th>
+                    <th>Estado</th>
+                    <th class="text-center" style="width: 120px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var marketplace in _marketPlace)
+                {
+                    <tr>
+                        <td class="align-middle">@marketplace.Name</td>                       
+                        <td class="align-middle">@marketplace.Code</td>
+                        <td>
+                            @if (marketplace.IsActive)
+                            {
+                                <span class="badge text-bg-success">Activo</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Inactivo</span>
+                            }
+                        </td>
+                        <td class="text-center align-middle">
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="/marketplace/edit/@marketplace.Id" class="btn btn-sm btn-outline-primary" title="Editar marketplace">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar marketplace" @onclick="() => PrepareDeletion(marketplace.Id, marketplace.Name)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<ConfirmModal Show="@(_marketplaceIdPendiente.HasValue)"
+              IsError="@_modalEsError"
+              Title="@(_modalEsError ? "No se puede eliminar" : "Eliminar marketplace")"
+              Message="@_marketplaceNombrePendiente"
+              ConfirmText="Eliminar"
+              CancelText="Cancelar"
+              OnConfirm="ConfirmDeletionAsync"
+              OnCancel="CancelDeletion" />
+@code {
+
+    private List<MarketplaceDto> _marketPlace = new();
+    private Guid? _marketplaceIdPendiente;
+    private string? _marketplaceNombrePendiente;
+    private bool _modalEsError;
+
+    private string? _pendingSearchBy;
+    private string? _pendingSearchTerm;
+    private string? _pendingStatus;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMarketplacesAsync();
+    }
+
+    private async Task LoadMarketplacesAsync()
+    {
+        bool? estadoFiltro = null;
+        IsLoading = true;
+
+
+        if (_pendingStatus == "Activos")
+        {
+            estadoFiltro = true;
+        }
+        else if (_pendingStatus == "Inactivos")
+        {
+            estadoFiltro = false;
+        }
+
+        BaseQueryDto query = new BaseQueryDto
+        {
+            SortBy = CurrentSortBy,
+            SortAscending = CurrentSortAscending,
+            SearchBy = _pendingSearchBy,
+            SearchTerm = _pendingSearchTerm,
+            IsActive = estadoFiltro
+        };
+
+        var result = await MarketplaceClient.GetAllMarketplaceAsync(query);
+
+        if (!result.IsSuccess)
+        {
+            ErrorMessage = ErrorHandler.HandleError(result);
+            IsLoading = false;
+            return;
+        }
+
+        _marketPlace = result.Data ?? new List<MarketplaceDto>();
+        IsLoading = false;
+    }
+    private async Task ToggleSortLocal(string columnName)
+    {
+        ToggleSort(columnName);
+        await LoadMarketplacesAsync();
+    }
+    private async Task LimpiarFiltros()
+    {
+        _pendingSearchBy = "Name";
+        _pendingSearchTerm = "";
+        _pendingStatus = "Todos";
+
+        await LoadMarketplacesAsync();
+    }
+
+    private async Task AplicarFiltros()
+    {
+        await LoadMarketplacesAsync();
+    }
+
+    private async Task ConfirmDeletionAsync()
+    {
+        if (!_marketplaceIdPendiente.HasValue) return;
+
+        var result = await MarketplaceClient.DeleteMarketplaceAsync(_marketplaceIdPendiente.Value);
+
+        if (result.IsSuccess)
+        {
+            await LoadMarketplacesAsync();
+            CancelDeletion();
+        }
+        else
+        {
+            _modalEsError = true;
+            _marketplaceNombrePendiente = ErrorHandler.HandleError(result);
+        }
+    }
+
+    private void CancelDeletion()
+    {
+        _marketplaceIdPendiente = null;
+        _marketplaceNombrePendiente = null;
+        _modalEsError = false;
+    }
+
+    private void PrepareDeletion(Guid id, string name)
+    {
+        _marketplaceIdPendiente = id;
+        _marketplaceNombrePendiente = name;
+        _modalEsError = false;
+    }
+}
+

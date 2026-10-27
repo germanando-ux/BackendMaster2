@@ -18,6 +18,8 @@ namespace BackendMaster2.Modules.Data
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<Color> Color => Set<Color>();
         public DbSet<ProductOption> ProductOptions => Set<ProductOption>();
+        public DbSet<DataSource> DataSources => Set<DataSource>();
+        public DbSet<Marketplace> Marketplaces => Set<Marketplace>();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

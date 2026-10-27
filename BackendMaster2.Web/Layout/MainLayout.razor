@@ -37,6 +37,26 @@
                         </div>
                     }
                 </div>
+
+                <div class="w-100">
+                    <button @onclick="AlternarMaestros"
+                            class="sidebar-link d-flex align-items-center gap-2 w-100"
+                            style="background:transparent;border:none;cursor:pointer;font:inherit;text-align:left;">
+                        <i class="bi bi-collection"></i>
+                        <span class="link-texto">Maestros</span>
+                        <i class="bi bi-chevron-down ms-auto"
+                           style="transition:transform .2s;transform:@(_maestrosAbierto ? "rotate(180deg)" : "rotate(0deg)");"></i>
+                    </button>
+                    @if (_maestrosAbierto)
+                    {
+                        <div style="background:rgba(0,0,0,.05);">
+                            <NavLink href="/marketplace" class="sidebar-link" style="padding-left:2.6rem;"> <i class="bi bi-shop-window"></i><span class="link-texto">MarketPlaces</span></NavLink>
+                        </div>
+                        <div style="background:rgba(0,0,0,.05);">
+                            <NavLink href="/datasource" class="sidebar-link" style="padding-left:2.6rem;"> <i class="bi bi-database-down"></i><span class="link-texto">Origenes de datos</span></NavLink>
+                        </div>
+                    }
+                </div>
             </nav>
         </aside>
         <main class="app-content">
@@ -49,12 +69,16 @@
 @code {
 
     private bool _catalogoAbierto;
+    private bool _maestrosAbierto;
 
     private void AlternarCatalogo()
     {
         _catalogoAbierto = !_catalogoAbierto;
     }
-
+    private void AlternarMaestros()
+    {
+        _maestrosAbierto = !_maestrosAbierto;
+    }
     protected override void OnInitialized()
     {
         _catalogoAbierto = NavigationManager.Uri.Contains("/colors");

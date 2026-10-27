@@ -63,6 +63,8 @@ namespace BackendMaster2.Api
             builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
             builder.Services.AddScoped<ICatalogService, CatalogService>();
             builder.Services.AddScoped<IAiService, AiService>();
+            builder.Services.AddScoped<IMasterDataService, MasterDataService>();
+            builder.Services.AddScoped<IMasterDataRepository, MasterDataRepository>();
             //registro de servicios de notificación SignalR
             builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 

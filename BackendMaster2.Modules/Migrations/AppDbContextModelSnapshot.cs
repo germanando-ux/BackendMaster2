@@ -53,6 +53,50 @@ namespace BackendMaster2.Modules.Migrations
                     b.ToTable("Colors", (string)null);
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.DataSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DataSources");
+                });
+
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.Marketplace", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Marketplaces");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.Person", b =>
                 {
                     b.Property<Guid>("Id")

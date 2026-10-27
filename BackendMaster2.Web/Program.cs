@@ -38,6 +38,10 @@ namespace BackendMaster2.Web
             builder.Services.AddScoped<IProductsClient, ProductsClient>();
             //cliente colores
             builder.Services.AddScoped<IColorClient, ColorClient>();
+            //cliente marketplaces
+            builder.Services.AddScoped<IMarketplaceClient, MarketplaceClient>();
+            //cliente data source
+            builder.Services.AddScoped<IDataSourceClient, DataSourceClient>();
             //mesajes de error con toast
             builder.Services.AddScoped<ToastService>();
 

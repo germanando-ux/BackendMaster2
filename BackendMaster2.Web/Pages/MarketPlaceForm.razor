@@ -1,0 +1,110 @@
+﻿@page "/marketplace/create"
+@page "/marketplace/edit/{Id:guid}"
+@using BackendMaster2.Web.Components
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Services
+@inject IMarketplaceClient MarketplaceClient
+@inject NavigationManager Navigation
+@inject ToastService ToastService
+
+@inherits FormBaseComponent  //hereda de FormBaseComponent para manejar errores y variables de estado
+
+
+@if (IsLoading)
+{
+    <div class="alert alert-info"> Cargando datos...</div>
+}
+else
+{
+    <EditForm Model="marketplaceDto" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control border-primary" @bind="marketplaceDto.Name" />
+            <ValidationMessage For="@(() => marketplaceDto.Name)" class="text-danger small" />
+        </div>
+
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Código</label>
+            <input type="text" class="form-control border-primary" @bind="marketplaceDto.Code" />
+            <ValidationMessage For="@(() => marketplaceDto.Code)" class="text-danger small" />
+        </div>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" @bind="marketplaceDto.IsActive" />
+            <label class="form-check-label">Marketplace Activo</label>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
+        </div>
+    </EditForm>
+
+}
+
+@code {
+    // 2. El objeto que va a "viajar" al backend.
+    private MarketplaceDto marketplaceDto = new();
+
+    // 2. Se ejecuta al pulsar "Guardar"
+    private async Task HandleSubmit()
+    {
+        IsSaving = true;
+        ErrorMessage = null;
+
+        ApiResult<MarketplaceDto> result;
+
+        // Decidimos si crear o actualizar según si tenemos un Id
+        if (IsEdit)
+        {
+            result = await MarketplaceClient.UpdateMarketplaceAsync(Id.Value, marketplaceDto);
+        }
+        else
+        {
+            result = await MarketplaceClient.CreateMarketplaceAsync(marketplaceDto);
+        }
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/marketplace"); // Vuelve al grid (ajusta la ruta si es distinta)
+        }
+        else
+        {
+            ToastService.ShowError(ErrorHandler.HandleError(result));
+        }
+
+        IsSaving = false;
+
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit)
+        {
+            IsLoading = true;
+            var result = await MarketplaceClient.GetMarketplaceByIdAsync(Id.Value);
+
+            if (result.IsSuccess && result.Data != null)
+            {
+                marketplaceDto = result.Data; // Rellenamos el formulario con los datos
+            }
+            else
+            {
+                ErrorMessage = "No se pudo cargar el marketplace.";
+            }
+
+        }
+        else
+        {
+            marketplaceDto.IsActive = true;
+        }
+        IsLoading = false;
+    }
+
+    // 3. Acción para el botón Cancelar
+    private async Task Cancel()
+    {
+        Navigation.NavigateTo("/marketplace");
+    }
+
+}
