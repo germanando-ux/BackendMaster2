@@ -12,6 +12,7 @@ public class SeedController : ControllerBase
     private readonly ICatalogService _catalogService;
     private readonly IProductService _productService;
     private readonly Random _random;
+    public int CategoriesCreated { get; set; }
 
     public SeedController(ICatalogService catalogService, IProductService productService)
     {

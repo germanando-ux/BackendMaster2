@@ -6,9 +6,21 @@
 - [x] Validación de cliente con anotaciones + pintado de ProblemDetails del middleware en el front (¡Hecho!)
 
 ## Enriquecimiento del dominio
-- [ ] Categorías de producto (maestro + relación 1:N)
-- [ ] Tallas (maestro + relación N:M)
-- [ ] Características (decidir JSONB vs EAV cuando llegue el C8)
+
+- [x] **Maestros base**: Entidades `DataSource` y `Marketplace` con CRUD completo (Backend + Frontend Blazor), validaciones y seeds iniciales.
+### 🚧 En progreso (Plan estricto de hoy)
+- [ ] **Categorías (Bloque fuerte)**:
+  - [ ] Entidad `Category` con `ParentId` (jerarquía autorreferencial).
+  - [ ] Tabla intermedia `ProductCategory` con campo `IsPrimary` (un producto puede tener varias, pero una principal).
+  - [ ] Seed realista: "Ropa > Camisetas", "Calzado > Running", etc.
+  - [ ] Actualizar entidad `Product` para relacionarse con `ProductCategory`.
+- [ ] **Tallas (Si da tiempo)**:
+  - [ ] Maestros: `SizeGroup` (ej. "EU", "US") y `Size` (ej. "42", "M").
+  - [ ] Relación N:M: `CategorySizeGroup` (qué grupo de tallas aplica a qué categoría).
+  - [ ] Entidad de unión: `ProductSize` con stock específico por talla.
+- [ ] **Características (Mañana si no da tiempo)**:
+  - [ ] Entidad `Attribute` vinculada a `Category` (ej. "Material", "Voltaje").
+  - [ ] Entidad `ProductAttributeValue` para almacenar los valores concretos por producto.
 
 ## Procesamiento asíncrono y tiempo real
 - [x] Endpoint en backend para mejorar descripción de producto con IA (modelo ligero vía API) + Modal de confirmación en front + Toast de feedback (¡Hecho!)

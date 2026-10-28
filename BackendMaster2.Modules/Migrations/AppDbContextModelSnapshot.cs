@@ -23,6 +23,27 @@ namespace BackendMaster2.Modules.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.Color", b =>
                 {
                     b.Property<Guid>("Id")
@@ -174,6 +195,24 @@ namespace BackendMaster2.Modules.Migrations
                     b.ToTable("Product", (string)null);
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductCategory", b =>
+                {
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("ProductId", "CategoryId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("ProductCategories");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductOption", b =>
                 {
                     b.Property<Guid>("Id")
@@ -270,6 +309,25 @@ namespace BackendMaster2.Modules.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductCategory", b =>
+                {
+                    b.HasOne("BackendMaster2.Shared.Domain.Category", "Category")
+                        .WithMany("ProductCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackendMaster2.Shared.Domain.Product", "Product")
+                        .WithMany("ProductCategories")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductOption", b =>
                 {
                     b.HasOne("BackendMaster2.Shared.Domain.Color", "Color")
@@ -298,8 +356,15 @@ namespace BackendMaster2.Modules.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.Category", b =>
+                {
+                    b.Navigation("ProductCategories");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.Product", b =>
                 {
+                    b.Navigation("ProductCategories");
+
                     b.Navigation("ProductOptions");
                 });
 

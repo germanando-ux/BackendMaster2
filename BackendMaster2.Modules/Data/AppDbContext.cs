@@ -20,6 +20,8 @@ namespace BackendMaster2.Modules.Data
         public DbSet<ProductOption> ProductOptions => Set<ProductOption>();
         public DbSet<DataSource> DataSources => Set<DataSource>();
         public DbSet<Marketplace> Marketplaces => Set<Marketplace>();
+        public DbSet<Category> Categories => Set<Category>();
+        public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -88,6 +90,34 @@ namespace BackendMaster2.Modules.Data
                       .WithMany()
                       .HasForeignKey(po => po.ColorId)
                       .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            // Configuración de Category
+            modelBuilder.Entity<Category>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+            });
+
+            // Configuración de ProductCategory (Tabla de unión N:M)
+            modelBuilder.Entity<ProductCategory>(entity =>
+            {
+                // Clave compuesta
+                entity.HasKey(e => new { e.ProductId, e.CategoryId });
+
+                // Relación con Product
+                entity.HasOne(e => e.Product)
+                      .WithMany(p => p.ProductCategories)
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con Category
+                entity.HasOne(e => e.Category)
+                      .WithMany(c => c.ProductCategories)
+                      .HasForeignKey(e => e.CategoryId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

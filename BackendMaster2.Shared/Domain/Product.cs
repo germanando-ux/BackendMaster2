@@ -19,7 +19,10 @@ namespace BackendMaster2.Shared.Domain
         public decimal Price { get; set; }
         public int Stock { get; set; }
         public bool IsActive { get; set; } = true;           // Permite desactivar sin borrar
-        public ICollection<ProductOption> ProductOptions { get; set; } = new List<ProductOption>();
         public Vector? Embedding { get; set; }
+        public ICollection<ProductOption> ProductOptions { get; set; } = new List<ProductOption>();
+        // Relación N:M con Categorías a través de la tabla de unión
+        public ICollection<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
+        
     }
 }
