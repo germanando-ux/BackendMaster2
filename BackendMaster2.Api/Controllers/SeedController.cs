@@ -12,7 +12,6 @@ public class SeedController : ControllerBase
     private readonly ICatalogService _catalogService;
     private readonly IProductService _productService;
     private readonly Random _random;
-    public int CategoriesCreated { get; set; }
 
     public SeedController(ICatalogService catalogService, IProductService productService)
     {
@@ -30,85 +29,112 @@ public class SeedController : ControllerBase
 
         try
         {
-            // 1. OBTENER COLORES EXISTENTES (Idempotencia)
-            // BaseQueryDto vacío: sin filtros, trae todos los colores
-            var queryVacia = new BaseQueryDto();
+            //// 1. OBTENER COLORES EXISTENTES (Idempotencia)
+            //var queryVacia = new BaseQueryDto();
+            //var coloresExistentes = await _catalogService.GetAllColorsAsync(queryVacia);
+            //var colorIdsDict = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
 
-            var coloresExistentes = await _catalogService.GetAllColorsAsync(queryVacia);
-            var colorIdsDict = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+            //foreach (var color in coloresExistentes)
+            //{
+            //    colorIdsDict[color.Name] = color.Id;
+            //    result.ColorsSkipped++;
+            //}
 
-            foreach (var color in coloresExistentes)
+            //// 2. CREAR SOLO LOS COLORES QUE FALTEN
+            //foreach (var colorData in _seedColors)
+            //{
+            //    if (colorIdsDict.ContainsKey(colorData.Name))
+            //    {
+            //        continue; // Ya existe, usaremos su ID
+            //    }
+
+            //    try
+            //    {
+            //        var colorDto = new ColorDto
+            //        {
+            //            Name = colorData.Name,
+            //            HexCode = colorData.HexCode,
+            //            IsActive = true
+            //        };
+
+            //        var created = await _catalogService.CreateColorAsync(colorDto);
+            //        colorIdsDict[colorData.Name] = created.Id;
+            //        result.ColorsCreated++;
+
+            //        await Task.Delay(1100, cancellationToken); // Rate limit Gemini: 1 RPS
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Console.WriteLine($"[SEED] Error creando color {colorData.Name}: {ex.Message}");
+            //    }
+            //}
+
+            //if (!colorIdsDict.Any())
+            //{
+            //    return StatusCode(500, new { error = "No se pudieron obtener ni crear colores." });
+            //}
+
+            //var colorIdsList = colorIdsDict.Values.ToList();
+
+            // 2.5 SEED DE CATEGORÍAS (Idempotente)
+            var categoriasSeed = new[] { "Ropa", "Calzado", "Electrónica", "Hogar", "Deportes" };
+            var categoriasExistentes = (await _catalogService.GetAllCategoriesAsync(new BaseQueryDto()))
+                .Select(c => c.Name)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var catName in categoriasSeed)
             {
-                colorIdsDict[color.Name] = color.Id;
-                result.ColorsSkipped++;
-            }
-
-            // 2. CREAR SOLO LOS COLORES QUE FALTEN
-            foreach (var colorData in _seedColors)
-            {
-                if (colorIdsDict.ContainsKey(colorData.Name))
+                if (categoriasExistentes.Contains(catName))
                 {
-                    continue; // Ya existe, usaremos su ID
+                    result.CategoriesSkipped++;
+                    continue;
                 }
 
                 try
                 {
-                    var colorDto = new ColorDto
+                    await _catalogService.CreateCategoryAsync(new CategoryDto
                     {
-                        Name = colorData.Name,
-                        HexCode = colorData.HexCode,
+                        Name = catName,
                         IsActive = true
-                    };
-
-                    var created = await _catalogService.CreateColorAsync(colorDto);
-                    colorIdsDict[colorData.Name] = created.Id;
-                    result.ColorsCreated++;
-
-                    await Task.Delay(1100, cancellationToken); // Rate limit Gemini: 1 RPS
+                    });
+                    result.CategoriesCreated++;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[SEED] Error creando color {colorData.Name}: {ex.Message}");
+                    Console.WriteLine($"[SEED] Error creando categoría {catName}: {ex.Message}");
                 }
             }
 
-            if (!colorIdsDict.Any())
-            {
-                return StatusCode(500, new { error = "No se pudieron obtener ni crear colores." });
-            }
+            //    // 3. GENERAR 200 PRODUCTOS MOCK
+            //    var productosGenerados = GenerarProductosMock(200, colorIdsList);
 
-            var colorIdsList = colorIdsDict.Values.ToList();
+            //    // 4. CREAR PRODUCTOS EN LA BASE DE DATOS
+            //    foreach (var productData in productosGenerados)
+            //    {
+            //        try
+            //        {
+            //            var productDto = new ProductDto
+            //            {
+            //                Sku = productData.Sku,
+            //                Name = productData.Name,
+            //                Description = productData.Description,
+            //                Price = productData.Price,
+            //                Stock = productData.Stock,
+            //                IsActive = true,
+            //                ColorIds = productData.ColorIds
+            //            };
 
-            // 3. GENERAR 200 PRODUCTOS MOCK
-            var productosGenerados = GenerarProductosMock(200, colorIdsList);
+            //            await _productService.CreateAsync(productDto);
+            //            result.ProductsCreated++;
 
-            // 4. CREAR PRODUCTOS EN LA BASE DE DATOS
-            foreach (var productData in productosGenerados)
-            {
-                try
-                {
-                    var productDto = new ProductDto
-                    {
-                        Sku = productData.Sku,
-                        Name = productData.Name,
-                        Description = productData.Description,
-                        Price = productData.Price,
-                        Stock = productData.Stock,
-                        IsActive = true,
-                        ColorIds = productData.ColorIds
-                    };
-
-                    await _productService.CreateAsync(productDto);
-                    result.ProductsCreated++;
-
-                    await Task.Delay(1100, cancellationToken); // Rate limit Gemini: 1 RPS
-                }
-                catch (Exception ex)
-                {
-                    result.ProductsSkipped++;
-                    Console.WriteLine($"[SEED] Error creando producto {productData.Sku}: {ex.Message}");
-                }
-            }
+            //            await Task.Delay(1100, cancellationToken); // Rate limit Gemini: 1 RPS
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            result.ProductsSkipped++;
+            //            Console.WriteLine($"[SEED] Error creando producto {productData.Sku}: {ex.Message}");
+            //        }
+            //    }
 
             result.TotalTimeSeconds = (int)(DateTime.UtcNow - startTime).TotalSeconds;
             return Ok(result);
@@ -197,6 +223,8 @@ public record SeedResultDto
 {
     public int ColorsCreated { get; set; }
     public int ColorsSkipped { get; set; }
+    public int CategoriesCreated { get; set; }
+    public int CategoriesSkipped { get; set; }
     public int ProductsCreated { get; set; }
     public int ProductsSkipped { get; set; }
     public int TotalTimeSeconds { get; set; }

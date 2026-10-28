@@ -235,6 +235,27 @@ namespace BackendMaster2.Modules.Migrations
                     b.ToTable("ProductOptions", (string)null);
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductSize", b =>
+                {
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SizeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Sku")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Stock")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ProductId", "SizeId");
+
+                    b.HasIndex("SizeId");
+
+                    b.ToTable("ProductSizes", (string)null);
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -262,6 +283,53 @@ namespace BackendMaster2.Modules.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.Size", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("SizeGroupId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SizeGroupId");
+
+                    b.ToTable("Sizes", (string)null);
+                });
+
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.SizeGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SizeGroups", (string)null);
                 });
 
             modelBuilder.Entity("BackendMaster2.Shared.Domain.User", b =>
@@ -345,6 +413,25 @@ namespace BackendMaster2.Modules.Migrations
                     b.Navigation("Color");
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductSize", b =>
+                {
+                    b.HasOne("BackendMaster2.Shared.Domain.Product", "Product")
+                        .WithMany("ProductSizes")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackendMaster2.Shared.Domain.Size", "Size")
+                        .WithMany("ProductSizes")
+                        .HasForeignKey("SizeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Size");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.RefreshToken", b =>
                 {
                     b.HasOne("BackendMaster2.Shared.Domain.User", "User")
@@ -354,6 +441,17 @@ namespace BackendMaster2.Modules.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.Size", b =>
+                {
+                    b.HasOne("BackendMaster2.Shared.Domain.SizeGroup", "SizeGroup")
+                        .WithMany("Sizes")
+                        .HasForeignKey("SizeGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SizeGroup");
                 });
 
             modelBuilder.Entity("BackendMaster2.Shared.Domain.Category", b =>
@@ -366,6 +464,18 @@ namespace BackendMaster2.Modules.Migrations
                     b.Navigation("ProductCategories");
 
                     b.Navigation("ProductOptions");
+
+                    b.Navigation("ProductSizes");
+                });
+
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.Size", b =>
+                {
+                    b.Navigation("ProductSizes");
+                });
+
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.SizeGroup", b =>
+                {
+                    b.Navigation("Sizes");
                 });
 
             modelBuilder.Entity("BackendMaster2.Shared.Domain.User", b =>

@@ -23,6 +23,8 @@ namespace BackendMaster2.Shared.Domain
         public ICollection<ProductOption> ProductOptions { get; set; } = new List<ProductOption>();
         // Relación N:M con Categorías a través de la tabla de unión
         public ICollection<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
-        
+        // Relación con tallas (variantes con stock
+        public ICollection<ProductSize> ProductSizes { get; set; } = new List<ProductSize>();
+
     }
 }

@@ -22,12 +22,21 @@ public class CatalogRepository : ICatalogRepository
         .Select(p => p.Name)
         .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+    // HashSet para validación segura de Dynamic LINQ en Categorías
+    private static readonly HashSet<string> AllowedCategorySortColumns = typeof(Category)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => TypeValidationExtensions.IsSimpleType(p.PropertyType))
+        .Select(p => p.Name)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
     public CatalogRepository(AppDbContext context)
     {
         _context = context;
     }
 
-    public async Task AddColorAsync(Color color)
+    //colores
+
+    public async Task CreateColorAsync(Color color)
     {
         await _context.Color.AddAsync(color);
         await _context.SaveChangesAsync();
@@ -82,4 +91,62 @@ public class CatalogRepository : ICatalogRepository
         await _context.SaveChangesAsync();
         return color;
     }
+
+    //categorías
+    public async Task CreateCategoryAsync(Category category)
+    {
+        await _context.Categories.AddAsync(category);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteCategoryAsync(Guid id)
+    {
+        var category = await GetCategoryByIdAsync(id);
+        if (category != null)
+        {
+            _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<IEnumerable<Category>> GetAllCategoriesAsync(BaseQueryDto query)
+    {
+        IQueryable<Category> categoriesQuery = _context.Categories.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(query.SearchTerm) && !string.IsNullOrWhiteSpace(query.SearchBy) && AllowedCategorySortColumns.Contains(query.SearchBy))
+        {
+            categoriesQuery = categoriesQuery.Where($"{query.SearchBy}.ToLower().Contains(@0)", query.SearchTerm.ToLower());
+        }
+
+        if (query.IsActive.HasValue)
+        {
+            categoriesQuery = categoriesQuery.Where(c => c.IsActive == query.IsActive.Value);
+        }
+
+        if (!string.IsNullOrEmpty(query.SortBy) && AllowedCategorySortColumns.Contains(query.SortBy))
+        {
+            string direction = query.SortAscending ? "ascending" : "descending";
+            categoriesQuery = categoriesQuery.OrderBy($"{query.SortBy} {direction}");
+        }
+        else
+        {
+            categoriesQuery = categoriesQuery.OrderBy(c => c.Name);
+        }
+
+        return await categoriesQuery.ToListAsync();
+    }
+
+    public async Task<Category?> GetCategoryByIdAsync(Guid id)
+    {
+        return await _context.Categories.FindAsync(id);
+    }
+
+    public async Task<Category> UpdateCategoryAsync(Category category)
+    {
+        _context.Categories.Update(category);
+        await _context.SaveChangesAsync();
+        return category;
+    }
+
+
 }

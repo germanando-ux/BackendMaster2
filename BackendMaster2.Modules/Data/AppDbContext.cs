@@ -22,7 +22,9 @@ namespace BackendMaster2.Modules.Data
         public DbSet<Marketplace> Marketplaces => Set<Marketplace>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
-
+        public DbSet<SizeGroup> SizeGroups => Set<SizeGroup>();
+        public DbSet<Size> Sizes => Set<Size>();
+        public DbSet<ProductSize> ProductSizes => Set<ProductSize>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +36,7 @@ namespace BackendMaster2.Modules.Data
                 entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
                 entity.Property(p => p.Embedding).HasColumnType("vector(1536)");
                 entity.HasIndex(e => e.Sku).IsUnique();   // SKU único blindado en BBDD
+
                 
 
                 // Configuramos la relación desde aquí, ya que ProductOption ya no tiene navegación a Product.
@@ -73,11 +76,10 @@ namespace BackendMaster2.Modules.Data
                 entity.Property(c => c.Name).HasMaxLength(50).IsRequired();
                 entity.Property(c => c.HexCode).HasMaxLength(9).IsRequired();
                 entity.Property(c => c.Embedding).HasColumnType("vector(1536)");
-                entity.HasIndex(c => c.Name).IsUnique();
-                
-
+                entity.HasIndex(c => c.Name).IsUnique();               
             });
 
+            //tabla intermedia con colores, nombre equivocado, pero es la que hay
             modelBuilder.Entity<ProductOption>(entity =>
             {
                 entity.ToTable("ProductOptions");
@@ -119,6 +121,46 @@ namespace BackendMaster2.Modules.Data
                       .HasForeignKey(e => e.CategoryId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // Configuración de SizeGroup
+            modelBuilder.Entity<SizeGroup>(entity =>
+            {
+                entity.ToTable("SizeGroups"); // <-- AÑADIDO: Nombre explícito
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+            });
+            //configuración de Size
+            modelBuilder.Entity<Size>(entity =>
+            {
+                entity.ToTable("Sizes");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+                // Relación con SizeGroup
+                entity.HasOne(e => e.SizeGroup)
+                      .WithMany(sg => sg.Sizes)
+                      .HasForeignKey(e => e.SizeGroupId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+            // Configuración de ProductSize (Tabla de unión N:M con payload)
+            modelBuilder.Entity<ProductSize>(entity =>
+            {
+                entity.ToTable("ProductSizes");
+                // Clave compuesta
+                entity.HasKey(e => new { e.ProductId, e.SizeId });
+                // Relación con Product
+                entity.HasOne(e => e.Product)
+                      .WithMany(p => p.ProductSizes)
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                // Relación con Size
+                entity.HasOne(e => e.Size)
+                      .WithMany(s => s.ProductSizes)
+                      .HasForeignKey(e => e.SizeId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
         }
     }
 }

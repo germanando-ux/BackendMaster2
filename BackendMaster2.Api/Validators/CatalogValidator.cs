@@ -25,4 +25,20 @@ public class CreateColorValidator : AbstractValidator<ColorDto>
                 .NotEmpty().WithMessage("El Id es obligatorio en una actualización.");
         }
     }
+
+
+}
+
+public class CategoryValidator : AbstractValidator<CategoryDto>
+{
+
+    public CategoryValidator()
+    {
+        RuleFor(x => x.Name)
+            .NotEmpty().WithMessage("El nombre de la categoría es obligatorio.")
+            .MaximumLength(200).WithMessage("El nombre no puede superar 200 caracteres.");
+
+        RuleFor(x => x.IsActive)
+          .NotNull().WithMessage("El campo IsActive es obligatorio");
+    }
 }

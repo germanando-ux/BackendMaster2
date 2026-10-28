@@ -19,12 +19,14 @@ public class CatalogService : ICatalogService
         _aiService = aiService;
     }
 
+
+    //colores
     public async Task<ColorDto> CreateColorAsync(ColorDto colorDto)
     {
         Color newColor = _mapper.Map<Color>(colorDto);
         //genero vector embedding para el nombre del color
         newColor.Embedding = await _aiService.GenerateEmbeddingAsync(newColor.Name);
-        await _CatalogRepository.AddColorAsync(newColor);
+        await _CatalogRepository.CreateColorAsync(newColor);
         return _mapper.Map<ColorDto>(newColor);
         
     }
@@ -69,5 +71,56 @@ public class CatalogService : ICatalogService
 
         await _CatalogRepository.UpdateColorAsync(existing);
         return _mapper.Map<ColorDto>(existing);
+    }
+
+    //categorías
+
+    // ----- CATEGORIES -----
+
+    public async Task<CategoryDto> CreateCategoryAsync(CategoryDto categoryDto)
+    {
+        Category newCategory = _mapper.Map<Category>(categoryDto);
+        // Nota: Las categorías no llevan embedding, es un maestro de clasificación simple.
+        await _CatalogRepository.CreateCategoryAsync(newCategory);
+        return _mapper.Map<CategoryDto>(newCategory);
+    }
+
+    public async Task DeleteCategoryAsync(Guid id)
+    {
+        var existing = await _CatalogRepository.GetCategoryByIdAsync(id);
+        if (existing is null)
+        {
+            throw new NotFoundException($"No existe ninguna categoría con el id {id}.");
+        }
+
+        await _CatalogRepository.DeleteCategoryAsync(id);
+    }
+
+    public async Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync(BaseQueryDto query)
+    {
+        IEnumerable<Category> categories = await _CatalogRepository.GetAllCategoriesAsync(query);
+        return categories.Select(c => _mapper.Map<CategoryDto>(c));
+    }
+
+    public async Task<CategoryDto?> GetCategoryByIdAsync(Guid id)
+    {
+        Category category = await _CatalogRepository.GetCategoryByIdAsync(id);
+        return category != null ? _mapper.Map<CategoryDto>(category) : null;
+    }
+
+    public async Task<CategoryDto> UpdateCategoryAsync(CategoryDto categoryDto)
+    {
+        Category? existing = await _CatalogRepository.GetCategoryByIdAsync(categoryDto.Id);
+
+        if (existing is null)
+        {
+            throw new NotFoundException($"No existe ninguna categoría con el id {categoryDto.Id}.");
+        }
+
+        existing.Name = categoryDto.Name;
+        existing.IsActive = categoryDto.IsActive;
+
+        await _CatalogRepository.UpdateCategoryAsync(existing);
+        return _mapper.Map<CategoryDto>(existing);
     }
 }

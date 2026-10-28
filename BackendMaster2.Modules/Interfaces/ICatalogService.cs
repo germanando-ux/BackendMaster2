@@ -8,9 +8,18 @@ namespace BackendMaster2.Modules.Interfaces;
 
 public interface ICatalogService
 {
-    Task<ColorDto> CreateColorAsync(ColorDto color);
-    Task DeleteColorAsync(Guid id);
+    //colores
     Task<IEnumerable<ColorDto>> GetAllColorsAsync(BaseQueryDto query);
     Task<ColorDto?> GetColorByIdAsync(Guid id);
+    Task<ColorDto> CreateColorAsync(ColorDto color);
     Task<ColorDto?> UpdateColorAsync(ColorDto color);
+    Task DeleteColorAsync(Guid id);
+    
+
+    //categorías
+    Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync(BaseQueryDto query);
+    Task<CategoryDto?> GetCategoryByIdAsync(Guid id);
+    Task<CategoryDto> CreateCategoryAsync(CategoryDto categoryDto);
+    Task<CategoryDto?> UpdateCategoryAsync(CategoryDto categoryDto);
+    Task DeleteCategoryAsync(Guid id);
 }

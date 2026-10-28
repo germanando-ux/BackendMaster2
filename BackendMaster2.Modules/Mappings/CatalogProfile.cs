@@ -13,6 +13,9 @@ public class CatalogProfile : Profile
         CreateMap<Color, ColorDto>().ReverseMap();
         CreateMap<Marketplace, MarketplaceDto>().ReverseMap();
         CreateMap<DataSource, DataSourceDto>().ReverseMap();
+        CreateMap<Category, CategoryDto>();
+        CreateMap<CategoryDto, Category>();
+
 
         // 2. Product -> ProductDto 
         // Necesitamos decirle explícitamente cómo sacar los ColorIds de la tabla puente.
