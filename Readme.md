@@ -23,11 +23,18 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 - Bootstrap como única librería de UI (MudBlazor evaluado y retirado)
 - Layout propio: sidebar colapsable, navbar y tema de marca
 - Página de productos con listado, estados de carga/error y tabla tematizada
+- CRUD de maestros: colores, fuentes de datos y marketplaces
+- Login con validación de cliente (anotaciones) y pintado de ProblemDetails del middleware
+
+**Enriquecimiento del dominio (avance de Bloque E):** ✅
+- Maestros `DataSource` y `Marketplace` con CRUD completo (backend + frontend), validaciones y seeds
+- Categorías jerárquicas (`Category` con `ParentId`) y relación N:M con productos (`ProductCategory` con `IsPrimary`) vía migración EF Core
+- Endpoint de mejora de descripción de producto con IA + modal de confirmación y toast en el front
 
 ## 🛠️ Stack tecnológico
 
 ### Backend
-- **.NET 8** con ASP.NET Core
+- **.NET 10** con ASP.NET Core
 - **Entity Framework Core** + PostgreSQL dockerizado
 - **Npgsql + Pgvector**: Búsqueda vectorial y operadores de distancia de coseno (`<=>`)
 - **Microsoft.Extensions.AI**: Extracción de intención de búsqueda en lenguaje natural y generación de embeddings
@@ -39,6 +46,56 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 ### Frontend
 - **Blazor WebAssembly** (SPA con C#)
 - **Bootstrap** (para componentes HTML personalizados)
+
+## 📁 Estructura del proyecto
+
+```
+BackendMaster2.slnx
+├── BackendMaster2.Api          # Host ASP.NET Core: controllers, middlewares, SignalR, settings
+├── BackendMaster2.Modules      # Dominio modular: Auth + Catálogo (DbContext, entidades, servicios, repositorios, migraciones)
+│   ├── Auth                    # Módulo de autenticación (JWT + refresh tokens)
+│   ├── Data                    # AppDbContext
+│   ├── Dtos                    # Contratos de la API
+│   ├── Mappings                # Mapeo entidad <-> DTO
+│   ├── Migrations              # Migraciones EF Core (incluye pgvector)
+│   └── Services                # ProductService, CatalogService, MasterDataService, AiService
+├── BackendMaster2.Shared       # Utilidades transversales (VectorExtensions, validaciones de tipos)
+└── BackendMaster2.Web          # Frontend Blazor WebAssembly (páginas, layout, servicios HTTP, DTOs espejo)
+```
+
+## 🚀 Cómo ejecutar el proyecto
+
+### Requisitos
+- SDK **.NET 10**
+- **Docker** (para PostgreSQL + pgvector)
+
+### 1. Levantar la base de datos
+
+```bash
+docker compose up -d
+```
+
+Esto arranca `pgvector/pgvector:pg17` en el puerto `5432` (base `backendmaster2`, usuario `postgres`). Las credenciales están en `compose.yaml`.
+
+### 2. Ejecutar la API
+
+```bash
+dotnet run --project BackendMaster2.Api
+```
+
+Servida en `http://localhost:5150`. Documentación interactiva (Scalar/OpenAPI) en `http://localhost:5150/scalar`.
+
+### 3. Aplicar migraciones y seeds
+
+Aplica las migraciones de EF Core del proyecto `BackendMaster2.Modules` (por ejemplo con `dotnet ef database update --project BackendMaster2.Modules --startup-project BackendMaster2.Api`) y, una vez arrancada la API, carga los datos iniciales invocando el endpoint `POST /api/seed` (idempotente: genera maestros, usuarios y 200+ productos mock con embeddings).
+
+### 4. Ejecutar el frontend
+
+```bash
+dotnet run --project BackendMaster2.Web
+```
+
+El front consume la API vía HTTP; CORS ya está configurado para desarrollo.
 
 ## 🏗️ Decisiones de arquitectura
 
@@ -131,27 +188,30 @@ JWT con access tokens cortos (15 min) y refresh tokens en base de datos (7 días
 
 ### En progreso
 - 🚧 **Bloque C:** Frontend Blazor WebAssembly
-  - ✅ Esqueleto de layout con Bootstrap 
+  - ✅ Esqueleto de layout con Bootstrap
   - ✅ Configuración CORS en backend
-  - ⏳ Integración con API de autenticación
-  - ⏳ Gestión de estado de sesión
-  - ⏳ Páginas de productos y usuarios
+  - ✅ Página de productos (listado, formulario, estados de carga/error)
+  - ✅ CRUD de maestros en el front: colores, fuentes de datos y marketplaces
+  - ✅ Login con validación de cliente y pintado de ProblemDetails
+  - ⏳ Gestión de estado de sesión (refresh tokens en el front)
+  - ⏳ Integración de categorías en la página de productos
 
 ### Futuro
 - ⏳ **Bloque D:** Procesamiento asíncrono y tareas en segundo plano
   - **BackgroundServices** para tareas periódicas y limpieza automática
   - **Gestor de trabajos** (Hangfire o similar) para colas de trabajo persistentes
   - **Batch processing** para importaciones masivas de productos
-  - **SignalR** para notificaciones de progreso en tiempo real
+  - 🚧 **SignalR** para notificaciones de progreso en tiempo real (servicio base ya integrado en el Api)
   - **Redis** para caché distribuido y rate limiting
   - **RabbitMQ** para mensajería asíncrona entre módulos
   - **Elasticsearch + Kibana** para búsqueda avanzada de productos y análisis de logs
 
-- ⏳ **Bloque E:** Enriquecimiento del dominio
-  - Categorías de producto (maestro nuevo + relación 1:N)
-  - Tallas (maestro + relación N:M)
-  - Características (JSONB o EAV según necesidad de filtrado)
-  - Auditoría de cambios en entidades críticas
+- 🚧 **Bloque E:** Enriquecimiento del dominio
+  - ✅ Maestros `DataSource` y `Marketplace` con CRUD completo y seeds
+  - ✅ Categorías jerárquicas (`Category` con `ParentId`) + relación N:M con productos (`ProductCategory.IsPrimary`)
+  - ⏳ Tallas (maestro + relación N:M con stock por talla)
+  - ⏳ Características (JSONB o EAV según necesidad de filtrado)
+  - ⏳ Auditoría de cambios en entidades críticas
 
 - ⏳ **Bloque F:** Testing y calidad
   - Tests unitarios con xUnit
