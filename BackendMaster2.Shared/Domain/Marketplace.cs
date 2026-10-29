@@ -13,4 +13,6 @@ public class Marketplace
     public string Name { get; set; } = string.Empty; // Ej: "Amazon ES"
     public string Code { get; set; } = string.Empty; // Ej: "AMAZON_ES"
     public bool IsActive { get; set; } = true;
+    // Relación N:M con productos a través de la tabla de unión
+    public ICollection<ProductMarketplace> ProductMarketplaces { get; set; } = new List<ProductMarketplace>();
 }

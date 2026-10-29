@@ -1,4 +1,5 @@
-﻿using BackendMaster2.Shared.Domain;
+﻿using BackendMaster2.Shared;
+using BackendMaster2.Shared.Domain;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,9 @@ namespace BackendMaster2.Modules.Data
         public DbSet<Color> Color => Set<Color>();
         public DbSet<ProductOption> ProductOptions => Set<ProductOption>();
         public DbSet<DataSource> DataSources => Set<DataSource>();
+        public DbSet<ProductDataSource> ProductDataSources => Set<ProductDataSource>();        
         public DbSet<Marketplace> Marketplaces => Set<Marketplace>();
+        public DbSet<ProductMarketplace> ProductMarketplaces => Set<ProductMarketplace>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
         public DbSet<SizeGroup> SizeGroups => Set<SizeGroup>();
@@ -159,6 +162,44 @@ namespace BackendMaster2.Modules.Data
                       .WithMany(s => s.ProductSizes)
                       .HasForeignKey(e => e.SizeId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configuración de ProductDatasource (Tabla de unión N:M)
+            modelBuilder.Entity<ProductDataSource>(entity =>
+            {
+                // Clave compuesta
+                entity.HasKey(e => new { e.ProductId, e.DataSourceId });
+
+                // Relación con Product
+                entity.HasOne(e => e.Product)
+                      .WithMany(p => p.ProductDataSources)
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con DataSource
+                entity.HasOne(e => e.DataSource)
+                      .WithMany(c => c.ProductDataSources)
+                      .HasForeignKey(e => e.DataSourceId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Configuración de ProductMarketplace (Tabla de unión N:M)
+            modelBuilder.Entity<ProductMarketplace>(entity =>
+            {
+                // Clave compuesta
+                entity.HasKey(e => new { e.ProductId, e.MarketplaceId });
+
+                // Relación con Product
+                entity.HasOne(e => e.Product)
+                      .WithMany(p => p.ProductMarketplaces)
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con Marketplace
+                entity.HasOne(e => e.Marketplace)
+                      .WithMany(m => m.ProductMarketplaces)
+                      .HasForeignKey(e => e.MarketplaceId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
         }

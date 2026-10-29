@@ -29,112 +29,118 @@ public class SeedController : ControllerBase
 
         try
         {
-            //// 1. OBTENER COLORES EXISTENTES (Idempotencia)
+            // 1. COLORES (Comentado según tu código)
             //var queryVacia = new BaseQueryDto();
             //var coloresExistentes = await _catalogService.GetAllColorsAsync(queryVacia);
             //var colorIdsDict = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
-
-            //foreach (var color in coloresExistentes)
-            //{
-            //    colorIdsDict[color.Name] = color.Id;
-            //    result.ColorsSkipped++;
-            //}
-
-            //// 2. CREAR SOLO LOS COLORES QUE FALTEN
-            //foreach (var colorData in _seedColors)
-            //{
-            //    if (colorIdsDict.ContainsKey(colorData.Name))
-            //    {
-            //        continue; // Ya existe, usaremos su ID
-            //    }
-
-            //    try
-            //    {
-            //        var colorDto = new ColorDto
-            //        {
-            //            Name = colorData.Name,
-            //            HexCode = colorData.HexCode,
-            //            IsActive = true
-            //        };
-
+            //foreach (var color in coloresExistentes) { colorIdsDict[color.Name] = color.Id; result.ColorsSkipped++; }
+            //foreach (var colorData in _seedColors) {
+            //    if (colorIdsDict.ContainsKey(colorData.Name)) continue;
+            //    try {
+            //        var colorDto = new ColorDto { Name = colorData.Name, HexCode = colorData.HexCode, IsActive = true };
             //        var created = await _catalogService.CreateColorAsync(colorDto);
-            //        colorIdsDict[colorData.Name] = created.Id;
-            //        result.ColorsCreated++;
-
-            //        await Task.Delay(1100, cancellationToken); // Rate limit Gemini: 1 RPS
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Console.WriteLine($"[SEED] Error creando color {colorData.Name}: {ex.Message}");
-            //    }
+            //        colorIdsDict[colorData.Name] = created.Id; result.ColorsCreated++;
+            //        await Task.Delay(1100, cancellationToken);
+            //    } catch (Exception ex) { Console.WriteLine($"[SEED] Error creando color {colorData.Name}: {ex.Message}"); }
             //}
 
-            //if (!colorIdsDict.Any())
-            //{
-            //    return StatusCode(500, new { error = "No se pudieron obtener ni crear colores." });
+            // 2. CATEGORÍAS (Comentado según tu código)
+            //var categoriasSeed = new[] { "Ropa", "Calzado", "Electrónica", "Hogar", "Deportes" };
+            //var categoriasExistentes = (await _catalogService.GetAllCategoriesAsync(new BaseQueryDto())).Select(c => c.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            //foreach (var catName in categoriasSeed) {
+            //    if (categoriasExistentes.Contains(catName)) { result.CategoriesSkipped++; continue; }
+            //    try {
+            //        await _catalogService.CreateCategoryAsync(new CategoryDto { Name = catName, IsActive = true });
+            //        result.CategoriesCreated++;
+            //    } catch (Exception ex) { Console.WriteLine($"[SEED] Error creando categoría {catName}: {ex.Message}"); }
             //}
 
-            //var colorIdsList = colorIdsDict.Values.ToList();
+            // ========================================================================
+            // 2.6 SEED DE SIZE GROUPS (ACTIVO E IDEMPOTENTE)
+            // ========================================================================
+            var sizeGroupsSeedData = new[] { "EU", "US", "UK", "INT", "FR" };
+            var existingSizeGroups = await _catalogService.GetAllSizeGroupsAsync(new BaseQueryDto());
+            var sizeGroupsDict = existingSizeGroups.ToDictionary(sg => sg.Name, sg => sg.Id, StringComparer.OrdinalIgnoreCase);
 
-            // 2.5 SEED DE CATEGORÍAS (Idempotente)
-            var categoriasSeed = new[] { "Ropa", "Calzado", "Electrónica", "Hogar", "Deportes" };
-            var categoriasExistentes = (await _catalogService.GetAllCategoriesAsync(new BaseQueryDto()))
-                .Select(c => c.Name)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var catName in categoriasSeed)
+            foreach (var sgName in sizeGroupsSeedData)
             {
-                if (categoriasExistentes.Contains(catName))
+                if (sizeGroupsDict.ContainsKey(sgName))
                 {
-                    result.CategoriesSkipped++;
+                    result.SizeGroupsSkipped++;
                     continue;
                 }
 
                 try
                 {
-                    await _catalogService.CreateCategoryAsync(new CategoryDto
-                    {
-                        Name = catName,
-                        IsActive = true
-                    });
-                    result.CategoriesCreated++;
+                    var created = await _catalogService.CreateSizeGroupAsync(new SizeGroupDto { Name = sgName, IsActive = true });
+                    sizeGroupsDict[sgName] = created.Id;
+                    result.SizeGroupsCreated++;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[SEED] Error creando categoría {catName}: {ex.Message}");
+                    Console.WriteLine($"[SEED] Error creando SizeGroup {sgName}: {ex.Message}");
                 }
             }
 
-            //    // 3. GENERAR 200 PRODUCTOS MOCK
-            //    var productosGenerados = GenerarProductosMock(200, colorIdsList);
+            // ========================================================================
+            // 2.7 SEED DE SIZES (ACTIVO E IDEMPOTENTE)
+            // ========================================================================
+            var sizesByGroup = new Dictionary<string, string[]>
+            {
+                { "EU", new[] { "36", "38", "40", "42", "44", "46", "48" } },
+                { "US", new[] { "4", "6", "8", "10", "12", "14" } },
+                { "UK", new[] { "6", "8", "10", "12", "14" } },
+                { "INT", new[] { "XS", "S", "M", "L", "XL", "XXL" } },
+                { "FR", new[] { "34", "36", "38", "40", "42" } }
+            };
 
-            //    // 4. CREAR PRODUCTOS EN LA BASE DE DATOS
-            //    foreach (var productData in productosGenerados)
-            //    {
-            //        try
-            //        {
-            //            var productDto = new ProductDto
-            //            {
-            //                Sku = productData.Sku,
-            //                Name = productData.Name,
-            //                Description = productData.Description,
-            //                Price = productData.Price,
-            //                Stock = productData.Stock,
-            //                IsActive = true,
-            //                ColorIds = productData.ColorIds
-            //            };
+            var existingSizes = await _catalogService.GetAllSizesAsync(new BaseQueryDto());
+            var existingSizesKeys = existingSizes.Select(s => $"{s.SizeGroupId}_{s.Name.ToLower()}").ToHashSet();
 
-            //            await _productService.CreateAsync(productDto);
-            //            result.ProductsCreated++;
+            foreach (var kvp in sizesByGroup)
+            {
+                if (!sizeGroupsDict.TryGetValue(kvp.Key, out var sizeGroupId))
+                {
+                    Console.WriteLine($"[SEED] SizeGroup {kvp.Key} no encontrado, saltando sus tallas.");
+                    continue;
+                }
 
-            //            await Task.Delay(1100, cancellationToken); // Rate limit Gemini: 1 RPS
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            result.ProductsSkipped++;
-            //            Console.WriteLine($"[SEED] Error creando producto {productData.Sku}: {ex.Message}");
-            //        }
+                foreach (var sizeName in kvp.Value)
+                {
+                    var uniqueKey = $"{sizeGroupId}_{sizeName.ToLower()}";
+                    if (existingSizesKeys.Contains(uniqueKey))
+                    {
+                        result.SizesSkipped++;
+                        continue;
+                    }
+
+                    try
+                    {
+                        await _catalogService.CreateSizeAsync(new SizeDto { Name = sizeName, SizeGroupId = sizeGroupId, IsActive = true });
+                        existingSizesKeys.Add(uniqueKey);
+                        result.SizesCreated++;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[SEED] Error creando Size {sizeName} para {kvp.Key}: {ex.Message}");
+                    }
+                }
+            }
+            // ========================================================================
+
+            // 3. PRODUCTOS (Comentado según tu código)
+            //var productosGenerados = GenerarProductosMock(200, colorIdsList); // Nota: colorIdsList estaría comentado también
+            //foreach (var productData in productosGenerados) {
+            //    try {
+            //        var productDto = new ProductDto { Sku = productData.Sku, Name = productData.Name, Description = productData.Description, Price = productData.Price, Stock = productData.Stock, IsActive = true, ColorIds = productData.ColorIds };
+            //        await _productService.CreateAsync(productDto);
+            //        result.ProductsCreated++;
+            //        await Task.Delay(1100, cancellationToken);
+            //    } catch (Exception ex) {
+            //        result.ProductsSkipped++;
+            //        Console.WriteLine($"[SEED] Error creando producto {productData.Sku}: {ex.Message}");
             //    }
+            //}
 
             result.TotalTimeSeconds = (int)(DateTime.UtcNow - startTime).TotalSeconds;
             return Ok(result);
@@ -175,23 +181,16 @@ public class SeedController : ControllerBase
         for (int i = 1; i <= cantidad; i++)
         {
             var plantilla = plantillas[_random.Next(plantillas.Length)];
-
             var prefijo = prefijos[_random.Next(prefijos.Length)];
             var sufijo = sufijos[_random.Next(sufijos.Length)];
             var nombre = $"{prefijo} {plantilla.Nombre} {sufijo} {i:D3}";
             var sku = $"{plantilla.Categoria.Substring(0, 3).ToUpper()}-{prefijo.Substring(0, 3).ToUpper()}-{i:D4}";
 
-            var precio = Math.Round(
-                plantilla.PrecioMin +
-                (_random.NextDecimal() * (plantilla.PrecioMax - plantilla.PrecioMin)), 2);
-
+            var precio = Math.Round(plantilla.PrecioMin + ((decimal)_random.NextDouble() * (plantilla.PrecioMax - plantilla.PrecioMin)), 2);
             var stock = _random.Next(10, 250);
 
-            var numColores = _random.Next(2, 4); // 2 o 3 colores
-            var coloresAsignados = colorIdsDisponibles
-                .OrderBy(_ => Guid.NewGuid())
-                .Take(numColores)
-                .ToList();
+            var numColores = _random.Next(2, 4);
+            var coloresAsignados = colorIdsDisponibles.OrderBy(_ => Guid.NewGuid()).Take(numColores).ToList();
 
             productos.Add((sku, nombre, plantilla.Desc, precio, stock, coloresAsignados));
         }
@@ -201,21 +200,11 @@ public class SeedController : ControllerBase
 
     private static readonly List<(string Name, string HexCode)> _seedColors = new()
     {
-        ("Rojo Ferrari", "#D40000"),
-        ("Azul Marino", "#000080"),
-        ("Verde Bosque", "#228B22"),
-        ("Negro Mate", "#1C1C1C"),
-        ("Blanco Perla", "#F0EDE2"),
-        ("Gris Plata", "#C0C0C0"),
-        ("Amarillo Sol", "#FFD700"),
-        ("Naranja Fuego", "#FF4500"),
-        ("Rosa Palo", "#FADADD"),
-        ("Morado Vino", "#722F37"),
-        ("Turquesa", "#40E0D0"),
-        ("Burdeos", "#800020"),
-        ("Beige Arena", "#F5F5DC"),
-        ("Verde Aguamarina", "#7FFFD4"),
-        ("Gris Carbón", "#36454F")
+        ("Rojo Ferrari", "#D40000"), ("Azul Marino", "#000080"), ("Verde Bosque", "#228B22"),
+        ("Negro Mate", "#1C1C1C"), ("Blanco Perla", "#F0EDE2"), ("Gris Plata", "#C0C0C0"),
+        ("Amarillo Sol", "#FFD700"), ("Naranja Fuego", "#FF4500"), ("Rosa Palo", "#FADADD"),
+        ("Morado Vino", "#722F37"), ("Turquesa", "#40E0D0"), ("Burdeos", "#800020"),
+        ("Beige Arena", "#F5F5DC"), ("Verde Aguamarina", "#7FFFD4"), ("Gris Carbón", "#36454F")
     };
 }
 
@@ -225,6 +214,13 @@ public record SeedResultDto
     public int ColorsSkipped { get; set; }
     public int CategoriesCreated { get; set; }
     public int CategoriesSkipped { get; set; }
+    
+    // NUEVO: Contadores para Tallas
+    public int SizeGroupsCreated { get; set; }
+    public int SizeGroupsSkipped { get; set; }
+    public int SizesCreated { get; set; }
+    public int SizesSkipped { get; set; }
+    
     public int ProductsCreated { get; set; }
     public int ProductsSkipped { get; set; }
     public int TotalTimeSeconds { get; set; }

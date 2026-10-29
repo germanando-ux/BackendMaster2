@@ -16,7 +16,7 @@ namespace BackendMaster2.Modules.Interfaces
         Task<IEnumerable<ProductSearchHybridResult>> GetAllProductsHybridSearchAsync(QueryHybridProductDto query);
         Task<Product?> GetByIdAsync(Guid id);
         Task<Product?> GetBySkuAsync(string sku);
-        Task AddAsync(Product product);
+        Task CreateAsync(Product product);
         Task UpdateAsync(Product product);
         Task DeleteAsync(Guid id);
     }

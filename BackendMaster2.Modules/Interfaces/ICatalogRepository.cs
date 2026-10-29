@@ -21,4 +21,18 @@ public interface ICatalogRepository
     Task CreateCategoryAsync(Category category);
     Task<Category> UpdateCategoryAsync(Category category);
     Task DeleteCategoryAsync(Guid id);
+
+    // ----- SIZE GROUPS -----
+    Task<IEnumerable<SizeGroup>> GetAllSizeGroupsAsync(BaseQueryDto query);
+    Task<SizeGroup?> GetSizeGroupByIdAsync(Guid id);
+    Task CreateSizeGroupAsync(SizeGroup sizeGroup);
+    Task UpdateSizeGroupAsync(SizeGroup sizeGroup);
+    Task DeleteSizeGroupAsync(Guid id);
+
+    // ----- SIZES -----
+    Task<IEnumerable<Size>> GetAllSizesAsync(BaseQueryDto query);
+    Task<Size?> GetSizeByIdAsync(Guid id);
+    Task CreateSizeAsync(Size size);
+    Task UpdateSizeAsync(Size size);
+    Task DeleteSizeAsync(Guid id);
 }

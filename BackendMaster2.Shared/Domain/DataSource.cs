@@ -11,4 +11,6 @@ public class DataSource
     public string Name { get; set; } = string.Empty; // Ej: "Shopify Tienda ES"
     public string Code { get; set; } = string.Empty; // Ej: "SHOPIFY_ES" (para lógica interna)
     public bool IsActive { get; set; } = true;
+    // Relación N:M con productos a través de la tabla de unión
+    public ICollection<ProductDataSource> ProductDataSources { get; set; } = new List<ProductDataSource>();
 }

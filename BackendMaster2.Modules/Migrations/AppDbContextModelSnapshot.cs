@@ -243,6 +243,9 @@ namespace BackendMaster2.Modules.Migrations
                     b.Property<Guid>("SizeId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal?>("Price")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("Sku")
                         .HasColumnType("text");
 
@@ -366,6 +369,50 @@ namespace BackendMaster2.Modules.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.ProductDataSource", b =>
+                {
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ExternalCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastSyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ProductId", "DataSourceId");
+
+                    b.HasIndex("DataSourceId");
+
+                    b.ToTable("ProductDataSources");
+                });
+
+            modelBuilder.Entity("BackendMaster2.Shared.ProductMarketplace", b =>
+                {
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MarketplaceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ExternalCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastSyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ProductId", "MarketplaceId");
+
+                    b.HasIndex("MarketplaceId");
+
+                    b.ToTable("ProductMarketplaces");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.Person", b =>
                 {
                     b.HasOne("BackendMaster2.Shared.Domain.User", "User")
@@ -454,14 +501,66 @@ namespace BackendMaster2.Modules.Migrations
                     b.Navigation("SizeGroup");
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.ProductDataSource", b =>
+                {
+                    b.HasOne("BackendMaster2.Shared.Domain.DataSource", "DataSource")
+                        .WithMany("ProductDataSources")
+                        .HasForeignKey("DataSourceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BackendMaster2.Shared.Domain.Product", "Product")
+                        .WithMany("ProductDataSources")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DataSource");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("BackendMaster2.Shared.ProductMarketplace", b =>
+                {
+                    b.HasOne("BackendMaster2.Shared.Domain.Marketplace", "Marketplace")
+                        .WithMany("ProductMarketplaces")
+                        .HasForeignKey("MarketplaceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BackendMaster2.Shared.Domain.Product", "Product")
+                        .WithMany("ProductMarketplaces")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Marketplace");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.Category", b =>
                 {
                     b.Navigation("ProductCategories");
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.DataSource", b =>
+                {
+                    b.Navigation("ProductDataSources");
+                });
+
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.Marketplace", b =>
+                {
+                    b.Navigation("ProductMarketplaces");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.Product", b =>
                 {
                     b.Navigation("ProductCategories");
+
+                    b.Navigation("ProductDataSources");
+
+                    b.Navigation("ProductMarketplaces");
 
                     b.Navigation("ProductOptions");
 

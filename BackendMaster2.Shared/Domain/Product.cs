@@ -25,6 +25,10 @@ namespace BackendMaster2.Shared.Domain
         public ICollection<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
         // Relación con tallas (variantes con stock
         public ICollection<ProductSize> ProductSizes { get; set; } = new List<ProductSize>();
+        // Relación con fuentes de datos (para sincronización)
+        public ICollection<ProductDataSource> ProductDataSources { get; set; } = new List<ProductDataSource>();
+        // Relación con marketplaces (para sincronización)
+        public ICollection<ProductMarketplace> ProductMarketplaces { get; set; } = new List<ProductMarketplace>();
 
     }
 }

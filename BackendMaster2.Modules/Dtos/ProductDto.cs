@@ -10,5 +10,11 @@ public class ProductDto
     public int Stock { get; set; }
     public bool IsActive { get; set; } = true;
     public List<Guid> ColorIds { get; set; } = new();
+    public List<Guid> CategoryIds { get; set; } = new();
+    public List<Guid> SizeIds { get; set; } = new();
+    public IEnumerable<ProductSizeDto> ProductSizes { get; set; } = null!;
+    public IEnumerable<ProductDataSourceDto> ProductDataSources { get; set; } = null!;
+    public IEnumerable<ProductMarketplaceDto> ProductMarketplaces { get; set; } = null!;
+
 
 }

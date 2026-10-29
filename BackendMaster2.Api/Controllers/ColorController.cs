@@ -14,11 +14,11 @@ namespace BackendMaster2.Api.Controllers;
 public class ColorController : ControllerBase
 {
     private readonly ICatalogService _catalogService;
-    private readonly CreateColorValidator _createColorValidator;
-    public ColorController(ICatalogService catalogService, CreateColorValidator createCatalogValidator)
+    private readonly ColorValidator _colorValidator;
+    public ColorController(ICatalogService catalogService, ColorValidator colorValidator)
     {
         _catalogService = catalogService;
-        _createColorValidator = createCatalogValidator;
+        _colorValidator = colorValidator;
     }
 
     [Authorize]
@@ -42,7 +42,7 @@ public class ColorController : ControllerBase
     [HttpPost("CreateColor")]
     public async Task<ActionResult<ColorDto>> CreateColor(ColorDto color)
     {
-        await _createColorValidator.ValidateAndThrowAsync(color);
+        await _colorValidator.ValidateAndThrowAsync(color);
 
         ColorDto created = await _catalogService.CreateColorAsync(color);
         //devuelve el color creado con un código de estado 201 Created y la ubicación del recurso creado
@@ -54,7 +54,7 @@ public class ColorController : ControllerBase
     [HttpPut("UpdateColor/{id}")]
     public async Task<ActionResult<ColorDto>> UpdateColor(Guid id, ColorDto color)
     {
-        await _createColorValidator.ValidateAndThrowAsync(color);
+        await _colorValidator.ValidateAndThrowAsync(color);
 
         ColorDto? updated = await _catalogService.UpdateColorAsync(color);
         return Ok(updated);

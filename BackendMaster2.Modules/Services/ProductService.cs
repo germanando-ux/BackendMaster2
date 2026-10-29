@@ -82,7 +82,7 @@ namespace BackendMaster2.Modules.Services
             }).ToList();
 
             // 3. Guardamos la entidad (EF Core insertará el producto y sus opciones en cascada)
-            await _productRepository.AddAsync(newProduct);
+            await _productRepository.CreateAsync(newProduct);
             // 4. Devolvemos el DTO con el Id ya generado por la base de datos
             return _mapper.Map<ProductDto>(newProduct);
         }

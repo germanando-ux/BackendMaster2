@@ -170,7 +170,7 @@ namespace BackendMaster2.Modules.Repository
 
         // INSERT: Add() marca el objeto como "pendiente de insertar";
         // SaveChanges() ejecuta el INSERT de verdad.
-        public async Task AddAsync(Product product)
+        public async Task CreateAsync(Product product)
         {
             _context.Products.Add(product);
             await _context.SaveChangesAsync();

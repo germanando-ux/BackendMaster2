@@ -15,6 +15,8 @@ public class CatalogProfile : Profile
         CreateMap<DataSource, DataSourceDto>().ReverseMap();
         CreateMap<Category, CategoryDto>();
         CreateMap<CategoryDto, Category>();
+        CreateMap<SizeGroupDto, SizeGroup>().ReverseMap(); ;
+        CreateMap<SizeDto, Size>().ReverseMap(); 
 
 
         // 2. Product -> ProductDto 
