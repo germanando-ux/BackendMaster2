@@ -9,7 +9,7 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 ## 📊 Estado actual
 
 **Bloque A (Backend):** ✅ Completado
-- API REST con ASP.NET Core 10
+- API REST con ASP.NET Core
 - Autenticación JWT con refresh tokens
 - PostgreSQL dockerizado + EF Core
 - Middleware de excepciones con ProblemDetails
@@ -17,8 +17,10 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 - Scalar/OpenAPI para documentación interactiva
 - CORS configurado para desarrollo
 - ✅ Búsqueda híbrida semántica con `pgvector` e IA (extracción de intención + umbral de similitud)
+- ✅ **Dominio de Producto evolucionado a PIM**: Relaciones N:M con payload implementadas (Tallas con Stock/Precio, Categorías, DataSources y Marketplaces). Patrón de sincronización quirúrgica (Clear + Add) aplicado en EF Core para actualizaciones eficientes y transaccionales.
+- ✅ **SignalR**: Implementado para notificaciones de progreso en tiempo real (ej. enriquecimiento de descripciones con IA).
 
-**Bloque C (Frontend):** 🚧 En progreso
+**Bloque C (Frontend):**  En progreso
 - Blazor WebAssembly standalone
 - Bootstrap como única librería de UI (MudBlazor evaluado y retirado)
 - Layout propio: sidebar colapsable, navbar y tema de marca
@@ -35,6 +37,7 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 - **BCrypt** para hashing de contraseñas
 - **JWT Bearer** para autenticación
 - **Scalar** para documentación OpenAPI interactiva
+- **SignalR** para comunicación en tiempo real servidor-cliente
 
 ### Frontend
 - **Blazor WebAssembly** (SPA con C#)
@@ -43,98 +46,54 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 ## 🏗️ Decisiones de arquitectura
 
 ### 1. DTOs en cliente y servidor (estrategia de espejo manual)
-
-**Decisión:** Los DTOs existen tanto en el backend (`BackendMaster2.Api.Models.Dtos`) como en el frontend (`BackendMaster2.Web.Models.Dtos`), copiados manualmente.
-
-**Alternativas consideradas:**
-- DTOs compartidos en proyecto `Shared` (referencia de proyecto)
-- Generación automática con NSwag/OpenAPI
-- DTOs solo en backend con tipos anónimos en frontend
-
-**Por qué esta elección:**
-- El frontend vive en la misma solución pero es una isla independiente
-- Evita acoplar el Web al proyecto Api (no arrastrar dependencias del servidor)
-- Permite segregar el frontend a otro repositorio en el futuro sin romper nada
-- El coste de mantener los espejos es asumible: el proceso es manual pero controlado, y crece de forma lineal y predecible con el número de contratos
-
-**Consecuencia:** Cada cambio en el contrato requiere actualizar ambos lados manualmente. Para proyectos más grandes, se migraría a generación automática con NSwag.
+**Decisión:** Los DTOs existen tanto en el backend como en el frontend, copiados manualmente.
+**Por qué esta elección:** El frontend vive en la misma solución pero es una isla independiente. Evita acoplar el Web al proyecto Api (no arrastrar dependencias del servidor) y permite segregar el frontend a otro repositorio en el futuro sin romper nada. El coste de mantener los espejos es asumible y predecible.
 
 ### 2. Uso flexible de entidades vs DTOs
-
 **Decisión:** En algunos endpoints simples se devuelven entidades directamente, mientras que en endpoints complejos se usan DTOs específicos.
+**Por qué esta flexibilidad:** Para endpoints de lectura simple, crear un DTO idéntico a la entidad añade fricción sin beneficio claro. Los DTOs se usan cuando hay transformación de datos, ocultación de campos internos, o composición de múltiples fuentes.
 
-**Alternativa canónica:** Siempre usar DTOs, nunca exponer entidades de dominio.
+### 3. Controllers REST pragmáticos
+**Decisión:** Los controllers siguen convenciones REST en general, pero priorizan claridad y simplicidad sobre adherencia estricta al patrón.
+**Por qué esta flexibilidad:** Para peticiones complejas, REST puro se queda corto. Reduce la carga cognitiva al navegar el código.
 
-**Por qué esta flexibilidad:**
-- Para endpoints de lectura simple (lista de productos), crear un DTO idéntico a la entidad añade fricción sin beneficio claro
-- Los DTOs se usan cuando hay transformación de datos, ocultación de campos internos, o composición de múltiples fuentes
-
-**Regla práctica:** Si el DTO sería idéntico a la entidad y no hay lógica de transformación, se puede devolver la entidad. Si hay que filtrar campos, calcular valores, o combinar datos, se crea un DTO.
-
-### 3. Controllers REST pragmáticos (no estrictamente REST)
-
-**Decisión:** Los controllers siguen convenciones REST en general, pero priorizan claridad y simplicidad sobre adherencia estricta al patrón REST.
-
-**Ejemplos de pragmatismo:**
-- Endpoints con verbos POST para acciones que no son creación (`POST /api/auth/refresh`, `POST /api/auth/revoke`)
-- URLs con verbos en lugar de sustantivos cuando la acción es más clara que el recurso
-
-**Por qué esta flexibilidad:**
-- Para peticiones complejas, REST puro se queda corto y no siempre encaja bien con acciones específicas del dominio
-- Reduce la carga cognitiva al navegar el código
-
-### 4. Blazor WebAssembly con Bootstrap puro (MudBlazor evaluado y retirado)
-
+### 4. Blazor WebAssembly con Bootstrap puro
 **Decisión:** El frontend usa Bootstrap + HTML puro como única librería de UI.
-
-**Historia:** El proyecto arrancó con MudBlazor como librería principal. Durante el Bloque C se sustituyó progresivamente por Bootstrap y, cuando ningún componente la usaba ya, se retiró por completo en cuatro pasos: links del index.html, usings, registro de servicios y paquete NuGet.
-
-**Por qué Bootstrap puro:**
-- Control total: cada clase y cada regla css del proyecto es nuestra y se puede leer
-- Menos magia: cualquier comportamiento se depura en el markup, no dentro de una librería
-- Aprendizaje más profundo de HTML/CSS y de los mecanismos de Blazor sin capas intermedias
-- Cero dependencias de UI externas que versionar
-
-**Coste asumido:** Los componentes ricos (tablas con ordenación, diálogos, toasts) se construyen a mano sobre clases de Bootstrap. Más markup propio, a cambio de entender cada línea.
-
-**Consecuencia:** El sistema de tema vive centralizado en `wwwroot/css/app.css` (token `--color-marca`, override parcial de variables de Bootstrap y extensiones puntuales como `.table-encabezado-marca`).
+**Por qué esta elección:** Control total del CSS, menos magia, aprendizaje más profundo de los mecanismos de Blazor sin capas intermedias y cero dependencias de UI externas que versionar.
 
 ### 5. Autenticación JWT
-
 JWT con access tokens cortos (15 min) y refresh tokens en base de datos (7 días) con capacidad de revocación. Patrón estándar de la industria.
 
 ### 6. Arquitectura modular en el backend
-
 **Decisión:** El código está organizado en módulos (`Auth`, `ProductManagement`) dentro de `BackendMaster2.Modules`, no en carpetas por capa técnica.
-
-**Por qué esta estructura:**
-- Cada módulo es autocontenido: tiene sus propios repositorios, servicios, DTOs y entidades
-- Facilita la extracción futura de módulos a microservicios si fuera necesario
-- Reduce el acoplamiento entre dominios diferentes
-- Más fácil de navegar: todo lo relacionado con "productos" está junto, no disperso en Controllers/Services/Repositories
+**Por qué esta estructura:** Cada módulo es autocontenido, facilita la extracción futura a microservicios, reduce el acoplamiento y hace el código más fácil de navegar.
 
 ### 7. Búsqueda Híbrida y Umbral de Similitud
+**Decisión:** La búsqueda combina filtros duros en la base de datos con ordenación semántica (`pgvector`), aplicando un umbral de similitud en memoria para descartar resultados irrelevantes.
+**Por qué esta elección:** Evita devolver "lo menos malo" cuando no hay coincidencias reales. El cálculo del score se delega a C# puro para evitar errores de traducción de EF Core.
 
-**Decisión:** La búsqueda combina filtros duros (precio, stock) en la base de datos con ordenación semántica (`pgvector`), aplicando un umbral de similitud (ej. 60%) en memoria para descartar resultados irrelevantes ("ruido").
-
-**Por qué esta elección:**
-- Evita devolver "lo menos malo" cuando no hay coincidencias reales en el dataset.
-- El cálculo del `SimilarityScore` se delega a una extensión C# pura (`VectorExtensions.CalculateCosineSimilarity` en `Shared`) para evitar errores de traducción de EF Core y mantener el código limpio, testeable y reutilizable.
-- Los DTOs de respuesta de búsqueda (`ProductSearchHybridDto`) están aislados en un archivo de soporte (`SupportDtos.cs`) para no ensuciar los DTOs de dominio principales con campos *ad-hoc*.
+### 8. Evolución hacia PIM: Pragmatismo sobre Sobreingeniería
+**Decisión:** El modelo de datos evoluciona hacia un PIM (Product Information Management) simplificado. Se gestionan orígenes (`ProductDataSource`) y canales de destino (`ProductMarketplace`) con atributos específicos de sincronización (`ExternalCode`, `LastSyncedAt`), evitando la complejidad extrema de sistemas enterprise legacy.
+**Contexto:** Un PIM real (como los utilizados en integración con grandes marketplaces) suele tener una complejidad abrumadora: multi-idioma, multi-moneda, gestión de assets digitales, reglas de negocio por canal y separación estricta de "características de cliente" vs "características de proveedor". 
+**Por qué esta elección:** 
+- **YAGNI:** Replicar esa complejidad en un proyecto de aprendizaje añade coste sin valor formativo inmediato.
+- **Escalabilidad controlada:** El modelo actual (entidad central `Product` + tablas de unión con payload) es suficiente para demostrar la gestión de variantes y la distribución multicanal.
+- **Futuro:** Si se requieren atributos específicos por canal, el sistema de Atributos (Bloque E) está diseñado para extenderse sin necesidad de duplicar toda la estructura de tablas.
 
 ## 🗺️ Roadmap
 
 ### Completado
-- ✅ **Bloque A:** Backend completo con autenticación JWT, gestión de productos, middleware de errores y búsqueda semántica
-- ✅ **Bloque A.5:** Validación JWT en endpoints protegidos
-- ✅ **Configuración:** PostgreSQL dockerizado, EF Core, migraciones, seeds
+- ✅ **Bloque A:** Backend completo con autenticación JWT, gestión de productos, middleware de errores y búsqueda semántica.
+- ✅ **Bloque A.5:** Validación JWT en endpoints protegidos.
+- ✅ **Configuración:** PostgreSQL dockerizado, EF Core, migraciones, seeds.
+- ✅ **Comunicación en tiempo real:** SignalR implementado para notificaciones de tareas asíncronas.
 
 ### En progreso
 - 🚧 **Bloque C:** Frontend Blazor WebAssembly
   - ✅ Esqueleto de layout con Bootstrap 
   - ✅ Configuración CORS en backend
-  - ⏳ Integración con API de autenticación
-  - ⏳ Gestión de estado de sesión
+  - ✅ Integración con API de autenticación
+  - ✅ Gestión de estado de sesión
   - ⏳ Páginas de productos y usuarios
 
 ### Futuro
@@ -142,16 +101,16 @@ JWT con access tokens cortos (15 min) y refresh tokens en base de datos (7 días
   - **BackgroundServices** para tareas periódicas y limpieza automática
   - **Gestor de trabajos** (Hangfire o similar) para colas de trabajo persistentes
   - **Batch processing** para importaciones masivas de productos
-  - **SignalR** para notificaciones de progreso en tiempo real
   - **Redis** para caché distribuido y rate limiting
-  - **RabbitMQ** para mensajería asíncrona entre módulos
+  - **RabbitMQ** para mensajería asíncrona entre módulos (sincronización con marketplaces)
   - **Elasticsearch + Kibana** para búsqueda avanzada de productos y análisis de logs
 
-- ⏳ **Bloque E:** Enriquecimiento del dominio
-  - Categorías de producto (maestro nuevo + relación 1:N)
-  - Tallas (maestro + relación N:M)
-  - Características (JSONB o EAV según necesidad de filtrado)
-  - Auditoría de cambios en entidades críticas
+-  **Bloque E:** Enriquecimiento del dominio PIM
+  - ✅ Categorías de producto (maestro nuevo + relación N:M)
+  - ✅ Tallas (maestro + relación N:M con payload de Stock, Sku y Price)
+  - ✅ Canales y Orígenes (`ProductMarketplace` y `ProductDataSource` con trazabilidad de sincronización)
+  -  **Atributos flexibles:** Diseño e implementación (JSONB vs EAV) para características dinámicas, paso previo imprescindible para la sincronización batch con RabbitMQ.
+  - ⏳ Actualización del Seed para poblar relaciones complejas antes de la integración total con el Frontend.
 
 - ⏳ **Bloque F:** Testing y calidad
   - Tests unitarios con xUnit

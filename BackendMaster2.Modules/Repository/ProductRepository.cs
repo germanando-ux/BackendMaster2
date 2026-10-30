@@ -156,6 +156,15 @@ namespace BackendMaster2.Modules.Repository
              return await _context.Products
             .Include(p => p.ProductOptions)
             .ThenInclude(po => po.Color)
+            .Include(p => p.ProductCategories)
+            .ThenInclude(pc => pc.Category)
+            .Include(p=> p.ProductMarketplaces)
+            .ThenInclude(pm => pm.Marketplace)
+            .Include(p => p.ProductDataSources)
+            .ThenInclude(pds => pds.DataSource)
+            .Include(p => p.ProductSizes)
+            .ThenInclude(ps => ps.Size)
+            .ThenInclude(s => s.SizeGroup)
             .FirstOrDefaultAsync(p => p.Id == id);
         }
         

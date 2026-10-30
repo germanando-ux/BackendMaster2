@@ -81,6 +81,42 @@ namespace BackendMaster2.Modules.Services
                 ColorId = colorId
             }).ToList();
 
+            newProduct.ProductCategories = productDto.CategoryIds.Select(CategoryId => new ProductCategory
+            {
+                ProductId = newProduct.Id, // Se asignará al guardar, pero lo ponemos por claridad
+                CategoryId = CategoryId
+            }).ToList();
+
+            //añadimos los nuevos Marketplaces. EF Core se encarga de los DELETE/INSERT.
+            newProduct.ProductMarketplaces = productDto.ProductMarketplaces.Select(pmDto => new ProductMarketplace
+            {
+                ProductId = newProduct.Id,
+                MarketplaceId = pmDto.MarketplaceId,     
+                ExternalCode = pmDto.ExternalCode,
+                LastSyncedAt = pmDto.LastSyncedAt
+            }).ToList();
+
+            //añadimos los nuevos DataSources. EF Core se encarga de los DELETE/INSERT.
+            newProduct.ProductDataSources = productDto.ProductDataSources.Select(pdsDto => new ProductDataSource
+            {
+                ProductId = newProduct.Id,
+                DataSourceId = pdsDto.DataSourceId,
+                ExternalCode = pdsDto.ExternalCode,
+                LastSyncedAt = pdsDto.LastSyncedAt
+            }).ToList();
+
+
+            //añadimos las tallas . EF Core se encarga de los DELETE/INSERT.
+            newProduct.ProductSizes = productDto.ProductSizes.Select(psDto => new ProductSize
+            {
+                ProductId = newProduct.Id,
+                SizeId = psDto.SizeId,
+                Stock = psDto.Stock,
+                Sku = psDto.Sku,
+                Price = psDto.Price
+            }).ToList();
+
+
             // 3. Guardamos la entidad (EF Core insertará el producto y sus opciones en cascada)
             await _productRepository.CreateAsync(newProduct);
             // 4. Devolvemos el DTO con el Id ya generado por la base de datos
@@ -125,6 +161,60 @@ namespace BackendMaster2.Modules.Services
             {
                 existing.ProductOptions.Add(new ProductOption { ColorId = colorId });
             }
+
+            // LÓGICA DE CATEGORÍAS (Patrón Clear + AddRange)
+            //borramos las categorías actuales y añadimos las nuevas. EF Core se encarga de los DELETE/INSERT.
+            existing.ProductCategories.Clear();
+            foreach (var categoryId in productDto.CategoryIds)
+            {
+                existing.ProductCategories.Add(new ProductCategory { CategoryId = categoryId });
+            }
+
+
+
+            //borramos los marketplaces actuales y añadimos los nuevos. EF Core se encarga de los DELETE/INSERT.
+            //en este caso no es una lista de ids, sino un DTO completo con marketplaceId, externalCode y lastSyncedAt
+            existing.ProductMarketplaces.Clear();
+            foreach (var pmDto in productDto.ProductMarketplaces)
+            {
+                existing.ProductMarketplaces.Add(new ProductMarketplace
+                {
+                    ProductId = existing.Id,
+                    MarketplaceId = pmDto.MarketplaceId,
+                    ExternalCode = pmDto.ExternalCode,
+                    LastSyncedAt = pmDto.LastSyncedAt
+                });
+            }
+
+            //borramos los datasources actuales y añadimos los nuevos. EF Core se encarga de los DELETE/INSERT.
+            //en este caso no es una lista de ids, sino un DTO completo con SizeId, Stock, Sku y Price
+            existing.ProductDataSources.Clear();
+            foreach (var pdsDto in productDto.ProductDataSources)
+            {
+                existing.ProductDataSources.Add(new ProductDataSource
+                {
+                    ProductId = existing.Id,
+                    DataSourceId = pdsDto.DataSourceId,
+                    ExternalCode = pdsDto.ExternalCode,
+                    LastSyncedAt = pdsDto.LastSyncedAt
+                });
+            }
+
+            //borramos las tallas actuales y añadimos los nuevos. EF Core se encarga de los DELETE/INSERT.
+            //en este caso no es una lista de ids, sino un DTO completo con datasourceId, externalCode y lastSyncedAt
+            existing.ProductSizes.Clear();
+            foreach (var psDto in productDto.ProductSizes)
+            {
+                existing.ProductSizes.Add(new ProductSize
+                {
+                    ProductId = existing.Id,
+                    SizeId = psDto.SizeId,
+                    Stock = psDto.Stock,
+                    Sku = psDto.Sku,
+                    Price = psDto.Price
+                });
+            }
+
 
             // 5. Guardamos
             await _productRepository.UpdateAsync(existing);

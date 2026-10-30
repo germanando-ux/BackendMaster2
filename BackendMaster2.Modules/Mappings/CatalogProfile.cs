@@ -16,7 +16,11 @@ public class CatalogProfile : Profile
         CreateMap<Category, CategoryDto>();
         CreateMap<CategoryDto, Category>();
         CreateMap<SizeGroupDto, SizeGroup>().ReverseMap(); ;
-        CreateMap<SizeDto, Size>().ReverseMap(); 
+        CreateMap<SizeDto, Size>().ReverseMap();        
+        CreateMap<ProductSize, ProductSizeDto>().ReverseMap();        
+        CreateMap<ProductDataSource, ProductDataSourceDto>().ReverseMap();        
+        CreateMap<ProductMarketplace, ProductMarketplaceDto>().ReverseMap();
+
 
 
         // 2. Product -> ProductDto 
@@ -34,5 +38,15 @@ public class CatalogProfile : Profile
         CreateMap<Product, ProductDetailDto>()
             .ForMember(dest => dest.Product, opt => opt.MapFrom(src => src))
             .ForMember(dest => dest.Colors, opt => opt.MapFrom(src => src.ProductOptions.Select(po => po.Color)));
+
+
+        CreateMap<Product, ProductDetailDto>()
+          .ForMember(dest => dest.Product, opt => opt.MapFrom(src => src))
+          .ForMember(dest => dest.Colors, opt => opt.MapFrom(src => src.ProductOptions.Select(po => po.Color)))
+          .ForMember(dest => dest.Sizes, opt => opt.MapFrom(src => src.ProductSizes.Select(ps => ps.Size)))
+          .ForMember(dest => dest.ProductSizes, opt => opt.MapFrom(src => src.ProductSizes))
+          .ForMember(dest => dest.ProductDataSources, opt => opt.MapFrom(src => src.ProductDataSources))
+          .ForMember(dest => dest.ProductMarketplaces, opt => opt.MapFrom(src => src.ProductMarketplaces));
     }
+}
 }

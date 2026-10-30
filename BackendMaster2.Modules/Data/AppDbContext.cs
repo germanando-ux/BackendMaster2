@@ -1,5 +1,4 @@
-﻿using BackendMaster2.Shared;
-using BackendMaster2.Shared.Domain;
+﻿using BackendMaster2.Shared.Domain;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
