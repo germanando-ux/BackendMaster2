@@ -1,4 +1,4 @@
-﻿namespace BackendMaster2.Modules.Dtos;
+﻿namespace BackendMaster2.Web.Models.Dtos;
 
 public class SizeDto
 {

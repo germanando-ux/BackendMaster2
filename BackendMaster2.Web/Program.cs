@@ -42,6 +42,8 @@ namespace BackendMaster2.Web
             builder.Services.AddScoped<IMarketplaceClient, MarketplaceClient>();
             //cliente data source
             builder.Services.AddScoped<IDataSourceClient, DataSourceClient>();
+            //cliente grupos de tallas
+            builder.Services.AddScoped<ISizeGroupClient, SizeGroupClient>();
             //mesajes de error con toast
             builder.Services.AddScoped<ToastService>();
 

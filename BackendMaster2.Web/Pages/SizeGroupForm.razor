@@ -1,0 +1,104 @@
+﻿@page "/sizegroup/create"
+@page "/sizegroup/edit/{Id:guid}"
+@using BackendMaster2.Web.Components
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Services
+@inject ISizeGroupClient SizeGroupClient
+@inject NavigationManager Navigation
+@inject ToastService ToastService
+
+@inherits FormBaseComponent  //hereda de FormBaseComponent para manejar errores y variables de estado
+
+@if (IsLoading)
+{
+    <div class="alert alert-info"> Cargando datos...</div>
+}
+else
+{
+    <EditForm Model="sizeGroupDto" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control border-primary" @bind="sizeGroupDto.Name" />
+            <ValidationMessage For="@(() => sizeGroupDto.Name)" class="text-danger small" />
+        </div>
+   
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" @bind="sizeGroupDto.IsActive" />
+            <label class="form-check-label">Marketplace Activo</label>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
+        </div>
+    </EditForm>
+
+}
+
+@code {
+
+    // 2. El objeto que va a "viajar" al backend.
+    private SizeGroupDto sizeGroupDto = new();
+
+    // 2. Se ejecuta al pulsar "Guardar"
+    private async Task HandleSubmit()
+    {
+        IsSaving = true;
+        ErrorMessage = null;
+
+        ApiResult<SizeGroupDto> result;
+
+        // Decidimos si crear o actualizar según si tenemos un Id
+        if (IsEdit)
+        {
+            result = await SizeGroupClient.UpdateSizeGroupAsync(Id.Value, sizeGroupDto);
+        }
+        else
+        {
+            result = await SizeGroupClient.CreateSizeGroupAsync(sizeGroupDto);
+        }
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/sizegroups"); // Vuelve al grid (ajusta la ruta si es distinta)
+        }
+        else
+        {
+            ToastService.ShowError(ErrorHandler.HandleError(result));
+        }
+
+        IsSaving = false;
+
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit)
+        {
+            IsLoading = true;
+            var result = await SizeGroupClient.GetSizeGroupByIdAsync(Id.Value);
+
+            if (result.IsSuccess && result.Data != null)
+            {
+                sizeGroupDto = result.Data; // Rellenamos el formulario con los datos
+            }
+            else
+            {
+                ErrorMessage = "No se pudo cargar el grupo de tallas.";
+            }
+
+        }
+        else
+        {
+            sizeGroupDto.IsActive = true;
+        }
+        IsLoading = false;
+    }
+
+    // 3. Acción para el botón Cancelar
+    private async Task Cancel()
+    {
+        Navigation.NavigateTo("/sizegroups");
+    }
+
+}

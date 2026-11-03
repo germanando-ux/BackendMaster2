@@ -34,6 +34,21 @@
                     {
                         <div style="background:rgba(0,0,0,.05);">
                             <NavLink href="/colors" class="sidebar-link" style="padding-left:2.6rem;"> <i class="bi bi-palette"></i><span class="link-texto">Colores</span></NavLink>
+                            <button @onclick="AlternarTallas"
+                                    class="sidebar-link d-flex align-items-center gap-2 w-100"
+                                    style="padding-left:2.6rem;background:transparent;border:none;cursor:pointer;font:inherit;text-align:left;">                                
+                                <i class="bi bi-rulers"></i>
+                                <span class="link-texto">Tallas</span>
+                                <i class="bi bi-chevron-down ms-auto"
+                                   style="transition:transform .2s;transform:@(_tallasAbierto ? "rotate(180deg)" : "rotate(0deg)");"></i>
+                            </button>
+                            @if (_tallasAbierto)
+                            {                                
+                                <div style="background:rgba(0,0,0,.05);">
+                                    <NavLink href="/sizegroups" class="sidebar-link" style="padding-left:5.2rem;"> <i class="bi bi-tags"></i><span class="link-texto">Grupos de tallas</span></NavLink>
+                                    <NavLink href="/sizes" class="sidebar-link" style="padding-left:5.5rem;"> <i class="bi bi-tag"></i><span class="link-texto">Tallas</span></NavLink>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
@@ -42,7 +57,7 @@
                     <button @onclick="AlternarMaestros"
                             class="sidebar-link d-flex align-items-center gap-2 w-100"
                             style="background:transparent;border:none;cursor:pointer;font:inherit;text-align:left;">
-                        <i class="bi bi-collection"></i>
+                        <i class="bi bi-database"></i>
                         <span class="link-texto">Maestros</span>
                         <i class="bi bi-chevron-down ms-auto"
                            style="transition:transform .2s;transform:@(_maestrosAbierto ? "rotate(180deg)" : "rotate(0deg)");"></i>
@@ -70,10 +85,15 @@
 
     private bool _catalogoAbierto;
     private bool _maestrosAbierto;
+    private bool _tallasAbierto;
 
     private void AlternarCatalogo()
     {
         _catalogoAbierto = !_catalogoAbierto;
+    }
+    private void AlternarTallas()
+    {
+        _tallasAbierto = !_tallasAbierto;
     }
     private void AlternarMaestros()
     {
@@ -81,7 +101,13 @@
     }
     protected override void OnInitialized()
     {
-        _catalogoAbierto = NavigationManager.Uri.Contains("/colors");
+        _catalogoAbierto = NavigationManager.Uri.Contains("/colors") ||
+                   NavigationManager.Uri.Contains("/sizegroups") ||
+                   NavigationManager.Uri.Contains("/sizes");
+        _tallasAbierto = NavigationManager.Uri.Contains("/sizegroups") ||
+                         NavigationManager.Uri.Contains("/sizes");
+        _maestrosAbierto = NavigationManager.Uri.Contains("/marketplace") ||
+                           NavigationManager.Uri.Contains("/datasource");
     }
 
     protected override async Task OnInitializedAsync()
