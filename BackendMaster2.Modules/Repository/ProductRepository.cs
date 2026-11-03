@@ -165,6 +165,9 @@ namespace BackendMaster2.Modules.Repository
             .Include(p => p.ProductSizes)
             .ThenInclude(ps => ps.Size)
             .ThenInclude(s => s.SizeGroup)
+            .Include(p => p.ProductFeatures)
+            .ThenInclude(pf => pf.Feature)
+            .ThenInclude(f => f.FeatureOptions)
             .FirstOrDefaultAsync(p => p.Id == id);
         }
         

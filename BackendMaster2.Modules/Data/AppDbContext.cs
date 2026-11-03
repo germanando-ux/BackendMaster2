@@ -27,6 +27,10 @@ namespace BackendMaster2.Modules.Data
         public DbSet<SizeGroup> SizeGroups => Set<SizeGroup>();
         public DbSet<Size> Sizes => Set<Size>();
         public DbSet<ProductSize> ProductSizes => Set<ProductSize>();
+        public DbSet<Feature> Features => Set<Feature>();
+        public DbSet<FeatureOption> FeatureOptions => Set<FeatureOption>();
+        public DbSet<CategoryFeature> CategoryFeatures => Set<CategoryFeature>();
+        public DbSet<ProductFeature> ProductFeatures => Set<ProductFeature>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -199,6 +203,65 @@ namespace BackendMaster2.Modules.Data
                       .WithMany(m => m.ProductMarketplaces)
                       .HasForeignKey(e => e.MarketplaceId)
                       .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Configuración de Feature
+            modelBuilder.Entity<Feature>(entity =>
+            {
+                entity.ToTable("Features");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.DataType).IsRequired();
+                entity.Property(e => e.IsRequired).HasDefaultValue(false);
+            });
+
+            //configuración de ProductFeature (Tabla de unión N:M con payload)
+            modelBuilder.Entity<ProductFeature>(entity =>
+            {
+                entity.ToTable("ProductFeatures");
+                // Clave compuesta
+                entity.HasKey(e => new { e.ProductId, e.FeatureId });
+                // Relación con Product
+                entity.HasOne(e => e.Product)
+                      .WithMany(p => p.ProductFeatures)
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                // Relación con Feature
+                entity.HasOne(e => e.Feature)
+                      .WithMany(f => f.ProductFeatures)
+                      .HasForeignKey(e => e.FeatureId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            //configuración de FeatureOption 
+            modelBuilder.Entity<FeatureOption>(entity =>
+            {
+                entity.ToTable("FeatureOptions");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Value).HasMaxLength(100).IsRequired();
+                // Relación con Feature
+                entity.HasOne(e => e.Feature)
+                      .WithMany(f => f.FeatureOptions)
+                      .HasForeignKey(e => e.FeatureId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            //configuración de CategoryFeature (Tabla de unión N:M con payload)
+            modelBuilder.Entity<CategoryFeature>(entity =>
+            {
+                entity.ToTable("CategoryFeatures");
+                // Clave compuesta
+                entity.HasKey(e => new { e.CategoryId, e.FeatureId });
+                // Relación con Category
+                entity.HasOne(e => e.Category)
+                      .WithMany(c => c.CategoryFeatures)
+                      .HasForeignKey(e => e.CategoryId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                // Relación con Feature
+                entity.HasOne(e => e.Feature)
+                      .WithMany(f => f.CategoryFeatures)
+                      .HasForeignKey(e => e.FeatureId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
         }

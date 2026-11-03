@@ -1,4 +1,6 @@
 ﻿using BackendMaster2.Modules.Dtos;
+using BackendMaster2.Modules.Repository;
+using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
 using System;
 using System.Collections.Generic;
@@ -36,4 +38,18 @@ public interface ICatalogService
     Task<SizeDto> CreateSizeAsync(SizeDto sizeDto);
     Task<SizeDto> UpdateSizeAsync(SizeDto sizeDto);
     Task DeleteSizeAsync(Guid id);
+
+
+    // ----- FEATURES -----
+    Task<IEnumerable<FeatureDto>> GetAllFeaturesAsync(BaseQueryDto query);
+    Task<FeatureDto?> GetFeatureByIdAsync(Guid id);
+    Task<FeatureDto> CreateFeatureAsync(FeatureDto featureDto);
+    Task<FeatureDto> UpdateFeatureAsync(FeatureDto featureDto);
+    Task DeleteFeatureAsync(Guid id);
+    // ----- FEATURES OPTIONS -----
+    Task<IEnumerable<FeatureOptionDto>> GetAllFeatureOptionsAsync(BaseQueryDto query);
+    Task<FeatureOptionDto?> GetFeatureOptionByIdAsync(Guid id);
+    Task<FeatureOptionDto> CreateFeatureOptionAsync(FeatureOptionDto featureOptionDto);
+    Task<FeatureOptionDto> UpdateFeatureOptionAsync(FeatureOptionDto featureOptionDto);
+    Task DeleteFeatureOptionAsync(Guid id);
 }

@@ -30,5 +30,8 @@ namespace BackendMaster2.Shared.Domain
         // Relación con marketplaces (para sincronización)
         public ICollection<ProductMarketplace> ProductMarketplaces { get; set; } = new List<ProductMarketplace>();
 
+        // Relación N:M con Características a través de la tabla de unión
+        public ICollection<ProductFeature> ProductFeatures { get; set; } = new List<ProductFeature>();
+
     }
 }

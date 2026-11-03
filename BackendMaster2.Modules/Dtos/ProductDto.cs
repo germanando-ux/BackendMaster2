@@ -9,12 +9,15 @@ public class ProductDto
     public decimal Price { get; set; }
     public int Stock { get; set; }
     public bool IsActive { get; set; } = true;
+
+    // Relaciones simples (sin payload): solo IDs
     public List<Guid> ColorIds { get; set; } = new();
     public List<Guid> CategoryIds { get; set; } = new();
-    public List<Guid> SizeIds { get; set; } = new();
-    public IEnumerable<ProductSizeDto> ProductSizes { get; set; } = null!;
-    public IEnumerable<ProductDataSourceDto> ProductDataSources { get; set; } = null!;
-    public IEnumerable<ProductMarketplaceDto> ProductMarketplaces { get; set; } = null!;
 
+    // Relaciones con payload: DTOs completos
+    public List<ProductSizeDto> ProductSizes { get; set; } = new();
+    public List<ProductDataSourceDto> ProductDataSources { get; set; } = new();
+    public List<ProductMarketplaceDto> ProductMarketplaces { get; set; } = new();
+    public List<ProductFeatureDto> ProductFeatures { get; set; } = new();
 
 }

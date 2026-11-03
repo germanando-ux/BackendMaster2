@@ -8,4 +8,7 @@ public class Category
 
     // Navegación: permite a EF Core saber que una Categoría tiene muchos ProductCategories
     public ICollection<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
+
+    //navegación: permite a EF Core saber que una Categoría tiene muchos CategoryFeatures
+    public ICollection<CategoryFeature> CategoryFeatures { get; set; } = new List<CategoryFeature>();
 }

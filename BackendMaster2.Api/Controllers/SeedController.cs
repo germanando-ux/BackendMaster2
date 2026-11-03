@@ -1,5 +1,6 @@
 ﻿using BackendMaster2.Modules.Dtos;
 using BackendMaster2.Modules.Interfaces;
+using BackendMaster2.Shared.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -58,71 +59,158 @@ public class SeedController : ControllerBase
             // ========================================================================
             // 2.6 SEED DE SIZE GROUPS (ACTIVO E IDEMPOTENTE)
             // ========================================================================
-            var sizeGroupsSeedData = new[] { "EU", "US", "UK", "INT", "FR" };
-            var existingSizeGroups = await _catalogService.GetAllSizeGroupsAsync(new BaseQueryDto());
-            var sizeGroupsDict = existingSizeGroups.ToDictionary(sg => sg.Name, sg => sg.Id, StringComparer.OrdinalIgnoreCase);
+            //var sizeGroupsSeedData = new[] { "EU", "US", "UK", "INT", "FR" };
+            //var existingSizeGroups = await _catalogService.GetAllSizeGroupsAsync(new BaseQueryDto());
+            //var sizeGroupsDict = existingSizeGroups.ToDictionary(sg => sg.Name, sg => sg.Id, StringComparer.OrdinalIgnoreCase);
 
-            foreach (var sgName in sizeGroupsSeedData)
+            //foreach (var sgName in sizeGroupsSeedData)
+            //{
+            //    if (sizeGroupsDict.ContainsKey(sgName))
+            //    {
+            //        result.SizeGroupsSkipped++;
+            //        continue;
+            //    }
+
+            //    try
+            //    {
+            //        var created = await _catalogService.CreateSizeGroupAsync(new SizeGroupDto { Name = sgName, IsActive = true });
+            //        sizeGroupsDict[sgName] = created.Id;
+            //        result.SizeGroupsCreated++;
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Console.WriteLine($"[SEED] Error creando SizeGroup {sgName}: {ex.Message}");
+            //    }
+            //}
+
+            // ========================================================================
+            // 2.7 SEED DE SIZES (ACTIVO E IDEMPOTENTE)
+            // ========================================================================
+            //var sizesByGroup = new Dictionary<string, string[]>
+            //{
+            //    { "EU", new[] { "36", "38", "40", "42", "44", "46", "48" } },
+            //    { "US", new[] { "4", "6", "8", "10", "12", "14" } },
+            //    { "UK", new[] { "6", "8", "10", "12", "14" } },
+            //    { "INT", new[] { "XS", "S", "M", "L", "XL", "XXL" } },
+            //    { "FR", new[] { "34", "36", "38", "40", "42" } }
+            //};
+
+            //var existingSizes = await _catalogService.GetAllSizesAsync(new BaseQueryDto());
+            //var existingSizesKeys = existingSizes.Select(s => $"{s.SizeGroupId}_{s.Name.ToLower()}").ToHashSet();
+
+            //foreach (var kvp in sizesByGroup)
+            //{
+            //    if (!sizeGroupsDict.TryGetValue(kvp.Key, out var sizeGroupId))
+            //    {
+            //        Console.WriteLine($"[SEED] SizeGroup {kvp.Key} no encontrado, saltando sus tallas.");
+            //        continue;
+            //    }
+
+            //    foreach (var sizeName in kvp.Value)
+            //    {
+            //        var uniqueKey = $"{sizeGroupId}_{sizeName.ToLower()}";
+            //        if (existingSizesKeys.Contains(uniqueKey))
+            //        {
+            //            result.SizesSkipped++;
+            //            continue;
+            //        }
+
+            //        try
+            //        {
+            //            await _catalogService.CreateSizeAsync(new SizeDto { Name = sizeName, SizeGroupId = sizeGroupId, IsActive = true });
+            //            existingSizesKeys.Add(uniqueKey);
+            //            result.SizesCreated++;
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            Console.WriteLine($"[SEED] Error creando Size {sizeName} para {kvp.Key}: {ex.Message}");
+            //        }
+            //    }
+            //}
+
+            // ========================================================================
+            // 2.8 SEED DE FEATURES (CARACTERÍSTICAS) (ACTIVO E IDEMPOTENTE)
+            // ========================================================================
+            var featuresSeedData = new[]
             {
-                if (sizeGroupsDict.ContainsKey(sgName))
+                new { Name = "Material", DataType = FeatureDataType.List, IsRequired = false },
+                new { Name = "Género", DataType = FeatureDataType.List, IsRequired = false },
+                new { Name = "Voltaje", DataType = FeatureDataType.Text, IsRequired = false },
+                new { Name = "Eficiencia Energética", DataType = FeatureDataType.List, IsRequired = false }
+            };
+
+            var existingFeatures = await _catalogService.GetAllFeaturesAsync(new BaseQueryDto());
+            var featuresDict = existingFeatures.ToDictionary(f => f.Name, f => f.Id, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var featureData in featuresSeedData)
+            {
+                if (featuresDict.ContainsKey(featureData.Name))
                 {
-                    result.SizeGroupsSkipped++;
+                    result.FeaturesSkipped++;
                     continue;
                 }
 
                 try
                 {
-                    var created = await _catalogService.CreateSizeGroupAsync(new SizeGroupDto { Name = sgName, IsActive = true });
-                    sizeGroupsDict[sgName] = created.Id;
-                    result.SizeGroupsCreated++;
+                    var created = await _catalogService.CreateFeatureAsync(new FeatureDto
+                    {
+                        Name = featureData.Name,
+                        DataType = featureData.DataType,
+                        IsRequired = featureData.IsRequired
+                    });
+                    featuresDict[featureData.Name] = created.Id;
+                    result.FeaturesCreated++;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[SEED] Error creando SizeGroup {sgName}: {ex.Message}");
+                    Console.WriteLine($"[SEED] Error creando Feature {featureData.Name}: {ex.Message}");
                 }
             }
 
             // ========================================================================
-            // 2.7 SEED DE SIZES (ACTIVO E IDEMPOTENTE)
+            // 2.9 SEED DE FEATURE OPTIONS (OPCIONES DE CARACTERÍSTICAS) (ACTIVO E IDEMPOTENTE)
             // ========================================================================
-            var sizesByGroup = new Dictionary<string, string[]>
+            var featureOptionsSeedData = new Dictionary<string, string[]>
             {
-                { "EU", new[] { "36", "38", "40", "42", "44", "46", "48" } },
-                { "US", new[] { "4", "6", "8", "10", "12", "14" } },
-                { "UK", new[] { "6", "8", "10", "12", "14" } },
-                { "INT", new[] { "XS", "S", "M", "L", "XL", "XXL" } },
-                { "FR", new[] { "34", "36", "38", "40", "42" } }
+                { "Material", new[] { "Algodón", "Poliéster", "Lana", "Cuero" } },
+                { "Género", new[] { "Hombre", "Mujer", "Unisex", "Infantil" } },
+                { "Eficiencia Energética", new[] { "A", "B", "C", "D", "E", "F", "G" } }
             };
 
-            var existingSizes = await _catalogService.GetAllSizesAsync(new BaseQueryDto());
-            var existingSizesKeys = existingSizes.Select(s => $"{s.SizeGroupId}_{s.Name.ToLower()}").ToHashSet();
+            var existingFeatureOptions = await _catalogService.GetAllFeatureOptionsAsync(new BaseQueryDto());
+            // Clave única: FeatureId + Value (en minúsculas)
+            var existingOptionsKeys = existingFeatureOptions.Select(fo => $"{fo.FeatureId}_{fo.Value.ToLower()}").ToHashSet();
 
-            foreach (var kvp in sizesByGroup)
+            foreach (var kvp in featureOptionsSeedData)
             {
-                if (!sizeGroupsDict.TryGetValue(kvp.Key, out var sizeGroupId))
+                if (!featuresDict.TryGetValue(kvp.Key, out var featureId))
                 {
-                    Console.WriteLine($"[SEED] SizeGroup {kvp.Key} no encontrado, saltando sus tallas.");
+                    Console.WriteLine($"[SEED] Feature {kvp.Key} no encontrada, saltando sus opciones.");
                     continue;
                 }
 
-                foreach (var sizeName in kvp.Value)
+                foreach (var optionValue in kvp.Value)
                 {
-                    var uniqueKey = $"{sizeGroupId}_{sizeName.ToLower()}";
-                    if (existingSizesKeys.Contains(uniqueKey))
+                    var uniqueKey = $"{featureId}_{optionValue.ToLower()}";
+                    if (existingOptionsKeys.Contains(uniqueKey))
                     {
-                        result.SizesSkipped++;
+                        result.FeatureOptionsSkipped++;
                         continue;
                     }
 
                     try
                     {
-                        await _catalogService.CreateSizeAsync(new SizeDto { Name = sizeName, SizeGroupId = sizeGroupId, IsActive = true });
-                        existingSizesKeys.Add(uniqueKey);
-                        result.SizesCreated++;
+                        await _catalogService.CreateFeatureOptionAsync(new FeatureOptionDto
+                        {
+                            FeatureId = featureId,
+                            Value = optionValue
+                        });
+                        existingOptionsKeys.Add(uniqueKey);
+                        result.FeatureOptionsCreated++;
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[SEED] Error creando Size {sizeName} para {kvp.Key}: {ex.Message}");
+                        Console.WriteLine($"[SEED] Error creando FeatureOption {optionValue} para {kvp.Key}: {ex.Message}");
                     }
                 }
             }
@@ -214,13 +302,18 @@ public record SeedResultDto
     public int ColorsSkipped { get; set; }
     public int CategoriesCreated { get; set; }
     public int CategoriesSkipped { get; set; }
-    
-    // NUEVO: Contadores para Tallas
+
     public int SizeGroupsCreated { get; set; }
     public int SizeGroupsSkipped { get; set; }
     public int SizesCreated { get; set; }
     public int SizesSkipped { get; set; }
-    
+
+    // NUEVO: Contadores para Features
+    public int FeaturesCreated { get; set; }
+    public int FeaturesSkipped { get; set; }
+    public int FeatureOptionsCreated { get; set; }
+    public int FeatureOptionsSkipped { get; set; }
+
     public int ProductsCreated { get; set; }
     public int ProductsSkipped { get; set; }
     public int TotalTimeSeconds { get; set; }

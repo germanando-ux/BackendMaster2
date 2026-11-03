@@ -29,7 +29,7 @@ Construir una aplicación completa (backend + frontend) que sirva como portfolio
 ## 🛠️ Stack tecnológico
 
 ### Backend
-- **.NET 8** con ASP.NET Core
+- **.NET 10** con ASP.NET Core
 - **Entity Framework Core** + PostgreSQL dockerizado
 - **Npgsql + Pgvector**: Búsqueda vectorial y operadores de distancia de coseno (`<=>`)
 - **Microsoft.Extensions.AI**: Extracción de intención de búsqueda en lenguaje natural y generación de embeddings

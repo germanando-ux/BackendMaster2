@@ -3,10 +3,11 @@ using BackendMaster2.Modules.Dtos;
 using BackendMaster2.Modules.Interfaces;
 using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
+using BackendMaster2.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.SemanticKernel;
 using System.Linq.Dynamic.Core;
 using System.Reflection;
-using BackendMaster2.Shared.Extensions;
 
 namespace BackendMaster2.Modules.Repository;
 
@@ -15,10 +16,13 @@ public class CatalogRepository : ICatalogRepository
     private readonly AppDbContext _context;
 
     // HashSet para validación segura de Dynamic LINQ
-    private static readonly HashSet<string> AllowedColorSortColumns = GetAllowedSortColums<Color>();
-    private static readonly HashSet<string> AllowedCategorySortColumns = GetAllowedSortColums<Category>();
-    private static readonly HashSet<string> AllowedSizeSortColumns = GetAllowedSortColums<Size>();
-    private static readonly HashSet<string> AllowedSizeGroupSortColumns = GetAllowedSortColums<SizeGroup>();
+    private static readonly HashSet<string> AllowedColorSortColumns = GetAllowedSortColumns<Color>();
+    private static readonly HashSet<string> AllowedCategorySortColumns = GetAllowedSortColumns<Category>();
+    private static readonly HashSet<string> AllowedSizeSortColumns = GetAllowedSortColumns<Size>();
+    private static readonly HashSet<string> AllowedSizeGroupSortColumns = GetAllowedSortColumns<SizeGroup>();
+    private static readonly HashSet<string> AllowedFeatureSortColumns = GetAllowedSortColumns<Feature>();
+    private static readonly HashSet<string> AllowedFeatureOptionSortColumns = GetAllowedSortColumns<FeatureOption>();
+
 
     public CatalogRepository(AppDbContext context)
     {
@@ -131,8 +135,12 @@ public class CatalogRepository : ICatalogRepository
 
     public async Task<Category?> GetCategoryByIdAsync(Guid id)
     {
-        return await _context.Categories.FindAsync(id);
+        return await _context.Categories
+                    .Include(c => c.CategoryFeatures)
+                    .ThenInclude(cf => cf.Feature)
+                    .FirstOrDefaultAsync(c => c.Id == id);
     }
+
 
     public async Task<Category> UpdateCategoryAsync(Category category)
     {
@@ -255,6 +263,125 @@ public class CatalogRepository : ICatalogRepository
         await _context.SaveChangesAsync();
     }
 
+
+    // ----- FEATURES -----
+
+
+    public async Task CreateFeatureAsync(Feature feature)
+    {
+        await _context.Features.AddAsync(feature);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteFeatureAsync(Guid id)
+    {
+        var feature = await GetFeatureByIdAsync(id);
+        if (feature != null)
+        {
+            _context.Features.Remove(feature);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<IEnumerable<Feature>> GetAllFeaturesAsync(BaseQueryDto query)
+    {
+        IQueryable<Feature> featuresQuery = _context.Features.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(query.SearchTerm) && !string.IsNullOrWhiteSpace(query.SearchBy) && AllowedFeatureSortColumns.Contains(query.SearchBy))
+        {
+            featuresQuery = featuresQuery.Where($"{query.SearchBy}.ToLower().Contains(@0)", query.SearchTerm.ToLower());
+        }
+
+        //if (query.IsActive.HasValue)
+        //{
+        //    featuresQuery = featuresQuery.Where(f => f.IsActive == query.IsActive.Value);
+        //}
+
+        if (!string.IsNullOrEmpty(query.SortBy) && AllowedFeatureSortColumns.Contains(query.SortBy))
+        {
+            string direction = query.SortAscending ? "ascending" : "descending";
+            featuresQuery = featuresQuery.OrderBy($"{query.SortBy} {direction}");
+        }
+        else
+        {
+            featuresQuery = featuresQuery.OrderBy(f => f.Name);
+        }
+
+        return await featuresQuery.ToListAsync();
+    }
+
+    public async Task<Feature?> GetFeatureByIdAsync(Guid id)
+    {
+        return await _context.Features
+            .Include(f => f.FeatureOptions) 
+            .FirstOrDefaultAsync(f => f.Id == id);
+    }
+
+    public async Task UpdateFeatureAsync(Feature feature)
+    {
+        _context.Features.Update(feature);
+        await _context.SaveChangesAsync();
+    }
+
+
+    // ----- FEATURES OPTIONS -----
+    //Son características de tipo "select" o "multiselect", que tienen opciones predefinidas (ej: Color, Talle, Material, etc.)
+
+
+    public async Task CreateFeatureOptionAsync(FeatureOption featureOption)
+    {
+        await _context.FeatureOptions.AddAsync(featureOption);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteFeatureOptionAsync(Guid id)
+    {
+        var featureOption = await GetFeatureOptionByIdAsync(id);
+        if (featureOption != null)
+        {
+            _context.FeatureOptions.Remove(featureOption);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<IEnumerable<FeatureOption>> GetAllFeatureOptionsAsync(BaseQueryDto query)
+    {
+        IQueryable<FeatureOption> featureOptionsQuery = _context.FeatureOptions.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(query.SearchTerm) && !string.IsNullOrWhiteSpace(query.SearchBy) && AllowedFeatureOptionSortColumns.Contains(query.SearchBy))
+        {
+            featureOptionsQuery = featureOptionsQuery.Where($"{query.SearchBy}.ToLower().Contains(@0)", query.SearchTerm.ToLower());
+        }
+
+        //if (query.IsActive.HasValue)
+        //{
+        //    featureOptionsQuery = featureOptionsQuery.Where(f => f.IsActive == query.IsActive.Value);
+        //}
+
+        if (!string.IsNullOrEmpty(query.SortBy) && AllowedFeatureOptionSortColumns.Contains(query.SortBy))
+        {
+            string direction = query.SortAscending ? "ascending" : "descending";
+            featureOptionsQuery = featureOptionsQuery.OrderBy($"{query.SortBy} {direction}");
+        }
+        else
+        {
+            featureOptionsQuery = featureOptionsQuery.OrderBy(f => f.Value);
+        }
+
+        return await featureOptionsQuery.ToListAsync();
+    }
+
+    public async Task<FeatureOption?> GetFeatureOptionByIdAsync(Guid id)
+    {
+        return await _context.FeatureOptions.FindAsync(id);
+    }
+
+    public async Task UpdateFeatureOptionAsync(FeatureOption featureOption)
+    {
+        _context.FeatureOptions.Update(featureOption);
+        await _context.SaveChangesAsync();
+    }
+
     //METODOS PRIVADOS
 
     /// <summary>
@@ -263,7 +390,7 @@ public class CatalogRepository : ICatalogRepository
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    private static HashSet<string> GetAllowedSortColums<T>()
+    private static HashSet<string> GetAllowedSortColumns<T>()
     {
         var result = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
         .Where(p => TypeValidationExtensions.IsSimpleType(p.PropertyType))

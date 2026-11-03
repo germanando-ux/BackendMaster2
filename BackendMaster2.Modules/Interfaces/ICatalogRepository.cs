@@ -35,4 +35,18 @@ public interface ICatalogRepository
     Task CreateSizeAsync(Size size);
     Task UpdateSizeAsync(Size size);
     Task DeleteSizeAsync(Guid id);
+
+    // FEATURES 
+    Task CreateFeatureAsync(Feature feature);
+    Task DeleteFeatureAsync(Guid id);
+    Task<IEnumerable<Feature>> GetAllFeaturesAsync(BaseQueryDto query);
+    Task<Feature?> GetFeatureByIdAsync(Guid id);
+    Task UpdateFeatureAsync(Feature feature);
+
+    // FEATURE OPTIONS 
+    Task CreateFeatureOptionAsync(FeatureOption featureOption);
+    Task DeleteFeatureOptionAsync(Guid id);
+    Task<IEnumerable<FeatureOption>> GetAllFeatureOptionsAsync(BaseQueryDto query);
+    Task<FeatureOption?> GetFeatureOptionByIdAsync(Guid id);
+    Task UpdateFeatureOptionAsync(FeatureOption featureOption);
 }

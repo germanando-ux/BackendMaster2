@@ -116,6 +116,14 @@ namespace BackendMaster2.Modules.Services
                 Price = psDto.Price
             }).ToList();
 
+            //añadimos las características . EF Core se encarga de los DELETE/INSERT.
+            newProduct.ProductFeatures = productDto.ProductFeatures.Select(pfDto => new ProductFeature
+            {
+                ProductId = newProduct.Id,
+                FeatureId = pfDto.FeatureId,
+                Value = pfDto.Value,
+                ChannelId = pfDto.ChannelId
+            }).ToList();
 
             // 3. Guardamos la entidad (EF Core insertará el producto y sus opciones en cascada)
             await _productRepository.CreateAsync(newProduct);
@@ -212,6 +220,19 @@ namespace BackendMaster2.Modules.Services
                     Stock = psDto.Stock,
                     Sku = psDto.Sku,
                     Price = psDto.Price
+                });
+            }
+
+            //borramos las características actuales y añadimos los nuevos. EF Core se encarga de los DELETE/INSERT. 
+            existing.ProductFeatures.Clear();
+            foreach (var pfDto in productDto.ProductFeatures)
+            {
+                existing.ProductFeatures.Add(new ProductFeature
+                {
+                    ProductId = existing.Id,
+                    FeatureId = pfDto.FeatureId,
+                    Value = pfDto.Value,
+                    ChannelId = pfDto.ChannelId
                 });
             }
 

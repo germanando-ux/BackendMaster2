@@ -81,6 +81,15 @@ public class CatalogService : ICatalogService
     {
         Category newCategory = _mapper.Map<Category>(categoryDto);
         // Nota: Las categorías no llevan embedding, es un maestro de clasificación simple.
+
+        //añadimos las características . EF Core se encarga de los DELETE/INSERT.
+        newCategory.CategoryFeatures = categoryDto.CategoryFeatures.Select(cfDto => new CategoryFeature
+        {
+            CategoryId = newCategory.Id,
+            FeatureId = cfDto.FeatureId,
+            IsRequired = cfDto.IsRequired
+        }).ToList();
+
         await _catalogRepository.CreateCategoryAsync(newCategory);
         return _mapper.Map<CategoryDto>(newCategory);
     }
@@ -119,6 +128,20 @@ public class CatalogService : ICatalogService
 
         existing.Name = categoryDto.Name;
         existing.IsActive = categoryDto.IsActive;
+
+        //borramos las características actuales y añadimos las nuevas. EF Core se encarga de los DELETE/INSERT.
+        //en este caso no es una lista de ids, sino un DTO completo con datasourceId, externalCode y lastSyncedAt
+        existing.CategoryFeatures.Clear();
+        foreach (var cfDto in categoryDto.CategoryFeatures)
+        {
+            existing.CategoryFeatures.Add(new CategoryFeature            
+            {
+                CategoryId = existing.Id,
+                FeatureId = cfDto.FeatureId,
+                IsRequired = cfDto.IsRequired
+            });
+        }
+
 
         await _catalogRepository.UpdateCategoryAsync(existing);
         return _mapper.Map<CategoryDto>(existing);
@@ -218,4 +241,101 @@ public class CatalogService : ICatalogService
 
         await _catalogRepository.DeleteSizeAsync(id);
     }
+
+
+    // ----- FEATURES -----
+    public async Task<IEnumerable<FeatureDto>> GetAllFeaturesAsync(BaseQueryDto query)
+    {
+        IEnumerable<Feature> features = await _catalogRepository.GetAllFeaturesAsync(query);
+        return features.Select(f => _mapper.Map<FeatureDto>(f));
+    }
+
+    public async Task<FeatureDto?> GetFeatureByIdAsync(Guid id)
+    {
+        Feature feature = await _catalogRepository.GetFeatureByIdAsync(id);
+        return feature != null ? _mapper.Map<FeatureDto>(feature) : null;
+    }
+
+    public async Task<FeatureDto> CreateFeatureAsync(FeatureDto featureDto)
+    {
+        Feature newFeature = _mapper.Map<Feature>(featureDto);
+        await _catalogRepository.CreateFeatureAsync(newFeature);
+        return _mapper.Map<FeatureDto>(newFeature);
+    }
+
+    public async Task<FeatureDto> UpdateFeatureAsync(FeatureDto featureDto)
+    {
+        Feature? existing = await _catalogRepository.GetFeatureByIdAsync(featureDto.Id);
+
+        if (existing is null)
+        {
+            throw new NotFoundException($"No existe ninguna característica con el id {featureDto.Id}.");
+        }
+
+        existing.Name = featureDto.Name;
+        existing.DataType = featureDto.DataType;
+        existing.IsRequired = featureDto.IsRequired;
+
+        await _catalogRepository.UpdateFeatureAsync(existing);
+        return _mapper.Map<FeatureDto>(existing);
+    }
+
+    public async Task DeleteFeatureAsync(Guid id)
+    {
+        var existing = await _catalogRepository.GetFeatureByIdAsync(id);
+        if (existing is null)
+        {
+            throw new NotFoundException($"No existe ninguna característica con el id {id}.");
+        }
+
+        await _catalogRepository.DeleteFeatureAsync(id);
+    }
+
+
+    // ----- FEATURES OPTIONS -----
+    public async Task<IEnumerable<FeatureOptionDto>> GetAllFeatureOptionsAsync(BaseQueryDto query)
+    {
+        IEnumerable<FeatureOption> featureOptions = await _catalogRepository.GetAllFeatureOptionsAsync(query);
+        return featureOptions.Select(fo => _mapper.Map<FeatureOptionDto>(fo));
+    }
+
+    public async Task<FeatureOptionDto?> GetFeatureOptionByIdAsync(Guid id)
+    {
+        FeatureOption featureOption = await _catalogRepository.GetFeatureOptionByIdAsync(id);
+        return featureOption != null ? _mapper.Map<FeatureOptionDto>(featureOption) : null;
+    }
+
+    public async Task<FeatureOptionDto> CreateFeatureOptionAsync(FeatureOptionDto featureOptionDto)
+    {
+        FeatureOption newFeatureOption = _mapper.Map<FeatureOption>(featureOptionDto);
+        await _catalogRepository.CreateFeatureOptionAsync(newFeatureOption);
+        return _mapper.Map<FeatureOptionDto>(newFeatureOption);
+    }
+
+    public async Task<FeatureOptionDto> UpdateFeatureOptionAsync(FeatureOptionDto featureOptionDto)
+    {
+        FeatureOption? existing = await _catalogRepository.GetFeatureOptionByIdAsync(featureOptionDto.Id);
+
+        if (existing is null)
+        {
+            throw new NotFoundException($"No existe ninguna opción de característica con el id {featureOptionDto.Id}.");
+        }
+
+        existing.Value   = featureOptionDto.Value;
+
+        await _catalogRepository.UpdateFeatureOptionAsync(existing);
+        return _mapper.Map<FeatureOptionDto>(existing);
+    }
+
+    public async Task DeleteFeatureOptionAsync(Guid id)
+    {
+        var existing = await _catalogRepository.GetFeatureOptionByIdAsync(id);
+        if (existing is null)
+        {
+            throw new NotFoundException($"No existe ninguna opción de característica con el id {id}.");
+        }
+
+        await _catalogRepository.DeleteFeatureOptionAsync(id);
+    }
+
 }

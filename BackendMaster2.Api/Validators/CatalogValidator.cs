@@ -59,3 +59,34 @@ public class SizeValidator : AbstractValidator<SizeDto>
             .NotEmpty().WithMessage("El Id del grupo de tallas es obligatorio.");
     }
 }
+
+// 5. VALIDADOR DE CARACTERÍSTICA (FEATURE)
+public class FeatureValidator : AbstractValidator<FeatureDto>
+{
+    public FeatureValidator()
+    {
+        RuleFor(x => x.Name)
+            .NotEmpty().WithMessage("El nombre de la característica es obligatorio.")
+            .MaximumLength(100).WithMessage("El nombre no puede superar 100 caracteres.");
+
+        RuleFor(x => x.DataType)
+            .IsInEnum().WithMessage("El tipo de dato debe ser un valor válido (Text, List, Number, Boolean).");
+
+        RuleFor(x => x.IsRequired)
+            .NotNull().WithMessage("El campo IsRequired es obligatorio.");
+    }
+}
+
+// 6. VALIDADOR DE OPCIÓN DE CARACTERÍSTICA (FEATURE OPTION)
+public class FeatureOptionValidator : AbstractValidator<FeatureOptionDto>
+{
+    public FeatureOptionValidator()
+    {
+        RuleFor(x => x.FeatureId)
+            .NotEmpty().WithMessage("El Id de la característica padre es obligatorio.");
+
+        RuleFor(x => x.Value)
+            .NotEmpty().WithMessage("El valor de la opción es obligatorio.")
+            .MaximumLength(100).WithMessage("El valor no puede superar 100 caracteres.");
+    }
+}
