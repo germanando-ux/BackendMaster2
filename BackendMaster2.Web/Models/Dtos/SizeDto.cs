@@ -6,4 +6,5 @@ public class SizeDto
     public string Name { get; set; } = string.Empty;
     public Guid SizeGroupId { get; set; }
     public bool IsActive { get; set; }
+    public string SizeGroupName { get; set; } = string.Empty;
 }

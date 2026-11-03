@@ -19,7 +19,9 @@ public class CatalogProfile : Profile
             .ForMember(dest => dest.CategoryFeatures, opt => opt.Ignore());
 
         CreateMap<SizeGroup, SizeGroupDto>().ReverseMap();
-        CreateMap<Size, SizeDto>().ReverseMap();
+        CreateMap<Size, SizeDto>()
+            .ForMember(dest => dest.SizeGroupName, opt => opt.MapFrom(src => src.SizeGroup.Name));
+
         CreateMap<ProductSize, ProductSizeDto>().ReverseMap();
         CreateMap<ProductDataSource, ProductDataSourceDto>().ReverseMap();
         CreateMap<ProductMarketplace, ProductMarketplaceDto>().ReverseMap();

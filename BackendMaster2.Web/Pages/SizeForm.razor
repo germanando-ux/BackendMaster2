@@ -1,0 +1,123 @@
+﻿@page "/sizes/create"
+@page "/sizes/edit/{Id:guid}"
+@using BackendMaster2.Web.Components
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Services
+@inject ISizeClient SizeClient
+@inject ISizeGroupClient SizeGroupClient
+@inject NavigationManager Navigation
+@inject ToastService ToastService
+@inherits FormBaseComponent  //hereda de FormBaseComponent para manejar errores y variables de estado
+
+
+@if (IsLoading)
+{
+    <div class="alert alert-info"> Cargando datos...</div>
+}
+else
+{
+    <EditForm Model="sizeDto" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control border-primary" @bind="sizeDto.Name" />
+            <ValidationMessage For="@(() => sizeDto.Name)" class="text-danger small" />
+        </div>
+
+         <div class="col-md-8 mb-3">
+            <label class="form-label">Grupo de tallas</label>
+            <select class="form-select" @bind="sizeDto.SizeGroupId">
+                <option value="">Seleccione un grupo de tallas</option>
+                @foreach (var sizeGroup in availableSizeGroups)
+                {
+                    <option value="@sizeGroup.Id">@sizeGroup.Name</option>
+                }
+            </select>
+        </div> 
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" @bind="sizeDto.IsActive" />
+            <label class="form-check-label">Marketplace Activo</label>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
+        </div>
+    </EditForm>
+
+}
+
+@code {
+    // 2. El objeto que va a "viajar" al backend.
+    private SizeDto sizeDto = new();
+    private List<SizeGroupDto> availableSizeGroups = new();
+
+    // 2. Se ejecuta al pulsar "Guardar"
+    private async Task HandleSubmit()
+    {
+        IsSaving = true;
+        ErrorMessage = null;
+
+        ApiResult<SizeDto> result;
+
+        // Decidimos si crear o actualizar según si tenemos un Id
+        if (IsEdit)
+        {
+            result = await SizeClient.UpdateSizeAsync(Id.Value, sizeDto);
+        }
+        else
+        {
+            result = await SizeClient.CreateSizeAsync(sizeDto);
+        }
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/sizes"); // Vuelve al grid (ajusta la ruta si es distinta)
+        }
+        else
+        {
+            ToastService.ShowError(ErrorHandler.HandleError(result));
+        }
+
+        IsSaving = false;
+
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        var sizeGroupResult = await SizeGroupClient.GetAllSizeGroupsAsync();
+        if (sizeGroupResult.IsSuccess)
+        {
+            availableSizeGroups = sizeGroupResult.Data ?? new();
+        }
+
+        if (IsEdit)
+        {
+            IsLoading = true;
+            var result = await SizeClient.GetSizeByIdAsync(Id.Value);
+
+            if (result.IsSuccess && result.Data != null)
+            {
+                sizeDto = result.Data; // Rellenamos el formulario con los datos
+            }
+            else
+            {
+                ErrorMessage = "No se pudo cargar la talla.";
+            }
+        
+            IsLoading = false;
+        }
+        else
+        {
+            sizeDto.IsActive = true;
+        }
+        IsLoading = false;
+    }
+
+    // 3. Acción para el botón Cancelar
+    private async Task Cancel()
+    {
+        Navigation.NavigateTo("/sizes");
+    }
+
+}

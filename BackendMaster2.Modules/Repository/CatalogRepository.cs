@@ -227,7 +227,9 @@ public class CatalogRepository : ICatalogRepository
 
     public async Task<IEnumerable<Size>> GetAllSizesAsync(BaseQueryDto query)
     {
-        IQueryable<Size> sizesQuery = _context.Sizes.AsQueryable();
+        IQueryable<Size> sizesQuery = _context.Sizes
+                                      .Include(s => s.SizeGroup)
+                                      .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(query.SearchTerm) && !string.IsNullOrWhiteSpace(query.SearchBy) && AllowedSizeSortColumns.Contains(query.SearchBy))
         {

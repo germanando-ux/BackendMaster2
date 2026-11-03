@@ -131,16 +131,37 @@ else
 
             if (result.IsSuccess && result.Data != null)
             {
-                dto = result.Data.Product; // Rellenamos el formulario con los datos
+                // Rellenamos el formulario con los datos
+                dto = new ProductDto
+                {
+                    Id = result.Data.Id,
+                    Sku = result.Data.Sku,
+                    Name = result.Data.Name,
+                    Description = result.Data.Description,
+                    Price = result.Data.Price,
+                    Stock = result.Data.Stock,
+                    IsActive = result.Data.IsActive,
+
+                    // Mapeamos los colores a la lista de IDs que usa el formulario
+                    ColorIds = result.Data.Colors?.Select(c => c.Id).ToList() ?? new List<Guid>()
+                };
+                
 
                 // Nos suscribimos al evento de finalización de la mejora de descripción
                 NotificationService.OnTaskCompleted += OnAiTaskCompleted;
             }
+
             else
             {
                 ErrorMessage = "No se pudo cargar el producto.";
             }                    
         }
+        else
+        {
+            // Para creación, aseguramos que la lista de colores no sea nula
+            dto.ColorIds = new List<Guid>();
+        }
+
 
         //cargamos todos los colores disponibles
         var colorsResult = await ColorClient.GetAllColorsAsync();

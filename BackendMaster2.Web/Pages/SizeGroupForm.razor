@@ -13,6 +13,11 @@
 {
     <div class="alert alert-info"> Cargando datos...</div>
 }
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+    <button class="btn btn-secondary" @onclick="Cancel">Volver al listado</button>
+}
 else
 {
     <EditForm Model="sizeGroupDto" OnValidSubmit="HandleSubmit">
@@ -25,7 +30,7 @@ else
    
         <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" @bind="sizeGroupDto.IsActive" />
-            <label class="form-check-label">Marketplace Activo</label>
+            <label class="form-check-label">Grupo de tallas Activo</label>
         </div>
 
         <div class="d-flex gap-2">
