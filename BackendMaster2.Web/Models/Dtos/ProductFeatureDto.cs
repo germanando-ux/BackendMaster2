@@ -6,7 +6,19 @@ namespace BackendMaster2.Web.Models.Dtos;
 
 public class ProductFeatureDto
 {
+    public Guid Id { get; set; }
+    public Guid ProductId { get; set; }
     public Guid FeatureId { get; set; }
-    public string Value { get; set; } = string.Empty;
-    public Guid? ChannelId { get; set; } // null = global, Guid = específico de canal
+
+    // Nombre de la feature (para mostrar en el front, mapeado desde la navegación)
+    public string FeatureName { get; set; } = string.Empty;
+
+    // NUEVO: Opción seleccionada si es tipo Lista
+    public Guid? FeatureOptionId { get; set; }
+    public string? FeatureOptionValue { get; set; } // Para mostrar el valor de la opción en el front
+
+    // Valor libre (para tipos Texto, Número, etc.)
+    public string? Value { get; set; }
+
+    public Guid? ChannelId { get; set; }
 }

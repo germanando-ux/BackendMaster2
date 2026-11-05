@@ -12,11 +12,10 @@
 ### ✅ Completado (Backend)
 - [x] **Maestros base**: Entidades `DataSource` y `Marketplace` con CRUD completo (Backend), validaciones y seeds iniciales.
 - [x] **Categorías**: 
-  - [x] Entidad `Category` con `ParentId` (jerarquía autorreferencial).
-  - [x] Tabla intermedia `ProductCategory` (relación N:M).
-  - [x] Seed realista: "Ropa > Camisetas", "Calzado > Running", etc.
-  - [x] Entidad `Product` relacionada con `ProductCategory`.
-  - [x] Integración en `ProductService` (Create/Update/Get) con patrón quirúrgico.
+  - [x] Entidad `Category` (sin jerarquía por ahora, `ParentId` descartado).
+  - [x] Tabla intermedia `CategoryFeature` (relación N:M con `IsRequired`).
+  - [x] Seed realista: asignación idempotente de características a categorías.
+  - [x] Integración en `CatalogService` con patrón quirúrgico (`Clear()` + `Add()`).
 - [x] **Tallas**:
   - [x] Maestros: `SizeGroup` (ej. "EU", "US") y `Size` (ej. "42", "M").
   - [x] Entidad de unión: `ProductSize` con payload (`Stock`, `Sku`, `Price`).
@@ -36,30 +35,45 @@
   - [x] DTOs, AutoMapper, Repositorio, Servicio, Controladores y Validadores.
   - [x] Soporte para atributos específicos de canal (`ChannelId` nullable en `ProductFeature`).
   - [x] Patrón quirúrgico extendido a `CategoryFeatures` en `CatalogService`.
+- [x] **Refactorización de `ProductFeature`** (sesión 04/11/2026):
+  - [x] Cambio de clave primaria compuesta (`ProductId`, `FeatureId`) a clave subrogada (`Id`).
+  - [x] Añadido `FeatureOptionId` (nullable) para integridad referencial en tipos Lista.
+  - [x] `Value` cambiado a `string?` (nullable), usado solo para tipos Texto/Número/Booleano.
+  - [x] Migración `RefactorProductFeatureKey` aplicada con limpieza de tabla para evitar conflictos.
 - [x] **SeedController actualizado** (sesión 02/11/2026):
   - [x] Seed idempotente de `SizeGroups`, `Sizes`, `Features` y `FeatureOptions`.
   - [x] Claves compuestas de idempotencia (ej: `{FeatureId}_{Value.ToLower()}`).
   - [x] `SeedResultDto` ampliado con contadores de Features y FeatureOptions.
+  - [x] Seed de `CategoryFeatures` asignando características realistas a categorías.
 
-### ✅ Completado (Frontend Blazor) — Sesión 03/11/2026
-- [x] **Menú lateral jerárquico (Opción B)**: `Catálogo > Tallas > {Grupos, Tallas}` y `Catálogo > Características > {Características, Opciones}`, con despliegue/colapso por estado C# y sangría por niveles.
+### ✅ Completado (Frontend Blazor)
+- [x] **Menú lateral jerárquico (Opción B)**: `Catálogo > Tallas > {Grupos, Tallas}` y `Catálogo > Características`, con despliegue/colapso por estado C# y sangría por niveles.
 - [x] **Maestro de `SizeGroup`**: Grid con filtros (buscar por / término / estado), ordenación por columna, modal de borrado con estado de error, formulario create/edit, cliente API (`SizeGroupClient`) y DTOs espejo en el Web.
-- [x] **Maestro de `Size`**: Grid con filtros y ordenación, formulario create/edit con `<select>` de `SizeGroup`, cliente API y DTOs. *(Quedan pulidos menores → ver "Pendientes técnicos detectados".)*
-- [x] **`ProductForm.razor` sincronizado con DTOs aplanados del backend**: Corregido el mapeo `ProductDetailDto → ProductDto` en `OnInitializedAsync`; operativo con campos básicos + selector de Colores. *(Tallas/Marketplaces/DataSources/Features aún no integrados en el form → ver abajo.)*
+- [x] **Maestro de `Size`**: Grid con filtros y ordenación, formulario create/edit con `<select>` de `SizeGroup`, cliente API y DTOs.
+- [x] **`ProductForm.razor` sincronizado con DTOs aplanados del backend**: Corregido el mapeo `ProductDetailDto → ProductDto` en `OnInitializedAsync`; operativo con campos básicos + selector de Colores.
+- [x] **Maestro de `Category`** (sesión 04/11/2026):
+  - [x] `Categories.razor` con patrón Master-Detail: grid superior de categorías + grid inferior de características obligatorias.
+  - [x] Selección de fila con resaltado visual y carga en memoria de características.
+  - [x] `CategoryForm.razor` con gestión dinámica de características: búsqueda en tiempo real (`@bind:event="oninput"` + propiedad computada), añadir/quitar en memoria, envío completo al backend.
+- [x] **Maestro de `Feature`** (sesión 05/11/2026):
+  - [x] `Features.razor` con patrón Master-Detail: grid superior de características + grid inferior de opciones.
+  - [x] Helper `GetDataTypeName()` para mostrar "Texto", "Lista", "Número", "Sí/No".
+  - [x] Depuración de errores: CSS039 (usar `"transparent"` en lugar de `""`), sintaxis Razor (`@GetDataTypeName(...)`), asignación de `result.Data` a variable de estado.
+- [x] **Maestro de `DataSource`**: Grid con filtros/ordenación, formulario create/edit, cliente API y DTOs. (CRUD simple completado).
+- [x] **Maestro de `Marketplace`**: Grid con filtros/ordenación, formulario create/edit, cliente API y DTOs. (CRUD simple completado).
 
 ### ⏳ Pendiente (Frontend Blazor)
 - [ ] **Maestros de catálogo restantes**:
-  - [ ] Maestro de `Category` (con dropdown de `ParentId` para jerarquía).
-  - [ ] Maestro de `Feature` (con gestión de `FeatureOptions` si es tipo Lista).
-  - [ ] Maestro de `FeatureOption` (vinculado a `Feature`).
-  - [ ] Maestro de `DataSource` (CRUD simple).
-  - [ ] Maestro de `Marketplace` (CRUD simple).
+  - [ ] **`FeatureForm.razor`** (formulario con sección condicional):
+    - [ ] Sección 1 (siempre visible): Nombre, DataType (dropdown), IsRequired (checkbox).
+    - [ ] Sección 2 (condicional, solo si DataType == List): Tabla de opciones + input para añadir.
 - [ ] **Formulario de Producto en Blazor** (el "jefe final") — completar sobre la base ya operativa:
+  - [ ] `Products.razor`: Grid de productos con filtros y ordenación.
   - [ ] Selector múltiple de Categorías.
   - [ ] Tabla dinámica de Tallas (con Stock, Sku variante, Precio variante).
   - [ ] Sección de Marketplaces (con ExternalCode, LastSyncedAt).
   - [ ] Sección de DataSources (con ExternalCode, LastSyncedAt).
-  - [ ] Sección dinámica de Características (InputText o Select según `DataType` de la Feature).
+  - [ ] Sección dinámica de Características (InputText o Select según `DataType` de la Feature, usando `FeatureOptionId` si es Lista).
 
 ### 🎨 Mejoras de UX aplazadas (Backlog de UI)
 - [ ] **Chip / Tag Input para creación en lote de tallas desde `SizeGroup`**: Sustituir el alta talla-a-talla por un patrón de píldoras (escribe + Enter/coma → chip con ✕; pegar "26, 27, 28" → genera 3 chips; validación por chip: no vacío, no duplicado). Motivo: dar de alta "Europa Niño Calzado 26–32" sin 7 formularios.

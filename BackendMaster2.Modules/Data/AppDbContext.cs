@@ -216,21 +216,30 @@ namespace BackendMaster2.Modules.Data
             });
 
             //configuración de ProductFeature (Tabla de unión N:M con payload)
+
             modelBuilder.Entity<ProductFeature>(entity =>
             {
-                entity.ToTable("ProductFeatures");
-                // Clave compuesta
-                entity.HasKey(e => new { e.ProductId, e.FeatureId });
-                // Relación con Product
+                // CLAVE PRIMARIA
+                entity.HasKey(e => e.Id);
+
+                //Relación con Product (Mantenemos Cascade: si borras producto, se borran sus features)
                 entity.HasOne(e => e.Product)
                       .WithMany(p => p.ProductFeatures)
                       .HasForeignKey(e => e.ProductId)
                       .OnDelete(DeleteBehavior.Cascade);
-                // Relación con Feature
+
+                //Relación con Feature (Mantenemos Cascade: si borras la feature maestra, se borran sus valores)
                 entity.HasOne(e => e.Feature)
                       .WithMany(f => f.ProductFeatures)
                       .HasForeignKey(e => e.FeatureId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                //Relación con FeatureOption
+                entity.HasOne(e => e.FeatureOption)
+                      .WithMany(fo => fo.ProductFeatures)
+                      .HasForeignKey(e => e.FeatureOptionId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
             });
 
             //configuración de FeatureOption 

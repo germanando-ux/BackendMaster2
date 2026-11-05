@@ -29,7 +29,20 @@ public class CatalogProfile : Profile
         // Nuevos mapeos para el sistema de Atributos (Features)
         CreateMap<Feature, FeatureDto>().ReverseMap();
         CreateMap<FeatureOption, FeatureOptionDto>().ReverseMap();
-        CreateMap<ProductFeature, ProductFeatureDto>().ReverseMap();
+
+
+        // Mapeo de Entidad -> DTO (Lectura)
+        CreateMap<ProductFeature, ProductFeatureDto>()
+            .ForMember(dest => dest.FeatureName, opt => opt.MapFrom(src => src.Feature.Name))
+            .ForMember(dest => dest.FeatureOptionValue, opt => opt.MapFrom(src => src.FeatureOption != null ? src.FeatureOption.Value : null));
+
+        // Mapeo de DTO -> Entidad (Escritura)
+        CreateMap<ProductFeatureDto, ProductFeature>()
+            // Ignoramos las navegaciones de lectura para que AutoMapper no intente sobrescribirlas
+            .ForMember(dest => dest.Feature, opt => opt.Ignore())
+            .ForMember(dest => dest.FeatureOption, opt => opt.Ignore())
+            .ForMember(dest => dest.Product, opt => opt.Ignore());
+
         // Mapeo de CategoryFeature a CategoryFeatureDto, incluyendo el nombre de la característica para mostrar las características obligatorias de la categoría en el front
         CreateMap<CategoryFeature, CategoryFeaturesDto>()
             .ForMember(dest => dest.FeatureName, opt => opt.MapFrom(src => src.Feature.Name)).ReverseMap();

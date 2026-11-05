@@ -9,4 +9,6 @@ public class FeatureOption
 
     // Navegación
     public Feature Feature { get; set; } = null!;
+    public ICollection<ProductFeature> ProductFeatures { get; set; } = new List<ProductFeature>(); 
+
 }

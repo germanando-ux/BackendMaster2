@@ -290,7 +290,7 @@ public class CatalogRepository : ICatalogRepository
 
     public async Task<IEnumerable<Feature>> GetAllFeaturesAsync(BaseQueryDto query)
     {
-        IQueryable<Feature> featuresQuery = _context.Features.AsQueryable();
+        IQueryable<Feature> featuresQuery = _context.Features.Include(o => o.FeatureOptions).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(query.SearchTerm) && !string.IsNullOrWhiteSpace(query.SearchBy) && AllowedFeatureSortColumns.Contains(query.SearchBy))
         {

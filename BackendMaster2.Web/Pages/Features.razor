@@ -1,0 +1,293 @@
+﻿@page "/features"
+@using BackendMaster2.Web.Models.Dtos
+@using BackendMaster2.Web.Components
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Services
+@inject IFeatureClient FeatureClient
+@inherits FormBaseComponent
+
+
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h1 class="mb-1">Características</h1>
+        <p class="text-muted mb-0">Gestión de Características</p>
+    </div>
+    <a href="/features/create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Nueva Característica
+    </a>
+</div>
+
+@* Cuadro de búsqueda *@
+<div class="card shadow mb-4">
+    <div class="card mb-3 p-3 bg-light">
+        <div class="row g-3 align-items-end">
+            <!-- 3. Primera columna: Ocupa 3 de las 12 partes del ancho (25%) -->
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Buscar por</label>
+                <!-- Desplegable estándar de Bootstrap -->
+                <select class="form-select" @bind="_pendingSearchBy">
+                    <option value="Name">Nombre</option>
+                    <option value="DataType">Tipo de dato</option>
+                </select>
+            </div>
+            <!-- 4. Segunda columna: Ocupa 4 de las 12 partes (33%, un poco más ancha para el texto) -->
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Término de búsqueda</label>
+                <!-- Input de texto estándar de Bootstrap -->
+                <input type="text" class="form-control" placeholder="Ej: rojo, 123..." @bind="_pendingSearchTerm" />
+            </div>
+            <!-- 5. Tercera columna: Ocupa 3 de las 12 partes -->
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Tipo de dato</label>
+                <select class="form-select" @bind="_pendingStatus">
+                    <option value="Todos">Todos</option>
+                    <option value="Activos">Activos</option>
+                    <option value="Inactivos">Inactivos</option>
+                </select>
+            </div>
+            <!-- 6. Cuarta columna: Ocupa las 2 partes restantes (2+3+4+3 = 12). 'd-flex' y 'gap-2' ponen los botones en fila con un pequeño espacio entre ellos -->
+            <div class="col-md-2 d-flex flex-column gap-2">
+                <!-- Label fantasma: invisible pero ocupa el mismo espacio que los otros labels -->
+                <label class="form-label mb-0" style="visibility: hidden;">Acciones</label>
+
+                <!-- Botones sin width ni height fijos -->
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-danger flex-fill" @onclick="LimpiarFiltros">
+                        <i class="bi bi-x-circle me-1"></i> Limpiar
+                    </button>
+                    <button class="btn btn-primary flex-fill" @onclick="AplicarFiltros">
+                        <i class="bi bi-search me-1"></i> Aplicar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* grid *@
+<div class="card shadow mb-4">
+    <table class="table table-bordered table-striped table-hover">
+        <thead class="table-encabezado-marca">
+            <tr>
+                <th style="cursor: pointer;" @onclick="@(() => ToggleSortLocal("Name"))">
+                    Nombre
+                    <i class="bi @GetSortIcon("Name")"></i>
+                </th>
+                <th>Tipo de dato</th>
+                <th class="text-center" style="width: 120px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var feature in _features)
+            {
+                var isSelected = feature.Id == _selectedFeatureId;
+                <tr @onclick="() => LoadOptions(feature.Id)" style="cursor: pointer; background-color: @(isSelected ? "#e3f2fd" : "transparent")">
+                    <td class="align-middle">
+                        @if (isSelected)
+                        {
+                            <i class="bi bi-chevron-right me-2"></i>
+                        }
+                        @feature.Name
+                    </td>
+                    <td class="align-middle">
+                        @GetDataTypeName(feature.DataType) 
+                    </td>
+                    <td class="text-center align-middle">
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="/features/edit/@feature.Id" class="btn btn-sm btn-outline-primary" title="Editar característica">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger" title="Eliminar característica" @onclick="() => PrepareDeletion(feature.Id, feature.Name)" @onclick:stopPropagation>
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@* grid de características obligatorias para esa característica *@
+
+<div class="card shadow mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">
+            <i class="bi bi-tags me-2"></i>
+            Opciones de la característica:
+            <strong>@_features.FirstOrDefault(c => c.Id == _selectedFeatureId)?.Name</strong>
+        </h5>
+    </div>
+    <table class="table table-bordered table-striped table-hover">
+        <thead class="table-encabezado-marca">
+            <tr>
+                <th>
+                    Nombre característica
+                    <i class="bi @GetSortIcon("Name")"></i>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var featureOption in _featureOptions)
+            {
+                <tr>
+                    <td class="align-middle">@featureOption.Value</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<ConfirmModal Show="@(_featureIdPendiente.HasValue)"
+              IsError="@_modalEsError"
+              Title="@(_modalEsError ? "No se puede eliminar" : "Eliminar característica")"
+              Message="@_featureNombrePendiente"
+              ConfirmText="Eliminar"
+              CancelText="Cancelar"
+              OnConfirm="ConfirmDeletionAsync"
+              OnCancel="CancelDeletion" />
+
+@if (IsLoading)
+{
+    <p class="text-muted">Cargando características…</p>
+}
+else if (ErrorMessage is not null)
+{
+    <div class="alert alert-danger" role="alert">@ErrorMessage</div>
+}
+else
+{
+    
+}
+
+
+@code {
+
+    private List<FeatureDto> _features = new();
+    private List<FeatureOptionDto> _featureOptions = new();
+    private Guid? _featureIdPendiente;
+    private string? _featureNombrePendiente;
+    private bool _modalEsError;
+    private Guid _selectedFeatureId;
+
+    private string? _pendingSearchBy;
+    private string? _pendingSearchTerm;
+    private string? _pendingStatus;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFeatureAsync();
+    }
+
+    private async Task LoadFeatureAsync()
+    {
+        bool? estadoFiltro = null;
+        IsLoading = true;
+
+
+        if (_pendingStatus == "Activos")
+        {
+            estadoFiltro = true;
+        }
+        else if (_pendingStatus == "Inactivos")
+        {
+            estadoFiltro = false;
+        }
+
+        BaseQueryDto query = new BaseQueryDto
+        {
+            SortBy = CurrentSortBy,
+            SortAscending = CurrentSortAscending,
+            SearchBy = _pendingSearchBy,
+            SearchTerm = _pendingSearchTerm,
+            IsActive = estadoFiltro
+        };
+
+        var result = await FeatureClient.GetAllFeaturesAsync(query);
+
+        if (!result.IsSuccess)
+        {
+            ErrorMessage = ErrorHandler.HandleError(result);
+            IsLoading = false;
+            return;
+        }
+        _features = result.Data ?? new List<FeatureDto>();
+        if (_features.Count > 0)
+        {
+            LoadOptions(_features[0].Id);
+        }
+
+        IsLoading = false;
+    }
+
+    //filtros ordenaciones
+    private async Task ToggleSortLocal(string columnName)
+    {
+        ToggleSort(columnName);
+        await LoadFeatureAsync();
+    }
+    private async Task LimpiarFiltros()
+    {
+        _pendingSearchBy = "Name";
+        _pendingSearchTerm = "";
+        _pendingStatus = "Todos";
+
+        await LoadFeatureAsync();
+    }
+
+    private async Task AplicarFiltros()
+    {
+        await LoadFeatureAsync();
+    }
+    
+    //borrar característica
+    private async Task ConfirmDeletionAsync()
+    {
+        if (!_featureIdPendiente.HasValue) return;
+
+        var result = await FeatureClient.DeleteFeatureAsync(_featureIdPendiente.Value);
+
+        if (result.IsSuccess)
+        {
+            await LoadFeatureAsync();
+            CancelDeletion();
+        }
+        else
+        {
+            _modalEsError = true;
+            _featureNombrePendiente = ErrorHandler.HandleError(result);
+        }
+    }
+
+    private void CancelDeletion()
+    {
+        _featureIdPendiente = null;
+        _featureNombrePendiente = null;
+        _modalEsError = false;
+    }
+
+    private void PrepareDeletion(Guid id, string name)
+    {
+        _featureIdPendiente = id;
+        _featureNombrePendiente = name;
+        _modalEsError = false;
+    }
+
+    private string GetDataTypeName(FeatureDataType dataType) => dataType switch
+    {
+        FeatureDataType.Text => "Texto",
+        FeatureDataType.List => "Lista",
+        FeatureDataType.Number => "Número",
+        FeatureDataType.Boolean => "Sí/No",
+        _ => "Desconocido"
+    };
+
+    //cargar opciones de la característica seleccionada
+    private void LoadOptions(Guid featureId)
+    {
+        _selectedFeatureId = featureId;
+        _featureOptions = _features.FirstOrDefault(c => c.Id == featureId)?.FeatureOptions?.ToList() ?? new List<FeatureOptionDto>();
+        StateHasChanged();
+    }
+}

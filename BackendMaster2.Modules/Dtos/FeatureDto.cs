@@ -13,5 +13,5 @@ public class FeatureDto
     public bool IsRequired { get; set; }
 
     // Solo se da la relación si datatype está informado
-    public ICollection<FeatureOptionDto> Options { get; set; } = new List<FeatureOptionDto>();
+    public ICollection<FeatureOptionDto> FeatureOptions { get; set; } = new List<FeatureOptionDto>();
 }

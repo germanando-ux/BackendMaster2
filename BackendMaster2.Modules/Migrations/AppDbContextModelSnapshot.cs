@@ -300,24 +300,34 @@ namespace BackendMaster2.Modules.Migrations
 
             modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductFeature", b =>
                 {
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("FeatureId")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("ChannelId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("FeatureId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("FeatureOptionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Value")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("ProductId", "FeatureId");
+                    b.HasKey("Id");
 
                     b.HasIndex("FeatureId");
 
-                    b.ToTable("ProductFeatures", (string)null);
+                    b.HasIndex("FeatureOptionId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductFeatures");
                 });
 
             modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductMarketplace", b =>
@@ -585,6 +595,11 @@ namespace BackendMaster2.Modules.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BackendMaster2.Shared.Domain.FeatureOption", "FeatureOption")
+                        .WithMany("ProductFeatures")
+                        .HasForeignKey("FeatureOptionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("BackendMaster2.Shared.Domain.Product", "Product")
                         .WithMany("ProductFeatures")
                         .HasForeignKey("ProductId")
@@ -592,6 +607,8 @@ namespace BackendMaster2.Modules.Migrations
                         .IsRequired();
 
                     b.Navigation("Feature");
+
+                    b.Navigation("FeatureOption");
 
                     b.Navigation("Product");
                 });
@@ -691,6 +708,11 @@ namespace BackendMaster2.Modules.Migrations
 
                     b.Navigation("FeatureOptions");
 
+                    b.Navigation("ProductFeatures");
+                });
+
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.FeatureOption", b =>
+                {
                     b.Navigation("ProductFeatures");
                 });
 
