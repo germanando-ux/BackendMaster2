@@ -108,7 +108,10 @@ public class CatalogRepository : ICatalogRepository
 
     public async Task<IEnumerable<Category>> GetAllCategoriesAsync(BaseQueryDto query)
     {
-        IQueryable<Category> categoriesQuery = _context.Categories.AsQueryable();
+        IQueryable<Category> categoriesQuery = 
+            _context.Categories.AsQueryable()
+            .Include(c => c.CategoryFeatures)
+            .ThenInclude(cf => cf.Feature);
 
         if (!string.IsNullOrWhiteSpace(query.SearchTerm) && !string.IsNullOrWhiteSpace(query.SearchBy) && AllowedCategorySortColumns.Contains(query.SearchBy))
         {

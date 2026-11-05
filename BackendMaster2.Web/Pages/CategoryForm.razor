@@ -1,0 +1,239 @@
+﻿@page "/categories/create"
+@page "/categories/edit/{Id:guid}"
+@using BackendMaster2.Web.Components
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Services
+@inject ICategoryClient CategoryClient
+@inject IFeatureClient FeatureClient
+@inject NavigationManager Navigation
+@inject ToastService ToastService
+@inherits FormBaseComponent  //hereda de FormBaseComponent para manejar errores y variables de estado
+
+
+
+@if (IsLoading)
+{
+    <div class="alert alert-info"> Cargando datos...</div>
+}
+else
+{
+    <EditForm Model="categoryDto" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control border-primary" @bind="categoryDto.Name" />
+            <ValidationMessage For="@(() => categoryDto.Name)" class="text-danger small" />
+        </div>
+                
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" @bind="categoryDto.IsActive" />
+            <label class="form-check-label">Categoría Activa</label>
+        </div>
+
+        @* Tabla de características asignadas *@
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-tags me-2"></i>Características obligatorias
+                    <span class="badge bg-success text-white ms-2">@categoryDto.CategoryFeatures.Count asignadas</span>
+                </h6>
+            </div>
+            <div class="card-body">
+                @if (categoryDto.CategoryFeatures != null && categoryDto.CategoryFeatures.Any())
+                {
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Característica</th>
+                                <th class="text-center" style="width: 120px;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cf in categoryDto.CategoryFeatures)
+                            {
+                                <tr>
+                                    <td class="align-middle">@cf.FeatureName</td>
+                                    <td class="text-center align-middle">
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                @onclick="() => RemoveFeature(cf.FeatureId)"
+                                                title="Quitar característica">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                        <span class="small">No hay características asignadas a esta categoría.</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* bloque búsqueda características *@
+    
+
+        @* bloque búsqueda y añadir características *@
+        <div class="col-md-5 mb-3">
+            <div class="p-3 bg-light rounded border">
+                <label class="form-label fw-bold small text-uppercase text-muted mb-2">
+                    <i class="bi bi-search me-1"></i> Añadir nueva característica
+                </label>            
+                <input type="text" class="form-control form-control-sm mb-2" placeholder="Escribe para filtrar..." @bind="_filtroFeatures" @bind:event="oninput" />
+        
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm shadow-sm" size="5" @bind="selectedFeatureId">
+                        @foreach (var fF in filteredFeatures)
+                        {
+                            <option value="@fF.Id">@fF.Name</option>
+                        }
+                    </select>               
+                    <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center" @onclick="AddSelectedFeature" title="Añadir a la lista">
+                        <i class="bi bi-plus-lg fs-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar Categoría</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
+        </div>
+    </EditForm>
+
+}
+
+
+@code {
+        // 2. El objeto que va a "viajar" al backend.
+    private CategoryDto categoryDto = new();
+    private List<CategoryDto> availableCategory = new();
+    private List<FeatureDto> allFeatures = new();    
+    private List<FeatureDto> filteredFeatures => allFeatures.Where(f => f.Name.Contains(_filtroFeatures, StringComparison.OrdinalIgnoreCase)).ToList();
+    private Guid? selectedFeatureId;
+    private string _filtroFeatures = "";
+
+    // 2. Se ejecuta al pulsar "Guardar"
+    private async Task HandleSubmit()
+    {
+        IsSaving = true;
+        ErrorMessage = null;
+
+        ApiResult<CategoryDto> result;
+
+        // Decidimos si crear o actualizar según si tenemos un Id
+        if (IsEdit)
+        {
+            result = await CategoryClient.UpdateCategoryAsync(Id.Value, categoryDto);
+        }
+        else
+        {
+            result = await CategoryClient.CreateCategoryAsync(categoryDto);
+        }
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/categories"); // Vuelve al grid (ajusta la ruta si es distinta)
+        }
+        else
+        {
+            ToastService.ShowError(ErrorHandler.HandleError(result));
+        }
+
+        IsSaving = false;
+
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        var categoryResult = await CategoryClient.GetAllCategoriesAsync();
+        if (categoryResult.IsSuccess)
+        {
+            availableCategory = categoryResult.Data ?? new();
+
+            // Cargar todas las características disponibles para la búsqueda y selección
+            var featureResult = await FeatureClient.GetAllFeaturesAsync();
+            if (featureResult.IsSuccess)
+            {
+                allFeatures = featureResult.Data ?? new();
+            }
+        }
+
+        if (IsEdit)
+        {
+            IsLoading = true;
+            var result = await CategoryClient.GetCategoryByIdAsync(Id.Value);
+
+            if (result.IsSuccess && result.Data != null)
+            {
+                categoryDto = result.Data; // Rellenamos el formulario con los datos
+            }
+            else
+            {
+                ErrorMessage = "No se pudo cargar la categoría.";
+            }
+
+            IsLoading = false;
+        }
+        else
+        {
+            categoryDto.IsActive = true;
+        }
+        IsLoading = false;
+    }
+
+    // 3. Acción para el botón Cancelar
+    private async Task Cancel()
+    {
+        Navigation.NavigateTo("/categories");
+    }
+
+
+    //elimina una característica asociada a la categoría 
+    private void RemoveFeature(Guid featureId)
+    {
+        if (categoryDto.CategoryFeatures != null)
+        {
+            var featureToRemove = categoryDto.CategoryFeatures.FirstOrDefault(cf => cf.FeatureId == featureId);
+            if (featureToRemove != null)
+            {
+                categoryDto.CategoryFeatures.Remove(featureToRemove);
+            }
+        }
+    }
+
+
+    // Añade característica seleccionada
+    private void AddSelectedFeature()
+    {
+        if (selectedFeatureId.HasValue)
+        {
+            //obtiene la seleccionada en la lista
+            var feature = filteredFeatures.FirstOrDefault(f => f.Id == selectedFeatureId.Value);
+            if (feature != null)
+            {
+                //por si acaso
+                if (categoryDto.CategoryFeatures == null)
+                {
+                    categoryDto.CategoryFeatures = new List<CategoryFeaturesDto>();
+                }
+                // Añade la característica si no existe ya
+                if (!categoryDto.CategoryFeatures.Any(cf => cf.FeatureId == feature.Id))
+                {
+                    categoryDto.CategoryFeatures.Add(new CategoryFeaturesDto
+                    {
+                        FeatureId = feature.Id,
+                        FeatureName = feature.Name,
+                        IsRequired = true
+                    });
+                }
+
+                selectedFeatureId = null; // Limpiar selección después de añadir
+            }
+        }
+    }
+}

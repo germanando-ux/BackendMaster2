@@ -46,6 +46,11 @@ namespace BackendMaster2.Web
             builder.Services.AddScoped<ISizeGroupClient, SizeGroupClient>();
             //cliente tallas
             builder.Services.AddScoped<ISizeClient, SizeClient>();
+            //Cliente categorias
+            builder.Services.AddScoped<ICategoryClient, CategoryClient>();
+            //Cliente features
+            builder.Services.AddScoped<IFeatureClient, FeatureClient>();
+
 
             //mesajes de error con toast
             builder.Services.AddScoped<ToastService>();

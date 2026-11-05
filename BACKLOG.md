@@ -41,23 +41,29 @@
   - [x] Claves compuestas de idempotencia (ej: `{FeatureId}_{Value.ToLower()}`).
   - [x] `SeedResultDto` ampliado con contadores de Features y FeatureOptions.
 
-###  Pendiente (Frontend Blazor)
-- [ ] **Maestros de catálogo en Blazor**:
-  - [ ] Maestro de `SizeGroup` (CRUD simple).
-  - [ ] Maestro de `Size` (con dropdown de `SizeGroup`).
+### ✅ Completado (Frontend Blazor) — Sesión 03/11/2026
+- [x] **Menú lateral jerárquico (Opción B)**: `Catálogo > Tallas > {Grupos, Tallas}` y `Catálogo > Características > {Características, Opciones}`, con despliegue/colapso por estado C# y sangría por niveles.
+- [x] **Maestro de `SizeGroup`**: Grid con filtros (buscar por / término / estado), ordenación por columna, modal de borrado con estado de error, formulario create/edit, cliente API (`SizeGroupClient`) y DTOs espejo en el Web.
+- [x] **Maestro de `Size`**: Grid con filtros y ordenación, formulario create/edit con `<select>` de `SizeGroup`, cliente API y DTOs. *(Quedan pulidos menores → ver "Pendientes técnicos detectados".)*
+- [x] **`ProductForm.razor` sincronizado con DTOs aplanados del backend**: Corregido el mapeo `ProductDetailDto → ProductDto` en `OnInitializedAsync`; operativo con campos básicos + selector de Colores. *(Tallas/Marketplaces/DataSources/Features aún no integrados en el form → ver abajo.)*
+
+### ⏳ Pendiente (Frontend Blazor)
+- [ ] **Maestros de catálogo restantes**:
   - [ ] Maestro de `Category` (con dropdown de `ParentId` para jerarquía).
   - [ ] Maestro de `Feature` (con gestión de `FeatureOptions` si es tipo Lista).
   - [ ] Maestro de `FeatureOption` (vinculado a `Feature`).
   - [ ] Maestro de `DataSource` (CRUD simple).
   - [ ] Maestro de `Marketplace` (CRUD simple).
-- [ ] **Formulario de Producto en Blazor** (el "jefe final"):
-  - [ ] Campos básicos (Sku, Nombre, Descripción, Precio base, Stock base).
-  - [ ] Selector múltiple de Colores.
+- [ ] **Formulario de Producto en Blazor** (el "jefe final") — completar sobre la base ya operativa:
   - [ ] Selector múltiple de Categorías.
   - [ ] Tabla dinámica de Tallas (con Stock, Sku variante, Precio variante).
   - [ ] Sección de Marketplaces (con ExternalCode, LastSyncedAt).
   - [ ] Sección de DataSources (con ExternalCode, LastSyncedAt).
   - [ ] Sección dinámica de Características (InputText o Select según `DataType` de la Feature).
+
+### 🎨 Mejoras de UX aplazadas (Backlog de UI)
+- [ ] **Chip / Tag Input para creación en lote de tallas desde `SizeGroup`**: Sustituir el alta talla-a-talla por un patrón de píldoras (escribe + Enter/coma → chip con ✕; pegar "26, 27, 28" → genera 3 chips; validación por chip: no vacío, no duplicado). Motivo: dar de alta "Europa Niño Calzado 26–32" sin 7 formularios.
+  - **Decisión de patrón (recordar)**: *Chips* para maestros simples (solo nombre, sin payload) y *tabla dinámica* para relaciones con payload (`ProductSizes`: talla + Stock/Sku/Price). No mezclarlos.
 
 ## Procesamiento asíncrono y tiempo real
 - [x] Endpoint en backend para mejorar descripción de producto con IA (modelo ligero vía API) + Modal de confirmación en front + Toast de feedback (¡Hecho!)

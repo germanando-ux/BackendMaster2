@@ -214,6 +214,79 @@ public class SeedController : ControllerBase
                     }
                 }
             }
+
+            // ========================================================================
+            // 2.10 SEED DE CATEGORY FEATURES (CARACTERÍSTICAS POR CATEGORÍA) (ACTIVO E IDEMPOTENTE)
+            // ========================================================================
+            var categoryFeaturesSeedData = new Dictionary<string, List<string>>
+            {
+                { "Ropa", new List<string> { "Material", "Género" } },
+                { "Calzado", new List<string> { "Material", "Género" } },
+                { "Electrónica", new List<string> { "Voltaje", "Eficiencia Energética", "Material" } },
+                { "Hogar", new List<string> { "Material", "Eficiencia Energética" } },
+                { "Deportes", new List<string> { "Material", "Género" } }
+            };
+
+            // Obtenemos las categorías con sus features actuales para comprobar idempotencia
+            var existingCategories = await _catalogService.GetAllCategoriesAsync(new BaseQueryDto());
+            var categoriesDict = existingCategories.ToDictionary(c => c.Name, c => c, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var kvp in categoryFeaturesSeedData)
+            {
+                if (!categoriesDict.TryGetValue(kvp.Key, out var category))
+                {
+                    Console.WriteLine($"[SEED] Categoría '{kvp.Key}' no encontrada, saltando.");
+                    continue;
+                }
+
+                // Comprobamos si ya tiene exactamente las mismas características asignadas
+                var currentFeatureNames = category.CategoryFeatures
+                    .Select(cf => cf.FeatureName)  // Usa FeatureName directamente
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var targetFeatureNames = kvp.Value.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                if (currentFeatureNames.SetEquals(targetFeatureNames))
+                {
+                    result.CategoryFeaturesSkipped++;
+                    continue;
+                }
+
+                try
+                {
+                    // Construimos la lista de DTOs para la actualización
+                    var newCategoryFeatures = new List<CategoryFeaturesDto>();
+                    foreach (var featureName in kvp.Value)
+                    {
+                        if (featuresDict.TryGetValue(featureName, out var featureId))
+                        {
+                            newCategoryFeatures.Add(new CategoryFeaturesDto
+                            {
+                                FeatureId = featureId,
+                                IsRequired = true // Las marcamos como obligatorias para esta categoría
+                            });
+                        }
+                    }
+
+                    // Llamamos al Update, que según tu arquitectura aplica el patrón quirúrgico (Clear + Add)
+                    var updateDto = new CategoryDto
+                    {
+                        Id = category.Id,
+                        Name = category.Name,
+                        IsActive = category.IsActive,
+                        CategoryFeatures = newCategoryFeatures
+                    };
+
+                    await _catalogService.UpdateCategoryAsync(updateDto);
+                    result.CategoryFeaturesCreated += newCategoryFeatures.Count;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[SEED] Error asignando features a la categoría '{kvp.Key}': {ex.Message}");
+                }
+            }
+            // ========================================================================
             // ========================================================================
 
             // 3. PRODUCTOS (Comentado según tu código)
@@ -313,6 +386,9 @@ public record SeedResultDto
     public int FeaturesSkipped { get; set; }
     public int FeatureOptionsCreated { get; set; }
     public int FeatureOptionsSkipped { get; set; }
+
+    public int CategoryFeaturesCreated { get; set; }
+    public int CategoryFeaturesSkipped { get; set; }
 
     public int ProductsCreated { get; set; }
     public int ProductsSkipped { get; set; }

@@ -37,7 +37,7 @@ else
 
         <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" @bind="sizeDto.IsActive" />
-            <label class="form-check-label">Marketplace Activo</label>
+            <label class="form-check-label">Talla Activa</label>
         </div>
 
         <div class="d-flex gap-2">
@@ -51,7 +51,9 @@ else
 @code {
     // 2. El objeto que va a "viajar" al backend.
     private SizeDto sizeDto = new();
-    private List<SizeGroupDto> availableSizeGroups = new();
+    private List<SizeGroupDto> availableSizeGroups = new(); // Lista de grupos de tallas disponibles para el select
+    private Guid? selectedFeatureId;
+
 
     // 2. Se ejecuta al pulsar "Guardar"
     private async Task HandleSubmit()

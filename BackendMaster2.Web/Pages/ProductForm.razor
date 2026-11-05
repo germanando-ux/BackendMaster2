@@ -44,10 +44,8 @@ else
         <div class=" col-md-8 mb-3 gap-3">
             <label class="form-label">Descripción</label>
             <div class="d-flex gap-3 align-items-center">
-                @* <div class="flex-grow-1"> *@
                     <textarea class="form-control border-primary" rows="3" @bind="dto.Description" disabled="@IsReadOnly"></textarea>
                     <ValidationMessage For="@(() => dto.Description)" class="text-danger small" />
-                @* </div> *@
                 <button type="button" class="btn btn-primary" @onclick="RequestAiEnhancementAsync">Mejorar descripción (IA)</button>
             </div>
         </div>

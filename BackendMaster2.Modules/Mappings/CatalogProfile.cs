@@ -30,7 +30,9 @@ public class CatalogProfile : Profile
         CreateMap<Feature, FeatureDto>().ReverseMap();
         CreateMap<FeatureOption, FeatureOptionDto>().ReverseMap();
         CreateMap<ProductFeature, ProductFeatureDto>().ReverseMap();
-        CreateMap<CategoryFeature, CategoryFeatureDto>().ReverseMap();
+        // Mapeo de CategoryFeature a CategoryFeatureDto, incluyendo el nombre de la característica para mostrar las características obligatorias de la categoría en el front
+        CreateMap<CategoryFeature, CategoryFeaturesDto>()
+            .ForMember(dest => dest.FeatureName, opt => opt.MapFrom(src => src.Feature.Name)).ReverseMap();
 
         // 2. Product -> ProductDto (Lectura para listados/edición)
         // Mapeamos explícitamente las listas de IDs desde las tablas puente

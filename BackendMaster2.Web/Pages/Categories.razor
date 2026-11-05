@@ -1,0 +1,281 @@
+﻿@page "/categories"
+@using BackendMaster2.Web.Models.Dtos
+@using BackendMaster2.Web.Components
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Services
+@inject ICategoryClient CategoryClient  
+@inherits FormBaseComponent
+
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h1 class="mb-1">Categorías</h1>
+        <p class="text-muted mb-0">Gestión de Categorías</p>
+    </div>
+    <a href="/categories/create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Nueva Categoría
+    </a>
+</div>
+
+@if (IsLoading)
+{
+    <p class="text-muted">Cargando categorías…</p>
+}
+else if (ErrorMessage is not null)
+{
+    <div class="alert alert-danger" role="alert">@ErrorMessage</div>
+}
+else
+{
+    @* Cuadro de búsqueda *@
+    <div class="card shadow mb-4">
+        <div class="card mb-3 p-3 bg-light">
+            <div class="row g-3 aling-items-end">
+                <!-- 3. Primera columna: Ocupa 3 de las 12 partes del ancho (25%) -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Buscar por</label>
+                    <!-- Desplegable estándar de Bootstrap -->
+                    <select class="form-select" @bind="_pendingSearchBy">
+                        <option value="Name">Nombre</option>
+                    </select>
+                </div>
+                <!-- 4. Segunda columna: Ocupa 4 de las 12 partes (33%, un poco más ancha para el texto) -->
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Término de búsqueda</label>
+                    <!-- Input de texto estándar de Bootstrap -->
+                    <input type="text" class="form-control" placeholder="Ej: rojo, 123..." @bind="_pendingSearchTerm" />
+                </div>
+                <!-- 5. Tercera columna: Ocupa 3 de las 12 partes -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Estado</label>
+                    <select class="form-select" @bind="_pendingStatus">
+                        <option value="Todos">Todos</option>
+                        <option value="Activos">Activos</option>
+                        <option value="Inactivos">Inactivos</option>
+                    </select>
+                </div>
+                <!-- 6. Cuarta columna: Ocupa las 2 partes restantes (2+3+4+3 = 12). 'd-flex' y 'gap-2' ponen los botones en fila con un pequeño espacio entre ellos -->
+                <div class="col-md-2 d-flex flex-column gap-2">
+                    <!-- Label fantasma: invisible pero ocupa el mismo espacio que los otros labels -->
+                    <label class="form-label mb-0" style="visibility: hidden;">Acciones</label>
+
+                    <!-- Botones sin width ni height fijos -->
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-danger flex-fill" @onclick="LimpiarFiltros">
+                            <i class="bi bi-x-circle me-1"></i> Limpiar
+                        </button>
+                        <button class="btn btn-primary flex-fill" @onclick="AplicarFiltros">
+                            <i class="bi bi-search me-1"></i> Aplicar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* grid *@
+    <div class="card shadow mb-4">
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-encabezado-marca">
+                <tr>
+                    <th style="cursor: pointer;" @onclick="@(() => ToggleSortLocal("Name"))">
+                        Nombre
+                        <i class="bi @GetSortIcon("Name")"></i>
+                    </th>
+                    <th>Estado</th>
+                    <th class="text-center" style="width: 120px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in _categories)
+                {
+                    var isSelected = category.Id == _selectedCategoryId;
+                    <tr @onclick="() => LoadFeatures(category.Id)" style="cursor: pointer; background-color: @(isSelected ? "#e3f2fd" : "")">
+                        <td class="align-middle">
+                            @if (isSelected)
+                            {
+                                <i class="bi bi-chevron-right me-2"></i>
+                            }
+                            @category.Name
+                        </td>
+                        <td>
+                            @if (category.IsActive)
+                            {
+                                <span class="badge text-bg-success">Activo</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Inactivo</span>
+                            }
+                        </td>
+                        <td class="text-center align-middle">
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="/categories/edit/@category.Id" class="btn btn-sm btn-outline-primary" title="Editar categoría">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar categoría" @onclick="() => PrepareDeletion(category.Id, category.Name)" @onclick:stopPropagation>
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @* grid de características obligatorias para esa categoría *@
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-tags me-2"></i>
+                Características obligatorias:
+                <strong>@_categories.FirstOrDefault(c => c.Id == _selectedCategoryId)?.Name</strong>
+            </h5>
+        </div>
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-encabezado-marca">
+                <tr>
+                    <th>
+                        Nombre característica
+                        <i class="bi @GetSortIcon("Name")"></i>
+                    </th>                                        
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var feature in _categoryFeatures)
+                {
+                    <tr>
+                        <td class="align-middle">@feature.FeatureName</td>                      
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<ConfirmModal Show="@(_categoryIdPendiente.HasValue)"
+              IsError="@_modalEsError"
+              Title="@(_modalEsError ? "No se puede eliminar" : "Eliminar talla")"
+              Message="@_categoryNombrePendiente"
+              ConfirmText="Eliminar"
+              CancelText="Cancelar"
+              OnConfirm="ConfirmDeletionAsync"
+              OnCancel="CancelDeletion" />
+
+@code {
+    private List<CategoryDto> _categories = new();
+    private List<CategoryFeaturesDto> _categoryFeatures = new();
+    private Guid? _categoryIdPendiente;
+    private string? _categoryNombrePendiente;
+    private bool _modalEsError;
+    private Guid _selectedCategoryId;
+
+    private string? _pendingSearchBy;
+    private string? _pendingSearchTerm;
+    private string? _pendingStatus;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategoryAsync();
+    }
+
+    private async Task LoadCategoryAsync()
+    {
+        bool? estadoFiltro = null;
+        IsLoading = true;
+
+
+        if (_pendingStatus == "Activos")
+        {
+            estadoFiltro = true;
+        }
+        else if (_pendingStatus == "Inactivos")
+        {
+            estadoFiltro = false;
+        }
+
+        BaseQueryDto query = new BaseQueryDto
+        {
+            SortBy = CurrentSortBy,
+            SortAscending = CurrentSortAscending,
+            SearchBy = _pendingSearchBy,
+            SearchTerm = _pendingSearchTerm,
+            IsActive = estadoFiltro
+        };
+
+        var result = await CategoryClient.GetAllCategoriesAsync(query);
+
+        if (!result.IsSuccess)
+        {
+            ErrorMessage = ErrorHandler.HandleError(result);
+            IsLoading = false;
+            return;
+        }
+
+        _categories = result.Data ?? new List<CategoryDto>();
+        if (_categories.Count > 0)
+        { 
+            LoadFeatures(_categories[0].Id); 
+        }
+        
+        IsLoading = false;
+    }
+    private async Task ToggleSortLocal(string columnName)
+    {
+        ToggleSort(columnName);
+        await LoadCategoryAsync();
+    }
+    private async Task LimpiarFiltros()
+    {
+        _pendingSearchBy = "Name";
+        _pendingSearchTerm = "";
+        _pendingStatus = "Todos";
+
+        await LoadCategoryAsync();
+    }
+
+    private async Task AplicarFiltros()
+    {
+        await LoadCategoryAsync();
+    }
+
+    private async Task ConfirmDeletionAsync()
+    {
+        if (!_categoryIdPendiente.HasValue) return;
+
+        var result = await CategoryClient.DeleteCategoryAsync(_categoryIdPendiente.Value);
+
+        if (result.IsSuccess)
+        {
+            await LoadCategoryAsync();
+            CancelDeletion();
+        }
+        else
+        {
+            _modalEsError = true;
+            _categoryNombrePendiente = ErrorHandler.HandleError(result);
+        }
+    }
+
+    private void CancelDeletion()
+    {
+        _categoryIdPendiente = null;
+        _categoryNombrePendiente = null;
+        _modalEsError = false;
+    }
+
+    private void PrepareDeletion(Guid id, string name)
+    {
+        _categoryIdPendiente = id;
+        _categoryNombrePendiente = name;
+        _modalEsError = false;
+    }
+
+    private void LoadFeatures(Guid categoryId)
+    {
+        _selectedCategoryId = categoryId;
+        _categoryFeatures = _categories.FirstOrDefault(c => c.Id == categoryId)?.CategoryFeatures?.ToList() ?? new List<CategoryFeaturesDto>();
+        StateHasChanged();
+    }
+}
