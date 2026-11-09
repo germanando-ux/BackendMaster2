@@ -1,5 +1,218 @@
-﻿<h3>FeatureForm</h3>
+﻿@page "/features/create"
+@page "/features/edit/{Id:guid}"
+@using BackendMaster2.Web.Components
+@using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Services
+@inject IFeatureClient FeatureClient
+@inject NavigationManager Navigation
+@inject ToastService ToastService
+@inherits FormBaseComponent  //hereda de FormBaseComponent para manejar errores y variables de estado
+
+
+@if (IsLoading)
+{
+    <div class="alert alert-info"> Cargando datos...</div>
+}
+else
+{
+    <EditForm Model="featureDto" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        @* campos del formulario *@
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control border-primary" @bind="featureDto.Name" />
+            <ValidationMessage For="@(() => featureDto.Name)" class="text-danger small" />
+        </div>
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Tipo de dato</label>
+            <select class="form-select" @bind="featureDto.DataType">
+                <option value="">Seleccione un tipo de dato</option>
+                @foreach (var dataType in Enum.GetValues<FeatureDataType>())
+                {
+                    <option value="@dataType">@GetDataTypeName(dataType)</option>
+                }
+            </select>
+        </div>
+        @if (featureDto.DataType == FeatureDataType.List)
+        {
+            @* Tabla de opciones asignadas *@
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-tags me-2"></i>Opciones de la característica
+                        <span class="badge bg-success text-white ms-2">@featureDto.FeatureOptions.Count opciones</span>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (featureDto.FeatureOptions != null && featureDto.FeatureOptions.Any())
+                    {
+                        <table class="table table-sm table-bordered mb-3">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Opciones de la lista</th>
+                                    <th class="text-center" style="width: 120px;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var fo in featureDto.FeatureOptions)
+                                {
+                                    <tr>
+                                        <td class="align-middle">@fo.Value</td>
+                                        <td class="text-center align-middle">
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                            @onclick="() => RemoveOption(fo.FeatureId)"
+                                            title="Quitar característica">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                            <span class="small">No hay opciones asignadas a esta característica.</span>
+                        </div>
+                    }
+                    @* sección añadir opción *@
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label">Añadir opción</label>
+                        <div class="d-flex gap-3 align-items-center">
+                            <div class="input-group">
+                                <input type="text" class="form-control border-primary" @bind="addOption" />
+                                <button type="button" class="btn btn-primary " @onclick="AddOption"><i class="bi bi-plus-lg"></i>Añadir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar característica</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
+        </div>
+    </EditForm>
+} 
+
 
 @code {
+    // 2. El objeto que va a "viajar" al backend.
+    private FeatureDto featureDto = new();
+    private List<FeatureDto> availableFeature = new();
+    private string _filtroFeatures = "";
+    private string addOption = "";
 
+    // 2. Se ejecuta al pulsar "Guardar"
+    private async Task HandleSubmit()
+    {
+        IsSaving = true;
+        ErrorMessage = null;
+
+        ApiResult<FeatureDto> result;
+
+        //si no es una lista borramos las options antes de grabar
+        if (featureDto.DataType != FeatureDataType.List)
+        {
+            featureDto.FeatureOptions.Clear();
+        }
+        // Decidimos si crear o actualizar según si tenemos un Id
+        if (IsEdit)
+        {
+            result = await FeatureClient.UpdateFeatureAsync(Id.Value, featureDto);
+        }
+        else
+        {
+            result = await FeatureClient.CreateFeatureAsync(featureDto);
+        }
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/features"); // Vuelve al grid (ajusta la ruta si es distinta)
+        }
+        else
+        {
+            ToastService.ShowError(ErrorHandler.HandleError(result));
+        }
+
+        IsSaving = false;
+
+    }
+    protected override async Task OnInitializedAsync()
+    {             
+
+        if (IsEdit)
+        {
+            IsLoading = true;
+            var result = await FeatureClient.GetFeatureByIdAsync(Id.Value);
+
+            if (result.IsSuccess && result.Data != null)
+            {
+                featureDto = result.Data; // Rellenamos el formulario con los datos
+            }
+            else
+            {
+                ErrorMessage = "No se pudo cargar la categoría.";
+            }
+
+            IsLoading = false;
+        }
+        // else
+        // {
+        //     featureDto.IsRequired = true;
+        // }
+        IsLoading = false;
+    }
+
+    // 3. Acción para el botón Cancelar
+    private async Task Cancel()
+    {
+        Navigation.NavigateTo("/features");
+    }
+
+
+    //elimina la opción de la lista de opciones de la característica
+    private void RemoveOption(Guid optionId)
+    {
+        if (featureDto.FeatureOptions != null)
+        {
+            var optionToRemove = featureDto.FeatureOptions.FirstOrDefault(cf => cf.FeatureId == optionId);
+            if (optionToRemove != null)
+            {
+                featureDto.FeatureOptions.Remove(optionToRemove);
+            }
+        }
+    }
+
+
+    // Añade una opción a la lista 
+    private void AddOption()
+    {
+        var opcionYaExiste = featureDto.FeatureOptions.FirstOrDefault(cf => cf.Value == addOption);
+        // Añade la característica si no existe ya
+        if (opcionYaExiste is null && !string.IsNullOrEmpty(addOption))
+        {
+            featureDto.FeatureOptions.Add(new FeatureOptionDto
+                {
+                    FeatureId = featureDto.Id,
+                    Value = addOption,
+                });
+
+            addOption = ""; // Limpiar la opción después de añadir
+        }    
+       
+    }
+
+    private string GetDataTypeName(FeatureDataType dataType) => dataType switch
+    {
+        FeatureDataType.Text => "Texto",
+        FeatureDataType.List => "Lista",
+        FeatureDataType.Number => "Número",
+        FeatureDataType.Boolean => "Sí/No",
+        _ => "Desconocido"
+    };
 }
+
+

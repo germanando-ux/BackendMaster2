@@ -276,6 +276,17 @@ public class CatalogService : ICatalogService
         existing.DataType = featureDto.DataType;
         existing.IsRequired = featureDto.IsRequired;
 
+        //borramos las opciones actuales y añadimos las nuevas. EF Core se encarga de los DELETE/INSERT.
+        existing.FeatureOptions.Clear();
+        foreach (var foDto in featureDto.FeatureOptions)
+        {
+            existing.FeatureOptions.Add(new FeatureOption
+            {                
+                FeatureId = foDto.FeatureId,
+                Value = foDto.Value
+            });
+        }
+
         await _catalogRepository.UpdateFeatureAsync(existing);
         return _mapper.Map<FeatureDto>(existing);
     }
