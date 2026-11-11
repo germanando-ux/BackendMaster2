@@ -4,6 +4,7 @@ public class ProductMarketplaceDto
 {
     public Guid ProductId { get; set; }
     public Guid MarketplaceId { get; set; }
+    public string MarketplaceName { get; set; } = string.Empty;    
     public string ExternalCode { get; set; } = string.Empty;
     public DateTime? LastSyncedAt { get; set; }
 }

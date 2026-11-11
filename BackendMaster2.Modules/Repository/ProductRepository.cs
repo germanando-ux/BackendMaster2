@@ -202,7 +202,6 @@ namespace BackendMaster2.Modules.Repository
                     {
                         Id = pc.Category.Id,
                         Name = pc.Category.Name
-                        // Añade aquí IsActive si tu CategoryDto lo tiene
                     }).ToList(),
 
                     // 3. Relaciones con payload 
@@ -229,7 +228,8 @@ namespace BackendMaster2.Modules.Repository
                     {
                         MarketplaceId = pm.MarketplaceId,
                         ExternalCode = pm.ExternalCode,
-                        LastSyncedAt = pm.LastSyncedAt
+                        LastSyncedAt = pm.LastSyncedAt,
+                        MarketPlaceName = pm.Marketplace.Name
                     }).ToList(),
 
                     ProductFeatures = p.ProductFeatures.Select(pf => new ProductFeatureDto
