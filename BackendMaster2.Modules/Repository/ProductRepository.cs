@@ -170,7 +170,79 @@ namespace BackendMaster2.Modules.Repository
             .ThenInclude(f => f.FeatureOptions)
             .FirstOrDefaultAsync(p => p.Id == id);
         }
-        
+
+        /// <summary>
+        /// Obtiene el detalle completo de un producto proyectado directamente a ProductDetailDto.
+        /// Usa proyección de EF Core (.Select) para ser rápido, transparente y evitar AutoMapper en anidamientos.
+        /// </summary>
+        public async Task<ProductDetailDto?> GetProductDetailByIdAsync(Guid id)
+        {
+            return await _context.Products
+                .Where(p => p.Id == id)
+                .Select(p => new ProductDetailDto
+                {
+                    // 1. Datos básicos
+                    Id = p.Id,
+                    Sku = p.Sku,
+                    Name = p.Name,
+                    Description = p.Description,
+                    Price = p.Price,
+                    Stock = p.Stock,
+                    IsActive = p.IsActive,
+
+                    // 2. Maestros completos (proyectamos solo los campos que tiene ColorDto y CategoryDto)
+                    Colors = p.ProductOptions.Select(po => new ColorDto
+                    {
+                        Id = po.Color.Id,
+                        Name = po.Color.Name,
+                        HexCode = po.Color.HexCode
+                    }).ToList(),
+
+                    Categories = p.ProductCategories.Select(pc => new CategoryDto
+                    {
+                        Id = pc.Category.Id,
+                        Name = pc.Category.Name
+                        // Añade aquí IsActive si tu CategoryDto lo tiene
+                    }).ToList(),
+
+                    // 3. Relaciones con payload 
+                    ProductSizes = p.ProductSizes.Select(ps => new ProductSizeDto
+                    {
+                        ProductId = ps.ProductId,
+                        SizeId = ps.SizeId,
+                        SizeName = ps.Size.Name,                
+                        SizeGroupName = ps.Size.SizeGroup.Name, 
+                        Stock = ps.Stock,
+                        Sku = ps.Sku,
+                        Price = ps.Price
+                    }).ToList(),
+
+                    // 4. Otras relaciones con payload (ajusta las propiedades si tu DTO tiene más campos)
+                    ProductDataSources = p.ProductDataSources.Select(pds => new ProductDataSourceDto
+                    {
+                        DataSourceId = pds.DataSourceId,
+                        ExternalCode = pds.ExternalCode,
+                        LastSyncedAt = pds.LastSyncedAt
+                    }).ToList(),
+
+                    ProductMarketplaces = p.ProductMarketplaces.Select(pm => new ProductMarketplaceDto
+                    {
+                        MarketplaceId = pm.MarketplaceId,
+                        ExternalCode = pm.ExternalCode,
+                        LastSyncedAt = pm.LastSyncedAt
+                    }).ToList(),
+
+                    ProductFeatures = p.ProductFeatures.Select(pf => new ProductFeatureDto
+                    {
+                        FeatureId = pf.FeatureId,
+                        FeatureName = pf.Feature.Name,
+                        Value = pf.Value,
+                        ChannelId = pf.ChannelId
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
+        }
+
 
         // BÚSQUEDA POR CAMPO NO CLAVE: se traduce a WHERE "Sku" = @p.
         public async Task<Product?> GetBySkuAsync(string sku)

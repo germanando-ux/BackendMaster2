@@ -11,6 +11,9 @@
 @inject IColorClient ColorClient
 @inject ToastService ToastService
 @inject INotificationClientService NotificationService
+@inject ICategoryClient CategoryClient
+@inject ISizeClient SizeClient
+@inject ISizeGroupClient SizeGroupClient
 
 @inherits FormBaseComponent //hereda de FormBaseComponent para manejar errores y variables de estado
 
@@ -21,7 +24,7 @@
 }
 else
 {
-     <EditForm Model="dto" OnValidSubmit="HandleSubmit">
+     <EditForm Model="productDto" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator />
         @if (IsReadOnly)
         {
@@ -29,66 +32,244 @@ else
                 <i class="bi bi-eye me-2"></i>Modo consulta: campos de solo lectura.
             </div>
         }
-        <div class="col-md-8 mb-3">
-            <label class="form-label">SKU</label>
-            <input type="text" class="form-control border-primary " @bind="dto.Sku" disabled="@IsReadOnly" />
-            <ValidationMessage For="@(() => dto.Sku)" class="text-danger small" />
-        </div>
 
-        <div class="col-md-8 mb-3">
-            <label class="form-label">Nombre</label>
-            <input type="text" class="form-control border-primary" @bind="dto.Name" disabled="@IsReadOnly" />
-            <ValidationMessage For="@(() => dto.Name)" class="text-danger small" />
-        </div>
+        <!-- PESTAÑAS (TABS) -->
+        <ul class="nav nav-tabs mb-4" id="productTabs" role="tablist">
+            <li class="nav-item">
+                <button type="button" class="nav-link @(activeTab == "general" ? "active" : "")"
+                        @onclick="@(() => SetActiveTab("general"))">
+                    <i class="bi bi-info-circle me-1"></i> Datos Generales
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link @(activeTab == "clasificacion" ? "active" : "")"
+                        @onclick="@(() => SetActiveTab("clasificacion"))">
+                    <i class="bi bi-tags me-1"></i> Clasificación
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link @(activeTab == "variantes" ? "active" : "")"
+                        @onclick="@(() => SetActiveTab("variantes"))">
+                    <i class="bi bi-rulers me-1"></i> Variantes (Tallas)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link @(activeTab == "canales" ? "active" : "")"
+                        @onclick="@(() => SetActiveTab("canales"))">
+                    <i class="bi bi-shop me-1"></i> Canales
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link @(activeTab == "caracteristicas" ? "active" : "")"
+                        @onclick="@(() => SetActiveTab("caracteristicas"))">
+                    <i class="bi bi-card-checklist me-1"></i> Características
+                </button>
+            </li>
+        </ul>
 
-        <div class=" col-md-8 mb-3 gap-3">
-            <label class="form-label">Descripción</label>
-            <div class="d-flex gap-3 align-items-center">
-                    <textarea class="form-control border-primary" rows="3" @bind="dto.Description" disabled="@IsReadOnly"></textarea>
-                    <ValidationMessage For="@(() => dto.Description)" class="text-danger small" />
-                <button type="button" class="btn btn-primary" @onclick="RequestAiEnhancementAsync">Mejorar descripción (IA)</button>
-            </div>
-        </div>
+        <!-- CONTENIDO DE LAS PESTAÑAS -->
+        <div class="tab-content" id="productTabsContent">
+    
+            <!-- PESTAÑA 1: DATOS GENERALES (Activa por defecto) -->
+            <div class="tab-pane fade @(activeTab == "general" ? "show active" : "")">
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label">SKU</label>
+                        <input type="text" class="form-control border-primary " @bind="productDto.Sku" disabled="@IsReadOnly" />
+                        <ValidationMessage For="@(() => productDto.Sku)" class="text-danger small" />
+                    </div>
 
-        <div class="col-6 mb-3">
-            <label class="form-label">Precio</label>
-            <div class="gap-3">
-                <NumberInput @bind-Value="dto.Price" CssClass="form-control" class="border-primary" required />
-                <ValidationMessage For="@(() => dto.Price)" class="text-danger small" />
-            </div>
-        </div>
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control border-primary" @bind="productDto.Name" disabled="@IsReadOnly" />
+                        <ValidationMessage For="@(() => productDto.Name)" class="text-danger small" />
+                    </div>
 
-        <div class="col-6 mb-3">
-            <label class="form-label">Stock</label>
-            <input type="number" class="form-control border-primary" @bind="dto.Stock" required />
-            <ValidationMessage For="@(() => dto.Stock)" class="text-danger small" />
-        </div>
-
-        <div class="mb-4 form-check">
-            <input type="checkbox" class="form-check-input" @bind="dto.IsActive" disabled="@IsReadOnly" />
-            <label class="form-check-label">Producto Activo</label>
-        </div>
-
-        <hr class="my-4" />
-
-        <div class="mb-4">
-            <label class="form-label fw-semibold fs-5">Colores</label>
-            <div class="d-flex flex-wrap gap-3">
-                @foreach (var color in availableColors)
-                {
-                    var seleccionado = dto.ColorIds.Contains(color.Id);
-
-                    <div class="d-flex align-items-center gap-2 border rounded p-2" @onclick="() => ToggleColor(color.Id)"
-                         style="cursor::@(IsReadOnly ? "default" : "pointer"); border-color:@(seleccionado ? "#0d6efd" : "#dee2e6") !important;background:@(seleccionado ? "#e7f1ff" : "white");">
-                        <div style="width:28px; height:28px; background-color:@color.HexCode; border:1px solid #ccc; border-radius:4px;"></div>
-                        <div>
-                            <div class="small fw-semibold">@color.Name</div>
-                            <div class="small text-muted font-monospace">@color.HexCode</div>
+                    <div class=" col-md-8 mb-3 gap-3">
+                        <label class="form-label">Descripción</label>
+                        <div class="d-flex gap-3 align-items-center">
+                            <textarea class="form-control border-primary" rows="3" @bind="productDto.Description" disabled="@IsReadOnly"></textarea>
+                            <ValidationMessage For="@(() => productDto.Description)" class="text-danger small" />
+                            <button type="button" class="btn btn-primary" @onclick="RequestAiEnhancementAsync">Mejorar descripción (IA)</button>
                         </div>
                     </div>
-                }
+                    <div class="row mb-3">
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Precio</label>
+                            <div class="gap-3">
+                                <NumberInput @bind-Value="productDto.Price" CssClass="form-control" class="border-primary" required />
+                                <ValidationMessage For="@(() => productDto.Price)" class="text-danger small" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Stock</label>
+                            <input type="number" class="form-control border-primary" @bind="productDto.Stock" required />
+                            <ValidationMessage For="@(() => productDto.Stock)" class="text-danger small" />
+                        </div>
+                    </div>
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" @bind="productDto.IsActive" disabled="@IsReadOnly" />
+                        <label class="form-check-label">Producto Activo</label>
+                    </div>
+                </div>
+               
+          
+
+                
             </div>
+            <!-- PESTAÑA 2: CLASIFICACIÓN  -->
+            <div class="tab-pane fade @(activeTab == "clasificacion" ? "show active" : "")">
+                <div class="row">
+                    @* COLORES *@
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-semibold fs-5"><i class="bi bi-palette me-2"></i>Colores</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach (var color in availableColors)
+                            {
+                                var seleccionado = productDto.ColorIds.Contains(color.Id);
+
+                                <div class="d-flex align-items-center gap-2 border rounded p-2" @onclick="() => ToggleColor(color.Id)"
+                                     style="cursor::@(IsReadOnly ? "default" : "pointer"); border-color:@(seleccionado ? "#0d6efd" : "#dee2e6") !important;background:@(seleccionado ? "#e7f1ff" : "white");">
+                                    <div style="width:28px; height:28px; background-color:@color.HexCode; border:1px solid #ccc; border-radius:4px;"></div>
+                                    <div>
+                                        <div class="small fw-semibold">@color.Name</div>
+                                        <div class="small text-muted font-monospace">@color.HexCode</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    @* CATEGORÍAS *@
+                    <!-- Columna 2: Categorías -->
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-semibold fs-5"><i class="bi bi-folder me-2"></i>Categorías</label>
+                        <div class="list-group">
+                            @foreach (var category in availableCategories)
+                            {
+                                var seleccionado = productDto.CategoryIds.Contains(category.Id);
+                                <label class="list-group-item d-flex gap-2 align-items-center" style="cursor: @(IsReadOnly ? "default" : "pointer");">
+                                    <input class="form-check-input flex-shrink-0" type="checkbox"
+                                           checked="@seleccionado"
+                                           disabled="@IsReadOnly"
+                                           @onchange="() => ToggleCategory(category.Id)" />
+                                    <span>@category.Name</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 3: VARIANTES  -->            
+           <div class="tab-pane fade @(activeTab == "variantes" ? "show active" : "")">
+                <label class="form-label fw-semibold fs-5"><i class="bi bi-rulers me-2"></i>Variantes de talla</label>                
+                    <div class="card mb-3 p-3 bg-info">
+                        <label class="form-label">
+                            <i class="bi bi-info-circle-fill"></i> <strong>¿Cómo añadir tallas?</strong> Usa "Añadir Grupo" para cargar todas las tallas de una categoría de golpe, o "Añadir Talla" para incorporar variantes sueltas. 
+                        </label>
+                    </div>  
+                @* grupo de combos de grupos de tallas y combos de tallas sueltas *@
+                <div class="card  shadow-sm mb-4">
+                    <div class="card mb-3 p-3 bg-light">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold fs-5">Añadir Talla Suelta</label>
+                                <div class="input-group">
+                                    <select class="form-select" @bind="selectedSize">
+                                        @foreach (var size in availableSizes)
+                                        {
+                                            <option value="@size.Id">@size.Name</option>
+                                        }
+                                    </select>
+                                    <button type="button" class="btn btn-primary" @onclick="addSelectedSize">
+                                        <i class="bi bi-plus-lg"></i>Añadir talla
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold fs-5">Añadir Grupo Completo</label>
+                                <div class="input-group">
+                                    <select class="form-select" @bind="selectedSizeGroups">
+                                        @foreach (var sizeGroup in availableSizeGroups)
+                                        {
+                                            <option value="@sizeGroup.Id">@sizeGroup.Name</option>
+                                        }
+                                    </select>
+                                    <button type="button" class="btn btn-primary" @onclick="addSelectedGroupSize">
+                                        <i class="bi bi-plus-lg"></i>Añadir grupo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                  @* grid de tallas *@
+                <div class="card shadow mb-4">
+                    <table class="table table-bordered table-striped table-hover">
+                        <thead class="table-encabezado-marca">
+                            <tr>
+                                <th>
+                                    Talla                                    
+                                </th>
+                                <th>
+                                    Grupo                                    
+                                </th>
+                                <th>Stock variante</th>
+                                <th>Sku variante</th>
+                                <th>Precio (€)</th>
+                                <th class="text-center" style="width: 120px;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var productSize in productDto.ProductSizes)
+                            {
+                                <tr>
+                                    <td class="align-middle">@productSize.SizeName</td>
+                                    <td> <span class="badge text-bg-success">@productSize.SizeGroupName</span></td>
+                                    <td class="align-middle">
+                                        <input type="number"
+                                               class="form-control form-control-sm border-primary"
+                                               @bind="productSize.Stock" />
+                                    </td>
+                                    <td class="align-middle">
+                                        <input type="text"
+                                               class="form-control form-control-sm border-primary"
+                                               @bind="productSize.Sku" />
+                                        <ValidationMessage For="@(() => productSize.Sku)" class="text-danger small d-block" />
+                                    </td>
+                                    <td class="align-middle">@productSize.Price</td>                              
+                                    <td class="text-center align-middle">
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => RemoveproductSize(productSize.SizeId)"
+                                                    title="Quitar característica">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+           
+
+            <!-- PESTAÑA 4: CANALES  -->
+            <div class="tab-pane fade @(activeTab == "canales" ? "show active" : "")">            
+                <p class="text-muted">Pendiente: Marketplaces y DataSources</p>
+            </div>
+
+            <!-- PESTAÑA 5: CARACTERÍSTICAS  -->
+            <div class="tab-pane fade @(activeTab == "caracteristicas" ? "show active" : "")">                   
+                <p class="text-muted">Pendiente: Características dinámicas</p>
+            </div>
+            
         </div>
+
+
 
         <div class="d-flex gap-2">
             @if (!IsReadOnly)
@@ -113,12 +294,19 @@ else
 
 @code {
 
+    private string activeTab = "general";
 
     // 2. El objeto que va a "viajar" al backend.
-    private ProductDto dto = new();
+    private ProductDto productDto = new();
 
     private List<ColorDto> availableColors = new();
+    private List<CategoryDto> availableCategories = new();
+    private List<SizeDto> availableSizes = new();
+    private List<SizeGroupDto> availableSizeGroups = new();
     private string AiDescription = string.Empty;
+
+    private Guid? selectedSizeGroups;
+    private Guid? selectedSize;
 
     // 1. Se ejecuta al entrar en la página. Si es edición, carga los datos.
     protected override async Task OnInitializedAsync()
@@ -130,7 +318,7 @@ else
             if (result.IsSuccess && result.Data != null)
             {
                 // Rellenamos el formulario con los datos
-                dto = new ProductDto
+                productDto = new ProductDto
                 {
                     Id = result.Data.Id,
                     Sku = result.Data.Sku,
@@ -141,9 +329,11 @@ else
                     IsActive = result.Data.IsActive,
 
                     // Mapeamos los colores a la lista de IDs que usa el formulario
-                    ColorIds = result.Data.Colors?.Select(c => c.Id).ToList() ?? new List<Guid>()
+                    ColorIds = result.Data.Colors?.Select(c => c.Id).ToList() ?? new List<Guid>(),
+                    CategoryIds = result.Data.Categories?.Select(c => c.Id).ToList() ?? new List<Guid>(),
+                    ProductSizes = result.Data.ProductSizes
                 };
-                
+
 
                 // Nos suscribimos al evento de finalización de la mejora de descripción
                 NotificationService.OnTaskCompleted += OnAiTaskCompleted;
@@ -157,17 +347,41 @@ else
         else
         {
             // Para creación, aseguramos que la lista de colores no sea nula
-            dto.ColorIds = new List<Guid>();
+            productDto.ColorIds = new List<Guid>();
         }
 
 
-        //cargamos todos los colores disponibles
+        //CARGAMOS todos los COLORES disponibles
         var colorsResult = await ColorClient.GetAllColorsAsync();
         if (colorsResult.IsSuccess)
         {
             availableColors = colorsResult.Data ?? new();
         }
+
+        //CARGAMOS todas las CATEGORIAS disponibles
+        var categoriesResult = await CategoryClient.GetAllCategoriesAsync();
+        if (categoriesResult.IsSuccess)
+        {
+            availableCategories = categoriesResult.Data ?? new();
+        }
         IsLoading = false;
+
+        //CARGAMOS todas las tallas disponibles
+        var sizesResult = await SizeClient.GetAllSizesAsync();
+        if (sizesResult.IsSuccess)
+        {
+            availableSizes = sizesResult.Data ?? new();
+        }
+        IsLoading = false;
+
+        //CARGAMOS todas grupos de tallas disponibles
+        var sizeGroupsResult = await SizeGroupClient.GetAllSizeGroupsAsync();
+        if (sizeGroupsResult.IsSuccess)
+        {
+            availableSizeGroups = sizeGroupsResult.Data ?? new();
+        }
+        IsLoading = false;
+
     }
 
     // 2. Se ejecuta al pulsar "Guardar"
@@ -186,11 +400,11 @@ else
             // Decidimos si crear o actualizar según si tenemos un Id
             if (IsEdit)
             {
-                result = await ProductsClient.UpdateProductAsync(Id.Value, dto);
+                result = await ProductsClient.UpdateProductAsync(Id.Value, productDto);
             }
             else
             {
-                result = await ProductsClient.CreateProductAsync(dto);
+                result = await ProductsClient.CreateProductAsync(productDto);
             }
 
             if (result.IsSuccess)
@@ -210,7 +424,7 @@ else
     {
         string error = "";
         //validamos que el produto tenga al menos un color
-        if  (dto.ColorIds.Count() == 0)
+        if  (productDto.ColorIds.Count() == 0)
         {
             error += "El producto debe tener al menos un color \n";
         }
@@ -235,13 +449,13 @@ else
     {
         if (IsReadOnly) return;
 
-        if (dto.ColorIds.Contains(colorId))
+        if (productDto.ColorIds.Contains(colorId))
         {
-            dto.ColorIds.Remove(colorId);   // Ya estaba elegido → lo quitamos
+            productDto.ColorIds.Remove(colorId);   // Ya estaba elegido → lo quitamos
         }
         else
         {
-            dto.ColorIds.Add(colorId);      // No estaba → lo añadimos
+            productDto.ColorIds.Add(colorId);      // No estaba → lo añadimos
         }
     }
 
@@ -253,9 +467,9 @@ else
         {
             var request = new EnrichDescriptionRequestDto
         {          
-            CurrentDescription = dto.Description,
-            Colors = availableColors.Where(c => dto.ColorIds.Contains(c.Id)).Select(c => c.Name).ToList(),
-            Price = dto.Price,
+            CurrentDescription = productDto.Description,
+            Colors = availableColors.Where(c => productDto.ColorIds.Contains(c.Id)).Select(c => c.Name).ToList(),
+            Price = productDto.Price,
             SRConnectionId = NotificationService.GetConnectionId() ?? string.Empty
         };
 
@@ -279,7 +493,7 @@ else
             ToastService.ShowError($"Error inesperado: {ex.Message}");
         }
 
-    }    
+    }     
 
     # region EventosDeSignalR
 
@@ -292,7 +506,7 @@ else
 
 
         // CRÍTICO: Forzar la actualización de la interfaz de usuario
-         _= InvokeAsync(StateHasChanged);
+        _= InvokeAsync(StateHasChanged);
     }
 
     //se ejecuta al salir de la página para desuscribirse del evento y evitar memory leaks
@@ -301,15 +515,122 @@ else
         NotificationService.OnTaskCompleted -= OnAiTaskCompleted;
     }
 
-#endregion
+    #endregion
 
     private void ConfirmAiDescription()
     {
-        dto.Description = AiDescription;
+        productDto.Description = AiDescription;
         AiDescription = string.Empty;
     }
     private void CancelProductDeletion()
     {
         AiDescription = string.Empty;
     }
+    //evento de pestañas
+    private void SetActiveTab(string tabName)
+    {
+        activeTab = tabName;
+    }
+
+    // Toggle para categorías
+    /// <summary>
+    /// Alterna la selección de una categoría para el producto.
+    /// </summary>
+    /// <param name="categoryId"></param>
+    private void ToggleCategory(Guid categoryId)
+    {
+        if (IsReadOnly)
+        {
+            return;
+        }
+        if (productDto.CategoryIds.Contains(categoryId))
+        {
+            productDto.CategoryIds.Remove(categoryId);
+        }
+        else
+        {
+            productDto.CategoryIds.Add(categoryId);
+        }
+    }
+
+    //EVENTOS PRODUCT SIZE y SIZE
+    private void RemoveproductSize(Guid sizeId)
+    {
+        if (productDto.ProductSizes != null)
+        {
+            var sizeToRemove = productDto.ProductSizes.FirstOrDefault(ps => ps.SizeId == sizeId);
+            if (sizeToRemove != null)
+            {
+                productDto.ProductSizes.Remove(sizeToRemove);
+            }
+        }
+    }
+
+    // Añade talla seleccionada
+    private void addSelectedSize()
+    {
+        if (selectedSize.HasValue)
+        {
+            var size = availableSizes.FirstOrDefault(s => s.Id == selectedSize.Value);
+            if (size != null)
+            {
+                if (productDto.ProductSizes == null)
+                {
+                    productDto.ProductSizes = new List<ProductSizeDto>();
+                }
+
+                //añade la talla si no existe
+                if (!productDto.ProductSizes.Any(ps => ps.SizeId == size.Id))
+                {
+                    productDto.ProductSizes.Add(new ProductSizeDto
+                    {
+                        ProductId = productDto.Id,
+                        SizeId = size.Id,
+                        SizeName = size.Name,
+                        SizeGroupName = size.SizeGroupName
+                    });
+                    selectedSize = null; // Limpiar selección después de añadir
+                }
+            }
+        }
+
+    }
+        
+    // Añade grupo de tallas seleccionado
+    private void addSelectedGroupSize()
+    {
+        if (selectedSizeGroups.HasValue)
+        {
+            var sizeGroup = availableSizeGroups.FirstOrDefault(s => s.Id == selectedSizeGroups.Value);
+            if (sizeGroup != null)
+            {
+                if (productDto.ProductSizes == null)
+                {
+                    productDto.ProductSizes = new List<ProductSizeDto>();
+                }
+
+                //añade la talla si no existe
+                var sizeList = availableSizes.Where(s => s.SizeGroupId == selectedSizeGroups.Value).ToList();
+
+                foreach (var size in sizeList)
+                {
+                    if (!productDto.ProductSizes.Any(ps => ps.SizeId == size.Id))
+                    {
+                        productDto.ProductSizes.Add(new ProductSizeDto
+                            {
+                                ProductId = productDto.Id,
+                                SizeId = size.Id,
+                                SizeName = size.Name,
+                                SizeGroupName = size.SizeGroupName
+                            });
+                    }   
+                    
+                }
+                selectedSizeGroups = null; // Limpiar selección después de añadir
+            }
+        }
+
+    }
+
+   
 }

@@ -38,21 +38,34 @@ namespace BackendMaster2.Modules.Services
             return products.Select(p => _mapper.Map<ProductDto>(p));
         }
 
-        /// <summary>
-        /// Consulta por id
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        /// <exception cref="NotFoundException"></exception>
+        ///// <summary>
+        ///// Consulta por id
+        ///// </summary>
+        ///// <param name="id"></param>
+        ///// <returns></returns>
+        ///// <exception cref="NotFoundException"></exception>
+        //public async Task<ProductDetailDto> GetByIdAsync(Guid id)
+        //{
+        //    var product = await _productRepository.GetByIdAsync(id);
+        //    if (product is null)
+        //    {
+        //        throw new NotFoundException($"No existe ningún producto con el id {id}.");
+        //    }
+
+        //    return _mapper.Map<ProductDetailDto>(product);
+        //}
+
         public async Task<ProductDetailDto> GetByIdAsync(Guid id)
         {
-            var product = await _productRepository.GetByIdAsync(id);
-            if (product is null)
+            
+            var productDetail = await _productRepository.GetProductDetailByIdAsync(id);
+
+            if (productDetail is null)
             {
                 throw new NotFoundException($"No existe ningún producto con el id {id}.");
             }
 
-            return _mapper.Map<ProductDetailDto>(product);
+            return productDetail; 
         }
 
         /// <summary>
