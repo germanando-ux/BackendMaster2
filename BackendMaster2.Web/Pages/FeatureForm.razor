@@ -3,6 +3,7 @@
 @using BackendMaster2.Web.Components
 @using BackendMaster2.Web.Interfaces
 @using BackendMaster2.Web.Services
+@using BackendMaster2.Web.Extensions
 @inject IFeatureClient FeatureClient
 @inject NavigationManager Navigation
 @inject ToastService ToastService
@@ -29,7 +30,7 @@ else
                 <option value="">Seleccione un tipo de dato</option>
                 @foreach (var dataType in Enum.GetValues<FeatureDataType>())
                 {
-                    <option value="@dataType">@GetDataTypeName(dataType)</option>
+                    <option value="@dataType">@dataType.GetDisplayName()</option>
                 }
             </select>
         </div>
@@ -205,14 +206,7 @@ else
        
     }
 
-    private string GetDataTypeName(FeatureDataType dataType) => dataType switch
-    {
-        FeatureDataType.Text => "Texto",
-        FeatureDataType.List => "Lista",
-        FeatureDataType.Number => "Número",
-        FeatureDataType.Boolean => "Sí/No",
-        _ => "Desconocido"
-    };
+  
 }
 
 

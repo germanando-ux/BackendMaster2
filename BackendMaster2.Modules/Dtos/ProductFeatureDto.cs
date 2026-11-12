@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BackendMaster2.Shared.Domain;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -12,6 +13,8 @@ public class ProductFeatureDto
 
     // Nombre de la feature (para mostrar en el front, mapeado desde la navegación)
     public string FeatureName { get; set; } = string.Empty;
+    public FeatureDataType? DataType { get; set; }
+    public List<FeatureOptionDto>? FeatureOptions { get; set; }
 
     // NUEVO: Opción seleccionada si es tipo Lista
     public Guid? FeatureOptionId { get; set; }
@@ -20,5 +23,5 @@ public class ProductFeatureDto
     // Valor libre (para tipos Texto, Número, etc.)
     public string? Value { get; set; }
 
-    public Guid? ChannelId { get; set; }
+    public Guid? ChannelId { get; set; } 
 }

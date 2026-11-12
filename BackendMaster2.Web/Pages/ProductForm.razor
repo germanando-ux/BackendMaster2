@@ -2,6 +2,7 @@
 @page "/products/{Mode}/{Id:guid}"
 
 @using BackendMaster2.Web.Components
+@using BackendMaster2.Web.Extensions
 @using BackendMaster2.Web.Interfaces
 @using BackendMaster2.Web.Models.Dtos
 @using BackendMaster2.Web.Services
@@ -16,6 +17,7 @@
 @inject ISizeGroupClient SizeGroupClient
 @inject IDataSourceClient DataSourceClient
 @inject IMarketplaceClient MarketplaceClient
+@inject IFeatureClient FeatureClient
 
 @inherits FormBaseComponent //hereda de FormBaseComponent para manejar errores y variables de estado
 
@@ -26,7 +28,7 @@
 }
 else
 {
-     <EditForm Model="productDto" OnValidSubmit="HandleSubmit">
+    <EditForm Model="productDto" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator />
         @if (IsReadOnly)
         {
@@ -71,7 +73,7 @@ else
 
         <!-- CONTENIDO DE LAS PESTAÑAS -->
         <div class="tab-content" id="productTabsContent">
-    
+
             <!-- PESTAÑA 1: DATOS GENERALES (Activa por defecto) -->
             <div class="tab-pane fade @(activeTab == "general" ? "show active" : "")">
                 <div class="row">
@@ -115,10 +117,10 @@ else
                         <label class="form-check-label">Producto Activo</label>
                     </div>
                 </div>
-               
-          
 
-                
+
+
+
             </div>
             <!-- PESTAÑA 2: CLASIFICACIÓN  -->
             <div class="tab-pane fade @(activeTab == "clasificacion" ? "show active" : "")">
@@ -146,7 +148,14 @@ else
                     <!-- Columna 2: Categorías -->
                     <div class="col-md-6 mb-4">
                         <label class="form-label fw-semibold fs-5"><i class="bi bi-folder me-2"></i>Categorías</label>
-                        <div class="list-group">
+                        <select class="form-select" @bind="SelectedCategoryId">
+                                <option value="">Seleccione categoría</option>
+                                 @foreach (var category in availableCategories)
+                                {
+                                    <option value="@category.Id">@category.Name</option>
+                                }
+                            </select>
+                        @* <div class="list-group">
                             @foreach (var category in availableCategories)
                             {
                                 var seleccionado = productDto.CategoryIds.Contains(category.Id);
@@ -158,19 +167,19 @@ else
                                     <span>@category.Name</span>
                                 </label>
                             }
-                        </div>
+                        </div> *@
                     </div>
                 </div>
             </div>
 
-            <!-- PESTAÑA 3: VARIANTES  -->            
-           <div class="tab-pane fade @(activeTab == "variantes" ? "show active" : "")">
-                <label class="form-label fw-semibold fs-5"><i class="bi bi-rulers me-2"></i>Variantes de talla</label>                
-                    <div class="card mb-3 p-3 bg-info">
-                        <label class="form-label">
-                            <i class="bi bi-info-circle-fill"></i> <strong>¿Cómo añadir tallas?</strong> Usa "Añadir Grupo" para cargar todas las tallas de una categoría de golpe, o "Añadir Talla" para incorporar variantes sueltas. 
-                        </label>
-                    </div>  
+            <!-- PESTAÑA 3: VARIANTES  -->
+            <div class="tab-pane fade @(activeTab == "variantes" ? "show active" : "")">
+                <label class="form-label fw-semibold fs-5"><i class="bi bi-rulers me-2"></i>Variantes de talla</label>
+                <div class="card mb-3 p-3 bg-info">
+                    <label class="form-label">
+                        <i class="bi bi-info-circle-fill"></i> <strong>¿Cómo añadir tallas?</strong> Usa "Añadir Grupo" para cargar todas las tallas de una categoría de golpe, o "Añadir Talla" para incorporar variantes sueltas.
+                    </label>
+                </div>
                 @* grupo de combos de grupos de tallas y combos de tallas sueltas *@
                 <div class="card  shadow-sm mb-4">
                     <div class="card mb-3 p-3 bg-light">
@@ -207,16 +216,16 @@ else
                     </div>
                 </div>
 
-                  @* lista de tallas *@
+                @* tabla de tallas *@
                 <div class="card shadow mb-4">
                     <table class="table table-bordered table-striped table-hover">
                         <thead class="table-encabezado-marca">
                             <tr>
                                 <th>
-                                    Talla                                    
+                                    Talla
                                 </th>
                                 <th>
-                                    Grupo                                    
+                                    Grupo
                                 </th>
                                 <th>Stock variante</th>
                                 <th>Sku variante</th>
@@ -262,10 +271,10 @@ else
                     </table>
                 </div>
             </div>
-           
+
 
             <!-- PESTAÑA 4: CANALES  -->
-            <div class="tab-pane fade @(activeTab == "canales" ? "show active" : "")">            
+            <div class="tab-pane fade @(activeTab == "canales" ? "show active" : "")">
                 <div class="row">
                     @* ORIGENES *@
                     <div class="col-md-6 mb-4">
@@ -285,7 +294,7 @@ else
                                 }
                             </select>
                         </div>
-                    
+
                         @if (CurrentProductDataSource is not null)
                         {
                             <div class="col-md-6 mb-4">
@@ -305,14 +314,14 @@ else
                         }
                     </div>
                     @* MARKETPLACES *@
-                    
+
                     <div class="col-md-6 mb-4">
                         <label class="form-label fw-semibold fs-5"><i class="bi bi-shop-window me-2"></i>Marketplaces</label>
                         @* Tabla de marketplaces *@
                         <div class="card shadow-sm mb-3">
                             <div class="card-header bg-primary text-white">
                                 <h6 class="mb-0 fw-bold">
-                                    <i class="bi bi-tags me-2"></i>Marketplaces 
+                                    <i class="bi bi-tags me-2"></i>Marketplaces
                                     <span class="badge bg-success text-white ms-2">@productDto.ProductMarketplaces.Count publicados</span>
                                 </h6>
                             </div>
@@ -336,7 +345,7 @@ else
                                                     <td class="align-middle">
                                                         <input type="text"
                                                                class="form-control form-control-sm border-primary"
-                                                               @bind="mp.ExternalCode" />                                                        
+                                                               @bind="mp.ExternalCode" />
                                                     </td>
                                                     <td class="align-middle">@mp.LastSyncedAt</td>
                                                     <td class="text-center align-middle">
@@ -376,7 +385,7 @@ else
                                             <option value="@mp.Id">@mp.Name</option>
                                         }
                                     </select>
-                                    <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center" @onclick="AddSelectedMarketplace" title="Añadir a la lista">
+                                    <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center" @onclick="AddSelectedFeature" title="Añadir a la lista">
                                         <i class="bi bi-plus-lg fs-5"></i>
                                     </button>
                                 </div>
@@ -388,10 +397,99 @@ else
             </div>
 
             <!-- PESTAÑA 5: CARACTERÍSTICAS  -->
-            <div class="tab-pane fade @(activeTab == "caracteristicas" ? "show active" : "")">                   
-                <p class="text-muted">Pendiente: Características dinámicas</p>
+            <div class="tab-pane fade @(activeTab == "caracteristicas" ? "show active" : "")">
+                <label class="form-label fw-semibold fs-5"><i class="bi bi-list-stars me-2"></i>Características</label>
+                <div class="card mb-3 p-3 bg-info">
+                    <label class="form-label">
+                        <i class="bi bi-info-circle-fill"></i>Selecciona una <strong>categoría</strong> en la pestaña Clasificación para cargar sus características obligatorias. También puedes añadir características libres desde el catálogo.
+                    </label>
+                </div>
+
+                @* tabla de características *@
+                <div class="card shadow mb-4">
+                    <table class="table table-bordered table-striped table-hover">
+                        <thead class="table-encabezado-marca">
+                            <tr>
+                                <th>Característica</th>
+                                <th>Tipo</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var productFeatures in productDto.ProductFeatures)
+                            {
+                                <tr>
+                                    <td class="align-middle">@productFeatures.FeatureName</td>
+                                    <td> <span class="badge text-bg-success">@productFeatures.DataType.GetDisplayName()</span></td>
+                                
+                                    <td class="align-middle">
+                                        @if (productFeatures.DataType == FeatureDataType.Text)
+                                        {
+                                            <input type="text" class="form-control form-control-sm border-primary" @bind="productFeatures.Value" />
+                                        }
+                                        else if (productFeatures.DataType == FeatureDataType.Number)
+                                        {
+                                            <input type="number" class="form-control form-control-sm text-end" @bind="productFeatures.Value" />
+                                        }
+                                        else if (productFeatures.DataType == FeatureDataType.Boolean)
+                                        {
+                                            <div class="form-check form-switch">
+                                                <input type="checkbox" class="form-check-input"
+                                                       checked="@(productFeatures.Value == "true")"
+                                                       @onchange="@(e => productFeatures.Value = (bool)e.Value ? "true" : "false")" />
+                                            </div>
+                                        }
+                                        else if (productFeatures.DataType == FeatureDataType.List)
+                                        {
+                                            <select class="form-select form-select-sm" @bind="productFeatures.FeatureOptionId">
+                                                    <option value="">Selecciona...</option>
+                                                @foreach (var opt in GetFeatureOptions(productFeatures.FeatureId))
+                                                    {
+                                                        <option value="@opt.Id">@opt.Value</option>
+                                                    }
+                                            </select>
+                                        }
+                            
+                                        @* <ValidationMessage For="@(() => productFeatures.Sku)" class="text-danger small d-block" /> *@
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => RemoveproductFeature(productFeatures.FeatureId)"
+                                                    title="Quitar característica">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @* bloque búsqueda y añadir características *@
+                <div class="col-md-12 mb-3">
+                    <div class="p-3 bg-light rounded border">
+                        <label class="form-label fw-bold small text-uppercase text-muted mb-2">
+                            <i class="bi bi-search me-1"></i> Añadir característica 
+                        </label>
+                        <input type="text" class="form-control form-control-sm mb-2" placeholder="Escribe para filtrar..." @bind="_filtroFeatures" @bind:event="oninput" />
+
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm shadow-sm" size="5" @bind="selectedFeatureId">
+                                @foreach (var feature in filteredFeatures)
+                                {
+                                    <option value="@feature.Id">@feature.Name</option>
+                                }
+                            </select>
+                            <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center" @onclick="AddSelectedFeature" title="Añadir a la lista">
+                                <i class="bi bi-plus-lg fs-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
+
         </div>
 
 
@@ -424,21 +522,27 @@ else
     // 2. El objeto que va a "viajar" al backend.
     private ProductDto productDto = new();
 
+
+    //Listas de datos para seleccionar opciones del producto
     private List<ColorDto> availableColors = new();
     private List<CategoryDto> availableCategories = new();
     private List<SizeDto> availableSizes = new();
-    private List<SizeGroupDto> availableSizeGroups = new();
+    private List<SizeGroupDto> availableSizeGroups = new();    
+    private List<DataSourceDto> availableDataSources = new();    
     private List<MarketplaceDto> availableMarketplaces = new();
-    private List<DataSourceDto> availableDataSources = new();
-    private List<MarketplaceDto> filteredMarketplaces => availableMarketplaces.Where(mp => mp.Name.Contains(_filtroMarketplaces, StringComparison.OrdinalIgnoreCase)).ToList(); 
+    private List<MarketplaceDto> filteredMarketplaces => availableMarketplaces.Where(mp => mp.Name.Contains(_filtroMarketplaces, StringComparison.OrdinalIgnoreCase)).ToList();
+    private List<FeatureDto> availableFeatures = new();
+    private List<FeatureDto> filteredFeatures => availableFeatures.Where(mp => mp.Name.Contains(_filtroFeatures, StringComparison.OrdinalIgnoreCase)).ToList();
 
     private string AiDescription = string.Empty;
 
     private string _filtroMarketplaces = "";
+    private string _filtroFeatures = "";
 
     private Guid? selectedSizeGroups;
     private Guid? selectedSize;
     private Guid? selectedMarketplaceId;
+    private Guid? selectedFeatureId;
     // Propiedad puente: el select lee/escribe el ÚNICO DataSource del DTO.
     private Guid? SelectedDataSourceId
     {
@@ -459,7 +563,26 @@ else
             }
         }
     }
+
     private ProductDataSourceDto? CurrentProductDataSource => productDto.ProductDataSources?.FirstOrDefault();
+
+    // Propiedad puente: el select lee/escribe la ÚNICA Categoría del DTO.
+    private Guid? SelectedCategoryId
+    {
+        get => productDto.CategoryIds?.FirstOrDefault();
+        set
+        {
+            productDto.CategoryIds ??= new List<Guid>();
+            productDto.CategoryIds.Clear(); // Siempre 0 o 1: regla de origen único
+
+            if (value is not null)
+            {
+                Guid categoryId = value.Value;
+                productDto.CategoryIds.Add(categoryId);
+            }
+        }
+    }
+
 
     // 1. Se ejecuta al entrar en la página. Si es edición, carga los datos.
     protected override async Task OnInitializedAsync()
@@ -486,7 +609,9 @@ else
                     CategoryIds = result.Data.Categories?.Select(c => c.Id).ToList() ?? new List<Guid>(),
                     ProductSizes = result.Data.ProductSizes,
                     ProductDataSources = result.Data.ProductDataSources ?? new List<ProductDataSourceDto>(),
-                    ProductMarketplaces = result.Data.ProductMarketplaces ?? new List<ProductMarketplaceDto>()                
+                    ProductMarketplaces = result.Data.ProductMarketplaces ?? new List<ProductMarketplaceDto>(),
+                    ProductFeatures = result.Data.ProductFeatures ?? new List<ProductFeatureDto >()
+
                 };
 
 
@@ -497,12 +622,13 @@ else
             else
             {
                 ErrorMessage = "No se pudo cargar el producto.";
-            }                    
+            }
         }
         else
         {
             // Para creación, aseguramos que la lista de colores no sea nula
             productDto.ColorIds = new List<Guid>();
+            productDto.CategoryIds = new List<Guid>();
         }
 
 
@@ -542,6 +668,13 @@ else
         if (marketplacesResult.IsSuccess)
         {
             availableMarketplaces = marketplacesResult.Data ?? new();
+        }
+
+        //CARGAMOS todas las features disponibles
+        var featuresResult = await FeatureClient.GetAllFeaturesAsync();
+        if (featuresResult.IsSuccess)
+        {
+            availableFeatures = featuresResult.Data ?? new();
         }
 
         IsLoading = false;
@@ -594,7 +727,13 @@ else
             error += "El producto debe tener al menos un color \n";
         }
 
-        // NUEVA: Validación de variantes (tallas)
+        // Validación de categoría única
+        if (!productDto.CategoryIds.Any())
+        {
+            error += "El producto debe tener asignada una categoría.\n";
+        }
+
+        // Validación de variantes (tallas)
         if (productDto.ProductSizes != null && productDto.ProductSizes.Any())
         {
             for (int i = 0; i < productDto.ProductSizes.Count; i++)
@@ -658,12 +797,12 @@ else
         try
         {
             var request = new EnrichDescriptionRequestDto
-        {          
-            CurrentDescription = productDto.Description,
-            Colors = availableColors.Where(c => productDto.ColorIds.Contains(c.Id)).Select(c => c.Name).ToList(),
-            Price = productDto.Price,
-            SRConnectionId = NotificationService.GetConnectionId() ?? string.Empty
-        };
+            {
+                CurrentDescription = productDto.Description,
+                Colors = availableColors.Where(c => productDto.ColorIds.Contains(c.Id)).Select(c => c.Name).ToList(),
+                Price = productDto.Price,
+                SRConnectionId = NotificationService.GetConnectionId() ?? string.Empty
+            };
 
             Console.WriteLine(">>> Enviando petición a la IA...");
             var result = await ProductsClient.EnrichDescriptionAsync(request);
@@ -685,7 +824,7 @@ else
             ToastService.ShowError($"Error inesperado: {ex.Message}");
         }
 
-    }     
+    }
 
     # region EventosDeSignalR
 
@@ -698,7 +837,7 @@ else
 
 
         // CRÍTICO: Forzar la actualización de la interfaz de usuario
-        _= InvokeAsync(StateHasChanged);
+        _ = InvokeAsync(StateHasChanged);
     }
 
     //se ejecuta al salir de la página para desuscribirse del evento y evitar memory leaks
@@ -724,26 +863,6 @@ else
         activeTab = tabName;
     }
 
-    // Toggle para categorías
-    /// <summary>
-    /// Alterna la selección de una categoría para el producto.
-    /// </summary>
-    /// <param name="categoryId"></param>
-    private void ToggleCategory(Guid categoryId)
-    {
-        if (IsReadOnly)
-        {
-            return;
-        }
-        if (productDto.CategoryIds.Contains(categoryId))
-        {
-            productDto.CategoryIds.Remove(categoryId);
-        }
-        else
-        {
-            productDto.CategoryIds.Add(categoryId);
-        }
-    }
 
     //EVENTOS PRODUCT SIZE y SIZE
     private void RemoveproductSize(Guid sizeId)
@@ -809,13 +928,13 @@ else
                     if (!productDto.ProductSizes.Any(ps => ps.SizeId == size.Id))
                     {
                         productDto.ProductSizes.Add(new ProductSizeDto
-                            {
-                                ProductId = productDto.Id,
-                                SizeId = size.Id,
-                                SizeName = size.Name,
-                                SizeGroupName = size.SizeGroupName
-                            });
-                    }   
+                        {
+                            ProductId = productDto.Id,
+                            SizeId = size.Id,
+                            SizeName = size.Name,
+                            SizeGroupName = size.SizeGroupName
+                        });
+                    }
 
                 }
                 selectedSizeGroups = null; // Limpiar selección después de añadir
@@ -825,7 +944,7 @@ else
     }
 
     //EVENTOS DATASOURCE y MARKETPLACE
-    private void RemoveMarketplace (Guid marketplaceId)
+    private void RemoveMarketplace(Guid marketplaceId)
     {
         if (productDto.ProductMarketplaces != null)
         {
@@ -866,5 +985,55 @@ else
             }
         }
     }
-   
+
+    //EVENTOS feature y featureOption
+    private List<FeatureOptionDto> GetFeatureOptions(Guid featureId)
+    {
+        return filteredFeatures.FirstOrDefault(f => f.Id == featureId)?.FeatureOptions?.ToList()?? new List<FeatureOptionDto>();
+    }
+
+    private void RemoveproductFeature(Guid featureId)
+    {
+        if (productDto.ProductFeatures != null)
+        {
+            var featureToRemove = productDto.ProductFeatures.FirstOrDefault(pf => pf.FeatureId == featureId);
+            if (featureToRemove != null)
+            {
+                productDto.ProductFeatures.Remove(featureToRemove);
+            }
+        }
+    }
+
+    
+    private void AddSelectedFeature()
+    {
+        if (selectedFeatureId.HasValue)
+        {
+            //obtiene la seleccionada en la lista
+            var feature = filteredFeatures.FirstOrDefault(f => f.Id == selectedFeatureId.Value);
+            if (feature != null)
+            {
+                //por si acaso
+                if (productDto.ProductFeatures == null)
+                {
+                    productDto.ProductFeatures = new List<ProductFeatureDto>();
+                }
+                // Añade la característica si no existe ya
+                if (!productDto.ProductFeatures.Any(pf => pf.FeatureId == feature.Id))
+                {
+                    productDto.ProductFeatures.Add(new ProductFeatureDto
+                    {
+                        FeatureId = feature.Id,
+                        FeatureName = feature.Name,
+                        DataType = feature.DataType, 
+                        Value = string.Empty,
+                        FeatureOptionId = null
+
+                    });
+                }
+
+                selectedFeatureId = null; // Limpiar selección después de añadir
+            }
+        }
+    }
 }

@@ -1,7 +1,8 @@
 ﻿@page "/features"
-@using BackendMaster2.Web.Models.Dtos
 @using BackendMaster2.Web.Components
+@using BackendMaster2.Web.Extensions
 @using BackendMaster2.Web.Interfaces
+@using BackendMaster2.Web.Models.Dtos
 @using BackendMaster2.Web.Services
 @inject IFeatureClient FeatureClient
 @inherits FormBaseComponent
@@ -89,8 +90,8 @@
                         }
                         @feature.Name
                     </td>
-                    <td class="align-middle">
-                        @GetDataTypeName(feature.DataType) 
+                    <td class="align-middle">                        
+                        @feature.DataType.GetDisplayName()
                     </td>
                     <td class="text-center align-middle">
                         <div class="d-flex justify-content-center gap-2">
@@ -273,15 +274,6 @@ else
         _featureNombrePendiente = name;
         _modalEsError = false;
     }
-
-    private string GetDataTypeName(FeatureDataType dataType) => dataType switch
-    {
-        FeatureDataType.Text => "Texto",
-        FeatureDataType.List => "Lista",
-        FeatureDataType.Number => "Número",
-        FeatureDataType.Boolean => "Sí/No",
-        _ => "Desconocido"
-    };
 
     //cargar opciones de la característica seleccionada
     private void LoadOptions(Guid featureId)

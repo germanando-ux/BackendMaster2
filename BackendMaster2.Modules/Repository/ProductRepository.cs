@@ -177,7 +177,7 @@ namespace BackendMaster2.Modules.Repository
         /// </summary>
         public async Task<ProductDetailDto?> GetProductDetailByIdAsync(Guid id)
         {
-            return await _context.Products
+            ProductDetailDto? product = await _context.Products
                 .Where(p => p.Id == id)
                 .Select(p => new ProductDetailDto
                 {
@@ -209,8 +209,8 @@ namespace BackendMaster2.Modules.Repository
                     {
                         ProductId = ps.ProductId,
                         SizeId = ps.SizeId,
-                        SizeName = ps.Size.Name,                
-                        SizeGroupName = ps.Size.SizeGroup.Name, 
+                        SizeName = ps.Size.Name,
+                        SizeGroupName = ps.Size.SizeGroup.Name,
                         Stock = ps.Stock,
                         Sku = ps.Sku,
                         Price = ps.Price
@@ -234,13 +234,22 @@ namespace BackendMaster2.Modules.Repository
 
                     ProductFeatures = p.ProductFeatures.Select(pf => new ProductFeatureDto
                     {
+                        Id = pf.Id,
+                        ProductId = pf.ProductId,
                         FeatureId = pf.FeatureId,
                         FeatureName = pf.Feature.Name,
+                        DataType = pf.Feature.DataType,
                         Value = pf.Value,
+                        FeatureOptionId = pf.FeatureOptionId,
                         ChannelId = pf.ChannelId
+
                     }).ToList()
                 })
                 .FirstOrDefaultAsync();
+
+         
+            
+            return product;
         }
 
 

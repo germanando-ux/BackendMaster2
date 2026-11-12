@@ -107,6 +107,11 @@ namespace BackendMaster2.Modules.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
                 entity.Property(e => e.IsActive).HasDefaultValue(true);
+                //Relación con sí misma para la jerarquía de categorías
+                entity.HasOne(c => c.Parent)
+                  .WithMany(c => c.Children)
+                  .HasForeignKey(c => c.ParentId)
+                  .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Configuración de ProductCategory (Tabla de unión N:M)

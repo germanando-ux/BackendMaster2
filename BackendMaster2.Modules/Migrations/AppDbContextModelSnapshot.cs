@@ -39,7 +39,12 @@ namespace BackendMaster2.Modules.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
 
                     b.ToTable("Categories");
                 });
@@ -508,6 +513,16 @@ namespace BackendMaster2.Modules.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.Category", b =>
+                {
+                    b.HasOne("BackendMaster2.Shared.Domain.Category", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.CategoryFeature", b =>
                 {
                     b.HasOne("BackendMaster2.Shared.Domain.Category", "Category")
@@ -693,6 +708,8 @@ namespace BackendMaster2.Modules.Migrations
             modelBuilder.Entity("BackendMaster2.Shared.Domain.Category", b =>
                 {
                     b.Navigation("CategoryFeatures");
+
+                    b.Navigation("Children");
 
                     b.Navigation("ProductCategories");
                 });

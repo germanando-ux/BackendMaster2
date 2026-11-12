@@ -13,6 +13,9 @@ public class ProductFeatureDto
     // Nombre de la feature (para mostrar en el front, mapeado desde la navegación)
     public string FeatureName { get; set; } = string.Empty;
 
+    // Tipo de dato de la feature (para mostrar en el front, mapeado desde la navegación)
+    public FeatureDataType DataType { get; set; }
+    
     // NUEVO: Opción seleccionada si es tipo Lista
     public Guid? FeatureOptionId { get; set; }
     public string? FeatureOptionValue { get; set; } // Para mostrar el valor de la opción en el front
