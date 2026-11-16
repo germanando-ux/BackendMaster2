@@ -1,125 +1,152 @@
 # BACKLOG - BackendMaster2
 
-## Pendientes técnicos detectados
-- [ ] Paginación real de servidor en la API (skip/take) cuando los datos crezcan
-- [x] Creación de DTOs específicos para respuestas complejas (ej. `ProductSearchHybridDto`) evitando ensuciar entidades de dominio con datos ad-hoc (¡Hecho!)
-- [ ] Limpieza C10: borrar `NavMenu.razor` y su css huérfanos, css viejos de la plantilla, splash de arranque del index.html
-- [ ] Alta conjunta User+Person desde el front (formulario del perforador)
-- [x] Validación de cliente con anotaciones + pintado de ProblemDetails del middleware en el front (¡Hecho!)
+## 🗺️ Roadmap Estratégico Acordado
+El desarrollo se ejecutará estrictamente en este orden, con estrategia **in crescendo** (de lo más simple y rápido a lo más complejo):
+1. **Bloque 1: Cierre del PIM** (Seed jerárquico + Validación de obligatorias en backend + mínimos de front).
+2. **Bloque 2: Infraestructura Asíncrona y Rendimiento** (Estrategia in crescendo en 5 fases).
+3. **Bloque 3: Testing Ligero** (xUnit básico + Testcontainers, justo lo necesario para validar el Bloque 4).
+4. **Bloque 4: Despliegue** (Docker Compose completo + CI/CD básico).
+5. **Bloque 5: IA Avanzada** (Solo si sobra tiempo: Agente conversacional / MCP).
+6. **Complementario: Power Platform** (Fuera de los bloques principales, como extensión o proyecto paralelo posterior al Bloque 2).
 
-## Enriquecimiento del dominio PIM
+---
+
+## Pendientes técnicos detectados
+- [ ] Paginación real de servidor en la API (skip/take) cuando los datos crezcan.
+- [x] Creación de DTOs específicos para respuestas complejas (ej. `ProductSearchHybridDto`) evitando ensuciar entidades de dominio.
+- [ ] Limpieza C10: borrar `NavMenu.razor` y su css huérfanos, css viejos de la plantilla, splash de arranque del index.html.
+- [ ] Alta conjunta User+Person desde el front (formulario del perforador).
+- [x] Validación de cliente con anotaciones + pintado de ProblemDetails del middleware en el front.
+- [ ] **Deuda de mapeo**: Evaluar mapeo automático o fábrica para `ProductDetailDto` → `ProductDto` en el frontend (el mapeo manual campo a campo ya provocó un olvido con DataSources/Marketplaces).
+
+---
+
+## 🟢 Bloque 1: Cierre del PIM (Inmediato)
 
 ### ✅ Completado (Backend)
-- [x] **Maestros base**: Entidades `DataSource` y `Marketplace` con CRUD completo (Backend), validaciones y seeds iniciales.
-- [x] **Categorías**: 
-  - [x] Entidad `Category` (sin jerarquía por ahora, `ParentId` descartado).
-  - [x] Tabla intermedia `CategoryFeature` (relación N:M con `IsRequired`).
-  - [x] Seed realista: asignación idempotente de características a categorías.
-  - [x] Integración en `CatalogService` con patrón quirúrgico (`Clear()` + `Add()`).
-- [x] **Tallas**:
-  - [x] Maestros: `SizeGroup` (ej. "EU", "US") y `Size` (ej. "42", "M").
-  - [x] Entidad de unión: `ProductSize` con payload (`Stock`, `Sku`, `Price`).
-  - [x] Integración en `ProductService` (Create/Update/Get) con patrón quirúrgico.
-  - [x] Campo `Price` (nullable) en `ProductSize` para variantes comerciales.
-- [x] **Integración de relaciones N:M en Product** (sesión 30/10/2026):
-  - [x] `ProductDataSource` y `ProductMarketplace` integrados en `ProductService` (Create/Update/Get).
-  - [x] Patrón quirúrgico (`Clear()` + `Add()`) aplicado a las 5 relaciones de Product (Colores, Categorías, Tallas, DataSources, Marketplaces).
-  - [x] `GetByIdAsync` ampliado con `ThenInclude` para cargar datos relacionados (Marketplace, DataSource, SizeGroup).
-  - [x] DTOs de unión creados: `ProductDataSourceDto`, `ProductMarketplaceDto`, `ProductSizeDto`.
-  - [x] AutoMapper (`CatalogProfile`) actualizado con mapeos de nuevas entidades.
-  - [x] Decisión arquitectónica: **Pragmatismo sobre sobreingeniería** (no replicar complejidad de B2X/Shein; modelo simple escalable).
-- [x] **Atributos Flexibles (Features)** (sesión 02/11/2026):
-  - [x] Diseño: Modelo EAV relacional (descartado JSONB).
-  - [x] Entidades: `Feature`, `FeatureOption`, `ProductFeature`, `CategoryFeature`.
-  - [x] Migración `AddFeatures` aplicada.
-  - [x] DTOs, AutoMapper, Repositorio, Servicio, Controladores y Validadores.
-  - [x] Soporte para atributos específicos de canal (`ChannelId` nullable en `ProductFeature`).
-  - [x] Patrón quirúrgico extendido a `CategoryFeatures` en `CatalogService`.
-- [x] **Refactorización de `ProductFeature`** (sesión 04/11/2026):
-  - [x] Cambio de clave primaria compuesta (`ProductId`, `FeatureId`) a clave subrogada (`Id`).
-  - [x] Añadido `FeatureOptionId` (nullable) para integridad referencial en tipos Lista.
-  - [x] `Value` cambiado a `string?` (nullable), usado solo para tipos Texto/Número/Booleano.
-  - [x] Migración `RefactorProductFeatureKey` aplicada con limpieza de tabla para evitar conflictos.
-- [x] **SeedController actualizado** (sesión 02/11/2026):
-  - [x] Seed idempotente de `SizeGroups`, `Sizes`, `Features` y `FeatureOptions`.
-  - [x] Claves compuestas de idempotencia (ej: `{FeatureId}_{Value.ToLower()}`).
-  - [x] `SeedResultDto` ampliado con contadores de Features y FeatureOptions.
-  - [x] Seed de `CategoryFeatures` asignando características realistas a categorías.
+- [x] Maestros base: `DataSource` y `Marketplace` con CRUD completo, validaciones y seeds.
+- [x] Categorías: Entidad `Category`, tabla intermedia `CategoryFeature` (N:M con `IsRequired`), seed realista e integración en `CatalogService` con patrón quirúrgico.
+- [x] **Jerarquía de Categorías (Modelo)**: Añadido `ParentId` (Guid? auto-FK) con `OnDelete(Restrict)`. El campo viaja en los DTOs, pero la UI de gestión jerárquica se aplaza (ver sección Frontend).
+- [x] Tallas: Maestros `SizeGroup` y `Size`, entidad de unión `ProductSize` con payload (`Stock`, `Sku`, `Price`), e integración en `ProductService`.
+- [x] Integración de relaciones N:M en Product: Patrón quirúrgico (`Clear()` + `Add()`) aplicado a las 5 relaciones (Colores, Categorías, Tallas, DataSources, Marketplaces).
+- [x] Atributos Flexibles (Features): Modelo EAV relacional (`Feature`, `FeatureOption`, `ProductFeature`, `CategoryFeature`). Refactorización a clave subrogada (`Id`) y adición de `FeatureOptionId` para integridad referencial en tipos Lista.
+- [x] SeedController actualizado: Seed idempotente de SizeGroups, Sizes, Features, FeatureOptions y asignación de CategoryFeatures.
 
 ### ✅ Completado (Frontend Blazor)
-- [x] **Menú lateral jerárquico (Opción B)**: `Catálogo > Tallas > {Grupos, Tallas}` y `Catálogo > Características`, con despliegue/colapso por estado C# y sangría por niveles.
-- [x] **Maestro de `SizeGroup`**: Grid con filtros (buscar por / término / estado), ordenación por columna, modal de borrado con estado de error, formulario create/edit, cliente API (`SizeGroupClient`) y DTOs espejo en el Web.
-- [x] **Maestro de `Size`**: Grid con filtros y ordenación, formulario create/edit con `<select>` de `SizeGroup`, cliente API y DTOs.
-- [x] **`ProductForm.razor` sincronizado con DTOs aplanados del backend**: Corregido el mapeo `ProductDetailDto → ProductDto` en `OnInitializedAsync`; operativo con campos básicos + selector de Colores.
-- [x] **Maestro de `Category`** (sesión 04/11/2026):
-  - [x] `Categories.razor` con patrón Master-Detail: grid superior de categorías + grid inferior de características obligatorias.
-  - [x] Selección de fila con resaltado visual y carga en memoria de características.
-  - [x] `CategoryForm.razor` con gestión dinámica de características: búsqueda en tiempo real (`@bind:event="oninput"` + propiedad computada), añadir/quitar en memoria, envío completo al backend.
-- [x] **Maestro de `Feature`** (sesión 05/11/2026):
-  - [x] `Features.razor` con patrón Master-Detail: grid superior de características + grid inferior de opciones.
-  - [x] Helper `GetDataTypeName()` para mostrar "Texto", "Lista", "Número", "Sí/No".
-  - [x] Depuración de errores: CSS039 (usar `"transparent"` en lugar de `""`), sintaxis Razor (`@GetDataTypeName(...)`), asignación de `result.Data` a variable de estado.
-- [x] **Maestro de `DataSource`**: Grid con filtros/ordenación, formulario create/edit, cliente API y DTOs. (CRUD simple completado).
-- [x] **Maestro de `Marketplace`**: Grid con filtros/ordenación, formulario create/edit, cliente API y DTOs. (CRUD simple completado).
+- [x] Menú lateral jerárquico (Opción B) con despliegue/colapso por estado C#.
+- [x] Maestros de catálogo: `SizeGroup`, `Size`, `Category` (Master-Detail), `Feature` (con gestión condicional de opciones), `DataSource` y `Marketplace`.
+- [x] `ProductForm.razor` (Base operativa): Sincronizado con DTOs aplanados, selector de Colores y pestañas de Variantes y Canales (con propiedad puente para origen único y tabla dinámica de marketplaces).
+- [x] Pestaña de Características: Renderizado dinámico de controles (Texto, Número, Switch, Lista) basado en `DataType`, usando helper de extensiones y lookup de opciones desde `availableFeatures`.
+- [x] Select de Categoría única: Implementado con propiedad puente (`SelectedCategoryId`) preparando el terreno para la jerarquía.
 
-### ⏳ Pendiente (Frontend Blazor)
-- [ ] **Maestros de catálogo restantes**:
-  - [ ] **`FeatureForm.razor`** (formulario con sección condicional):
-    - [ ] Sección 1 (siempre visible): Nombre, DataType (dropdown), IsRequired (checkbox).
-    - [ ] Sección 2 (condicional, solo si DataType == List): Tabla de opciones + input para añadir.
-- [ ] **Formulario de Producto en Blazor** (el "jefe final") — completar sobre la base ya operativa:
-  - [ ] `Products.razor`: Grid de productos con filtros y ordenación.
-  - [ ] Selector múltiple de Categorías.
-  - [ ] Tabla dinámica de Tallas (con Stock, Sku variante, Precio variante).
-  - [ ] Sección de Marketplaces (con ExternalCode, LastSyncedAt).
-  - [ ] Sección de DataSources (con ExternalCode, LastSyncedAt).
-  - [ ] Sección dinámica de Características (InputText o Select según `DataType` de la Feature, usando `FeatureOptionId` si es Lista).
+### ⏳ Pendiente (Bloque 1 - Mínimo Viable)
+- [ ] **Seed jerárquico realista**: Actualizar el `SeedController` para crear categorías con subcategorías (usando el nuevo `ParentId`) y asignar `CategoryFeatures` marcadas como `IsRequired = true` de forma coherente.
+- [ ] **Validación de obligatorias en backend**: En `ProductService` (Create/Update), verificar que todas las `Feature` asociadas a la categoría del producto con `IsRequired = true` tengan un `Value` o `FeatureOptionId` informado en el DTO. Devolver `ProblemDetails` si falta alguna.
+- [ ] **Mensajes amables de error**: Capturar la excepción de FK al borrar una categoría con hijas (Restrict) y devolver un mensaje claro en lugar del error crudo de PostgreSQL.
+- [ ] **Validación de características obligatorias en front**: En `FormValidation`, comprobar que las features asignadas como obligatorias por la categoría tengan valor antes de permitir el guardado.
+- [ ] **Lógica de cambio de categoría**: Implementar `ConfirmModal` al cambiar de categoría en el formulario: limpiar `ProductFeatures` y auto-añadir las obligatorias de la nueva categoría seleccionada.
+- [ ] **Ajuste del Seed**: Verificar y ampliar el seed de `CategoryFeatures` para que asigne características realistas y obligatorias a las categorías de prueba, permitiendo validar la carga automática en el frontend.
 
-### 🎨 Mejoras de UX aplazadas (Backlog de UI)
-- [ ] **Chip / Tag Input para creación en lote de tallas desde `SizeGroup`**: Sustituir el alta talla-a-talla por un patrón de píldoras (escribe + Enter/coma → chip con ✕; pegar "26, 27, 28" → genera 3 chips; validación por chip: no vacío, no duplicado). Motivo: dar de alta "Europa Niño Calzado 26–32" sin 7 formularios.
-  - **Decisión de patrón (recordar)**: *Chips* para maestros simples (solo nombre, sin payload) y *tabla dinámica* para relaciones con payload (`ProductSizes`: talla + Stock/Sku/Price). No mezclarlos.
+### ⏳ UI de Jerarquía de Categorías (Aplazado intencionadamente)
+- [ ] `CategoryForm`: Select de "categoría padre" excluyendo el propio nodo y sus descendientes.
+- [ ] `ProductForm`: Evolucionar el select plano a un helper de aplanado pre-orden que muestre la ruta completa (`Padre › Hijo`).
+- [ ] Decisión pendiente: ¿en `ProductForm` se puede seleccionar cualquier nivel o solo hojas?
 
-## Procesamiento asíncrono y tiempo real
-- [x] Endpoint en backend para mejorar descripción de producto con IA (modelo ligero vía API) + Modal de confirmación en front + Toast de feedback (¡Hecho!)
-- [x] SignalR implementado para notificaciones de tareas asíncronas (ej. enriquecimiento de descripciones)
-- [ ] Importaciones masivas con progreso en tiempo real vía SignalR
-- [ ] BackgroundServices para tareas periódicas
-- [ ] Gestor de trabajos (Hangfire o similar)
-- [ ] Redis para caché distribuido
-- [ ] RabbitMQ para mensajería entre módulos (sincronización con marketplaces)
-- [ ] Elasticsearch + Kibana para búsqueda y análisis de logs
+### ⏳ Otros pendientes de Front
+- [ ] `Products.razor`: Grid de productos con filtros y ordenación (pendiente de pulir).
 
-## Integraciones y escalado
-- [ ] API keys por cliente para integraciones externas (PrestaShop y similares)
-- [ ] Evolución a multitenant (TenantId + filtros globales de EF + claim de tenant)
-- [ ] UCP (Universal Commerce Protocol) como micro-proyecto de comercio agéntico
+---
 
-## Inteligencia Artificial y Búsqueda Avanzada
-- [x] Búsqueda híbrida semántica (`pgvector` + filtros duros) con umbral de similitud configurable (ej. 60%) para descartar ruido
-- [x] Extracción de intención de búsqueda en lenguaje natural mediante IA (traducción a JSON estructurado `SearchProductIntentDto`)
-- [x] Seed de datos mejorado: generación de 200+ productos mock con idempotencia y descripciones ricas para embeddings de calidad
-- [x] Extensión `VectorExtensions.CalculateCosineSimilarity` en `Shared` para cálculo seguro en memoria, evitando errores de traducción de EF Core
-- [ ] (Futuro) Agente conversacional sobre la API (requerirá Semantic Kernel)
-- [ ] (Futuro) Asistente integrado en el front Blazor
+## 🟡 Bloque 2: Infraestructura Asíncrona y Rendimiento (Estrategia in crescendo)
 
-## Calidad y despliegue
-- [ ] Tests unitarios (xUnit)
-- [ ] Tests de integración con Testcontainers
-- [ ] Tests de arquitectura
-- [ ] Dockerización completa y CI/CD
+### ✅ Completado
+- [x] Endpoint en backend para mejorar descripción de producto con IA + Modal de confirmación en front + Toast de feedback.
+- [x] SignalR implementado para notificaciones de tareas asíncronas.
 
-## Deuda de front y UX (aparcados del chat)
-- [x] Modal de confirmación Bootstrap para sustituir window.confirm en borrados (¡Hecho!)
-- [x] Componente reutilizable NumberInput.razor (input numérico con validación + decimal locale-aware) (¡Hecho!)
-- [x] Toast de errores auto-ocultables en grids y formularios (¡Hecho!)
-- [ ] Refactor jerarquía PageBaseComponent / FormBaseComponent (grids vs formularios)
-- [ ] Unificar estilo de rutas de endpoints (REST sustantivos vs verbos RPC)
-- [ ] Si la consulta de producto crece, separarla a un componente ProductDetail propio
+### Fase 2.1: Procesamiento Asíncrono Básico (RabbitMQ + Workers)
+*Caso de uso rápido y realista: importación masiva de Excel. Sin dependencias externas.*
+- [ ] **Caso de uso real (Importación Excel)**: Crear un endpoint que reciba un archivo Excel de productos. En lugar de procesarlo, serializarlo y enviarlo a una cola de RabbitMQ (`excel_import_queue`).
+- [ ] **Background Worker**: Crear un servicio en segundo plano que lea de la cola, procese el Excel fila a fila, guarde los productos en la BBDD y actualice el estado (usando SignalR para avisar al front cuando termine, que ya tenemos implementado).
+- [ ] **Patrón Strategy (Preparación)**: Dejar la arquitectura lista con interfaces `IMarketplaceSyncService` e `IDataSourceSyncService` para que en fases posteriores se puedan añadir integraciones reales (Shopify/WooCommerce) sin tocar el core.
 
-## Arquitectura y Evolución (NUEVO)
-- [ ] **Migración a DDD canónico (4 capas)**:
-  - Fase 1: Separar Domain de Data (pasar a modelo tipo "Store" de 3 capas)
-  - Fase 2: Crear capa Application independiente (casos de uso, DTOs, interfaces)
-  - Fase 3: Enriquecer Domain (mover reglas de FluentValidation a entidades)
-  - Fase 4: (Opcional) CQRS con MediatR
-- [ ] (Futuro) Evaluar migración a Servicio Centralizado de Notificaciones (SignalR + Redis/RabbitMQ) para desacoplar Hubs de APIs de negocio
+### Fase 2.2: Optimización de Rendimiento (Redis)
+*Optimización de lo que ya tenemos: el formulario de producto es "pesadito" por las múltiples consultas de maestros.*
+- [ ] **Caché de Maestros**: Implementar `IDistributedCache` con Redis para almacenar las listas de Colores, Categorías, Tallas y Features.
+- [ ] **Invalidación de caché**: Asegurar que cuando se cree o edite un maestro (ej. un nuevo Color), se borre de la caché para que la próxima vez se traiga el actualizado de la BBDD.
+- [ ] **Optimización del ProductForm**: Aplicar la caché a los endpoints que carga el formulario de producto para reducir drásticamente el tiempo de respuesta.
+
+### Fase 2.3: Monitorización de Jobs (Hangfire)
+*Dashboard web para ver el estado de los trabajos encolados. Opcional pero muy vistoso para portfolio.*
+- [ ] **Integración de Hangfire**: Añadir paquete NuGet y configurar dashboard en `/hangfire`.
+- [ ] **Migración de Workers a Hangfire**: Sustituir (o complementar) los BackgroundServices manuales por jobs de Hangfire para las tareas de importación Excel.
+- [ ] **Monitorización de sincronizaciones**: Usar Hangfire para registrar el estado de los jobs de sync (éxito, fallo, reintentos) y poder reintentar jobs fallidos con un clic desde el dashboard.
+
+### Fase 2.4: Integración Real con Shopify (DataSource)
+*Conectar el PIM con una Development Store gratuita de Shopify para importar productos reales.*
+- [ ] **Implementación de `ShopifySyncService`**: Servicio que llame a la API REST de Shopify (`GET /admin/api/2024-01/products.json`) usando credenciales de una Development Store gratuita.
+- [ ] **Mapeo de datos Shopify → PIM**: Transformar los productos de Shopify (título, precio, stock, variantes, imágenes) al modelo de `ProductDto` de BackendMaster2.
+- [ ] **Encolado en RabbitMQ/Hangfire**: La importación desde Shopify se encola como un job asíncrono, no bloquea la UI.
+- [ ] **Actualización de `LastSyncedAt`**: Tras la sync exitosa, actualizar el campo de trazabilidad en `ProductDataSource`.
+
+### Fase 2.5: Integración Real con WooCommerce (Marketplace)
+*Publicar productos del PIM en un WooCommerce local levantado con Docker (100% gratis, sin licencias).*
+- [ ] **Docker Compose para WooCommerce**: Añadir al `docker-compose.yml` un contenedor con WordPress + WooCommerce + MySQL, con productos de ejemplo importados desde CSV.
+- [ ] **Implementación de `WooCommerceSyncService`**: Servicio que llame a la API REST de WooCommerce (`POST /wp-json/wc/v3/products`) usando API keys generadas en el panel de admin.
+- [ ] **Mapeo de datos PIM → WooCommerce**: Transformar `ProductDto` al formato que espera WooCommerce (nombre, descripción, precio, stock, categorías, imágenes por URL).
+- [ ] **Gestión de errores y reintentos**: Si la API de WooCommerce responde con error (ej: producto duplicado), registrar el error y permitir reintento manual desde Hangfire.
+- [ ] **Actualización de `LastSyncedAt`**: Tras la publicación exitosa, actualizar el campo de trazabilidad en `ProductMarketplace`.
+
+### Fase 2.6: Otras integraciones asíncronas (Opcional)
+- [ ] **Importaciones masivas con progreso en tiempo real vía SignalR**: Mejorar la UX de la importación Excel mostrando progreso en tiempo real (ej: "Procesando fila 45 de 200...").
+- [ ] **Elasticsearch + Kibana para búsqueda y análisis de logs**: Centralizar logs de la API y de los workers para monitorización avanzada.
+
+---
+
+## 🟠 Bloque 3: Calidad y Testing (Ligero)
+*Objetivo: Asegurar lo justo y necesario para dar confianza al Bloque 4.*
+- [ ] Tests unitarios (xUnit) para la validación de características obligatorias en `ProductService`.
+- [ ] Tests de integración con Testcontainers (PostgreSQL) para verificar que el Seed jerárquico y las migraciones se aplican correctamente en un entorno limpio.
+- [ ] (Opcional) Tests de arquitectura básicos con ArchUnitNET (ej: "Los Controllers no pueden inyectar DbContext directamente").
+
+---
+
+## 🔵 Bloque 4: Despliegue y Producción
+- [ ] **Docker Compose completo**: Orquestación de API + PostgreSQL + RabbitMQ + Redis + Hangfire + (Opcional: contenedor de WooCommerce para demo).
+- [ ] **CI/CD**: Pipeline básico con GitHub Actions (Build + Test + Push de imagen Docker).
+- [ ] **Documentación**: README detallado sobre cómo levantar el entorno de demo con un solo comando (`docker-compose up`).
+- [ ] **Monitoreo básico**: Logs centralizados con Serilog.
+
+---
+
+## 🟣 Bloque 5: Inteligencia Artificial y Búsqueda Avanzada (Opcional)
+*Ya implementado: Búsqueda híbrida semántica (pgvector), extracción de intención con IA, Seed de 200+ productos mock.*
+- [x] Búsqueda híbrida semántica (`pgvector` + filtros duros) con umbral de similitud configurable.
+- [x] Extracción de intención de búsqueda en lenguaje natural mediante IA.
+- [x] Seed de datos mejorado: generación de 200+ productos mock con descripciones ricas para embeddings de calidad.
+- [ ] (Futuro) Agente conversacional sobre la API (Semantic Kernel).
+- [ ] (Futuro) Asistente integrado en el front Blazor.
+
+---
+
+## 🚀 Exploración Power Platform (Complementario / Post-Bloque 2)
+*Nota: NO integrar en los bloques principales para evitar desvío de foco. El objetivo es posicionarse como ".NET Backend Developer con capacidad de extender con Power Platform", no como desarrollador RPA/UiPath puro.*
+- [ ] **Power App de consulta**: Crear una app simple (Canvas App) que consuma la API de BackendMaster2 para listar y filtrar productos.
+- [ ] **Power Automate**: Crear un flujo que escuche un Webhook de la API (ej: "ProductoCreado") y envíe una notificación por email o registre el evento en un Excel de SharePoint.
+- [ ] **Power BI**: Conectar directamente a la base de datos PostgreSQL del proyecto para crear un dashboard de métricas (stock por categoría, productos pendientes de sincronizar).
+- [ ] **Copilot Studio**: Explorar agente conversacional sobre Power Platform (Microsoft está empujando fuerte aquí).
+- [ ] Documentar esta integración en el README como "Extensibilidad Enterprise".
+
+---
+
+## 🎨 Mejoras de UX aplazadas (Backlog de UI)
+*Se posponen indefinidamente a menos que sobre tiempo tras completar los Bloques 1 y 2.*
+- [ ] Chip/Tag Input para creación en lote de tallas desde `SizeGroup` (escribe + Enter/coma → chip con ✕). *Decisión de patrón: Chips para maestros simples, tabla dinámica para relaciones con payload.*
+- [ ] Refactor jerarquía `PageBaseComponent` / `FormBaseComponent` (grids vs formularios).
+- [ ] Unificar estilo de rutas de endpoints (REST sustantivos vs verbos RPC).
+
+---
+
+## 🏛️ Arquitectura y Evolución (Futuro)
+- [ ] Migración a DDD canónico (4 capas): Separar Domain de Data, crear capa Application independiente.
+- [ ] Evaluar migración a Servicio Centralizado de Notificaciones (SignalR + Redis/RabbitMQ) para desacoplar Hubs de APIs de negocio.
+- [ ] UCP (Universal Commerce Protocol) como micro-proyecto de comercio agéntico.

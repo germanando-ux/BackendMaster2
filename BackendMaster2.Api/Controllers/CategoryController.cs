@@ -63,4 +63,12 @@ public class CategoryController : ControllerBase
         await _catalogService.DeleteCategoryAsync(id);
         return Ok(true);
     }
+
+    [Authorize]
+    [HttpGet("GetMandatoryFeatures/{id}")]
+    public async Task<ActionResult<CategoryFeaturesDto?>> GetMandatoryFeatures(Guid id)
+    {
+        var category = await _catalogService.GetMandatoryFeatures(id);
+        return Ok(category);
+    }
 }

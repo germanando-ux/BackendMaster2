@@ -52,4 +52,5 @@ public interface ICatalogService
     Task<FeatureOptionDto> CreateFeatureOptionAsync(FeatureOptionDto featureOptionDto);
     Task<FeatureOptionDto> UpdateFeatureOptionAsync(FeatureOptionDto featureOptionDto);
     Task DeleteFeatureOptionAsync(Guid id);
+    Task<IEnumerable<CategoryFeaturesDto>> GetMandatoryFeatures(Guid id);
 }

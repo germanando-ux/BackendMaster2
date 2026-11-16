@@ -152,6 +152,20 @@ public class CatalogRepository : ICatalogRepository
         return category;
     }
 
+    public async Task<IEnumerable<CategoryFeaturesDto>> GetMandatoryFeatures(Guid id)
+    {
+        return await _context.CategoryFeatures
+            .Include(cf => cf.Feature)
+            .Where(cf => cf.CategoryId == id && cf.IsRequired)
+            .Select(cf => new CategoryFeaturesDto
+            {
+                FeatureId = cf.FeatureId,
+                FeatureName = cf.Feature.Name,
+                IsRequired = cf.IsRequired
+            })
+            .ToListAsync();
+    }
+
     // ----- SIZE GROUPS -----
 
 
@@ -404,7 +418,6 @@ public class CatalogRepository : ICatalogRepository
 
         return result;
     }
-
 
 
 }

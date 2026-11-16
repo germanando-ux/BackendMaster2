@@ -21,6 +21,7 @@ public interface ICatalogRepository
     Task CreateCategoryAsync(Category category);
     Task<Category> UpdateCategoryAsync(Category category);
     Task DeleteCategoryAsync(Guid id);
+    Task<IEnumerable<CategoryFeaturesDto>> GetMandatoryFeatures(Guid id);
 
     // ----- SIZE GROUPS -----
     Task<IEnumerable<SizeGroup>> GetAllSizeGroupsAsync(BaseQueryDto query);
@@ -48,5 +49,5 @@ public interface ICatalogRepository
     Task DeleteFeatureOptionAsync(Guid id);
     Task<IEnumerable<FeatureOption>> GetAllFeatureOptionsAsync(BaseQueryDto query);
     Task<FeatureOption?> GetFeatureOptionByIdAsync(Guid id);
-    Task UpdateFeatureOptionAsync(FeatureOption featureOption);
+    Task UpdateFeatureOptionAsync(FeatureOption featureOption);    
 }

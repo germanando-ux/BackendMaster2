@@ -147,6 +147,14 @@ public class CatalogService : ICatalogService
         return _mapper.Map<CategoryDto>(existing);
     }
 
+
+    public async Task<IEnumerable<CategoryFeaturesDto>> GetMandatoryFeatures(Guid id)
+    {
+        IEnumerable<CategoryFeaturesDto> madatoryFeatures = await _catalogRepository.GetMandatoryFeatures(id);
+        return _mapper.Map<IEnumerable<CategoryFeaturesDto>>(madatoryFeatures);
+
+    }
+
     // ----- SIZE GROUPS -----
     public async Task<IEnumerable<SizeGroupDto>> GetAllSizeGroupsAsync(BaseQueryDto query)
     {
@@ -348,5 +356,6 @@ public class CatalogService : ICatalogService
 
         await _catalogRepository.DeleteFeatureOptionAsync(id);
     }
+
 
 }
