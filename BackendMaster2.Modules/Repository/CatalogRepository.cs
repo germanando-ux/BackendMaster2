@@ -166,6 +166,8 @@ public class CatalogRepository : ICatalogRepository
             .ToListAsync();
     }
 
+ 
+
     // ----- SIZE GROUPS -----
 
 

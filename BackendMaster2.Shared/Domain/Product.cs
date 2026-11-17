@@ -33,5 +33,8 @@ namespace BackendMaster2.Shared.Domain
         // Relación N:M con Características a través de la tabla de unión
         public ICollection<ProductFeature> ProductFeatures { get; set; } = new List<ProductFeature>();
 
+        //relacion N:M con imagenes
+        public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
+
     }
 }

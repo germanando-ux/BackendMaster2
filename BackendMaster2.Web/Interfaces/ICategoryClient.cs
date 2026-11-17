@@ -9,5 +9,5 @@ public interface ICategoryClient
     Task<ApiResult<CategoryDto>> CreateCategoryAsync(CategoryDto category);
     Task<ApiResult<CategoryDto>> UpdateCategoryAsync(Guid id, CategoryDto category);
     Task<ApiResult<bool>> DeleteCategoryAsync(Guid id);
-   
+    Task<ApiResult<List<CategoryFeaturesDto>>> GetMandatoryFeaturesAsync(Guid value);
 }

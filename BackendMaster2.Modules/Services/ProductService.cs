@@ -4,6 +4,9 @@ using BackendMaster2.Modules.Interfaces;
 using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
 using BackendMaster2.Shared.Extensions;
+using System.ComponentModel.DataAnnotations;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 
 
 namespace BackendMaster2.Modules.Services
@@ -17,14 +20,16 @@ namespace BackendMaster2.Modules.Services
         private readonly IMapper _mapper;
         private readonly IAiService _aiService;
         private readonly INotificationService _notificationService;
+        private readonly ICatalogService _catalogService;
 
         // Depende del CONTRATO, no de la clase: el repositorio real lo inyecta el DI.
-        public ProductService(IProductRepository productRepository, IMapper mapper, IAiService aiService, INotificationService notificationService)
+        public ProductService(IProductRepository productRepository, IMapper mapper, IAiService aiService, INotificationService notificationService, ICatalogService catalogService)
         {
             _productRepository = productRepository;
             _mapper = mapper;
             _aiService = aiService;
             _notificationService = notificationService;
+            _catalogService = catalogService;
         }
 
         /// <summary>
@@ -38,22 +43,7 @@ namespace BackendMaster2.Modules.Services
             return products.Select(p => _mapper.Map<ProductDto>(p));
         }
 
-        ///// <summary>
-        ///// Consulta por id
-        ///// </summary>
-        ///// <param name="id"></param>
-        ///// <returns></returns>
-        ///// <exception cref="NotFoundException"></exception>
-        //public async Task<ProductDetailDto> GetByIdAsync(Guid id)
-        //{
-        //    var product = await _productRepository.GetByIdAsync(id);
-        //    if (product is null)
-        //    {
-        //        throw new NotFoundException($"No existe ningún producto con el id {id}.");
-        //    }
-
-        //    return _mapper.Map<ProductDetailDto>(product);
-        //}
+  
 
         public async Task<ProductDetailDto> GetByIdAsync(Guid id)
         {
@@ -135,8 +125,24 @@ namespace BackendMaster2.Modules.Services
                 ProductId = newProduct.Id,
                 FeatureId = pfDto.FeatureId,
                 Value = pfDto.Value,
+                FeatureOptionId = pfDto.FeatureOptionId,
                 ChannelId = pfDto.ChannelId
             }).ToList();
+
+
+            // Añadimos las imágenes. EF Core se encarga del INSERT en cascada.
+            newProduct.ProductImages = productDto.ProductImages?.Select(imgDto => new ProductImage
+            {
+                ProductId = newProduct.Id, // Se resolverá al guardar
+                StorageKey = imgDto.StorageKey,
+                Url = imgDto.Url,
+                AltText = imgDto.AltText,
+                Order = imgDto.Order,
+                IsPrimary = imgDto.IsPrimary,
+                Source = imgDto.Source,
+                ExternalId = imgDto.ExternalId,
+                CreatedAt = DateTime.UtcNow
+            }).ToList() ?? new List<ProductImage>();
 
             // 3. Guardamos la entidad (EF Core insertará el producto y sus opciones en cascada)
             await _productRepository.CreateAsync(newProduct);
@@ -146,6 +152,9 @@ namespace BackendMaster2.Modules.Services
 
         public async Task<ProductDto> UpdateAsync(ProductDto productDto)
         {
+             await validateProductAsync(productDto);
+
+            
             // 1. Cargo la entidad RASTREADA (la que vive en la memoria del DbContext).
             Product? existing = await _productRepository.GetByIdAsync(productDto.Id);
             if (existing is null)
@@ -245,8 +254,30 @@ namespace BackendMaster2.Modules.Services
                     ProductId = existing.Id,
                     FeatureId = pfDto.FeatureId,
                     Value = pfDto.Value,
+                    FeatureOptionId = pfDto.FeatureOptionId,
                     ChannelId = pfDto.ChannelId
                 });
+            }
+
+            // LÓGICA DE IMÁGENES (Patrón Clear + Add)
+            existing.ProductImages.Clear();
+            if (productDto.ProductImages != null)
+            {
+                foreach (var imgDto in productDto.ProductImages)
+                {
+                    existing.ProductImages.Add(new ProductImage
+                    {
+                        ProductId = existing.Id,
+                        StorageKey = imgDto.StorageKey,
+                        Url = imgDto.Url,
+                        AltText = imgDto.AltText,
+                        Order = imgDto.Order,
+                        IsPrimary = imgDto.IsPrimary,
+                        Source = imgDto.Source,
+                        ExternalId = imgDto.ExternalId,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
             }
 
 
@@ -255,6 +286,54 @@ namespace BackendMaster2.Modules.Services
 
             return _mapper.Map<ProductDto>(existing);
 
+
+        }
+
+        private async Task validateProductAsync(ProductDto productDto)
+        {
+            var validationErrors = new List<string>();
+
+            if (productDto.CategoryIds == null || !productDto.CategoryIds.Any())
+            {
+                return;
+            }
+
+
+            var categoryId = productDto.CategoryIds.First();
+
+            IEnumerable<CategoryFeaturesDto> mandatoryFeatures = await _catalogService.GetMandatoryFeaturesAsync(categoryId);
+            if (!mandatoryFeatures.Any())
+            {
+                return; // No hay reglas, salimos rápido
+            }
+
+
+            foreach (var feature in mandatoryFeatures)
+            {
+                var productFeature = productDto.ProductFeatures?.FirstOrDefault(f => f.FeatureId == feature.FeatureId);
+
+                // Caso A: La característica obligatoria no está en la lista del DTO
+                if (productFeature == null)
+                {
+                    validationErrors.Add($"La característica '{feature.FeatureName}' es obligatoria para esta categoría.");
+                    continue; // Pasamos a la siguiente, no tiene sentido comprobar el valor
+                }
+
+                // Caso B: Está en la lista, pero no tiene valor. 
+                // OJO: Debemos comprobar tanto 'Value' (para texto/número) como 'FeatureOptionId' (para listas)
+                bool hasValue = !string.IsNullOrEmpty(productFeature.Value) || productFeature.FeatureOptionId.HasValue;
+
+                if (!hasValue)
+                {
+                    validationErrors.Add($"La característica '{feature.FeatureName}' debe tener un valor informado.");
+                }
+             
+            }
+
+            if (validationErrors.Any())
+            {
+                throw new BusinessRuleException(string.Join(" ", validationErrors));
+            }
 
         }
 

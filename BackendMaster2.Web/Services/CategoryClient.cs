@@ -1,5 +1,6 @@
 ﻿using BackendMaster2.Web.Interfaces;
 using BackendMaster2.Web.Models.Dtos;
+using System.Security.AccessControl;
 
 namespace BackendMaster2.Web.Services;
 
@@ -33,9 +34,15 @@ public class CategoryClient : ICategoryClient
     {
         return await _apiClient.SendAsync<CategoryDto>(HttpMethod.Get, $"api/Category/GetCategoryById/{id}");
     }
-
+    
     public async Task<ApiResult<CategoryDto>> UpdateCategoryAsync(Guid id, CategoryDto category)
     {
         return await _apiClient.SendAsync<CategoryDto>(HttpMethod.Put, $"api/Category/UpdateCategory/{id}", category);
     }
+
+    public async Task<ApiResult<List<CategoryFeaturesDto>>> GetMandatoryFeaturesAsync(Guid value)
+    {
+        return await _apiClient.SendAsync<List<CategoryFeaturesDto>>(HttpMethod.Get, $"api/Category/GetMandatoryFeatures/{value}");
+    }
+
 }

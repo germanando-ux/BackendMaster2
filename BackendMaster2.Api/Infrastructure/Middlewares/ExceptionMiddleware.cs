@@ -92,6 +92,13 @@ public class ExceptionMiddleware
         // Mapeo de excepciones de dominio a códigos HTTP específicos
         switch (exception)
         {
+            case BusinessRuleException businessRuleException:
+                problem.Status = (int)HttpStatusCode.BadRequest;
+                problem.Title = "Error de validación de negocio";
+                problem.Detail = businessRuleException.Message;
+                problem.Type = "https://httpstatuses.com/400";
+                break;
+
             case ValidationException validationException:
                 problem.Status = (int)HttpStatusCode.BadRequest;
                 problem.Title = "Error de validación";

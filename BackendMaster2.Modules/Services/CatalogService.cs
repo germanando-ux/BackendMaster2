@@ -13,6 +13,7 @@ public class CatalogService : ICatalogService
     private readonly ICatalogRepository _catalogRepository;
     private readonly IMapper _mapper;
     private readonly IAiService _aiService;
+
     public CatalogService( ICatalogRepository CatalogRepository, IMapper mapper, IAiService aiService)
     {
         _catalogRepository = CatalogRepository;
@@ -148,11 +149,9 @@ public class CatalogService : ICatalogService
     }
 
 
-    public async Task<IEnumerable<CategoryFeaturesDto>> GetMandatoryFeatures(Guid id)
+    public async Task<IEnumerable<CategoryFeaturesDto>> GetMandatoryFeaturesAsync(Guid id)
     {
-        IEnumerable<CategoryFeaturesDto> madatoryFeatures = await _catalogRepository.GetMandatoryFeatures(id);
-        return _mapper.Map<IEnumerable<CategoryFeaturesDto>>(madatoryFeatures);
-
+        return await _catalogRepository.GetMandatoryFeatures(id);
     }
 
     // ----- SIZE GROUPS -----

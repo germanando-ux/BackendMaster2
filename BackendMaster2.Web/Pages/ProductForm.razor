@@ -147,8 +147,8 @@ else
                     @* CATEGORÍAS *@
                     <!-- Columna 2: Categorías -->
                     <div class="col-md-6 mb-4">
-                        <label class="form-label fw-semibold fs-5"><i class="bi bi-folder me-2"></i>Categorías</label>
-                        <select class="form-select" @bind="SelectedCategoryId">
+                        <label class="form-label fw-semibold fs-5"><i class="bi bi-folder me-2"></i>Categorías</label>                        
+                        <select class="form-select" value="@SelectedCategoryId" @onchange="OnCategoryChanging">
                                 <option value="">Seleccione categoría</option>
                                  @foreach (var category in availableCategories)
                                 {
@@ -514,6 +514,14 @@ else
               OnConfirm="ConfirmAiDescription"
               OnCancel="CancelProductDeletion" />
 
+<ConfirmModal Show="@showCategoryChangeModal"
+              IsError="false"
+              Title="Cambiar categoría"
+              Message="Al cambiar de categoría se perderán las características actuales del producto. ¿Continuar?"
+              ConfirmText="Sí, cambiar"
+              CancelText="Cancelar"
+              OnConfirm="ConfirmCategoryChangeAsync"
+              OnCancel="CancelCategoryChange" />
 
 @code {
 
@@ -535,6 +543,9 @@ else
     private List<FeatureDto> filteredFeatures => availableFeatures.Where(mp => mp.Name.Contains(_filtroFeatures, StringComparison.OrdinalIgnoreCase)).ToList();
 
     private string AiDescription = string.Empty;
+
+    private bool showCategoryChangeModal = false;
+    private Guid? _pendingCategoryId;
 
     private string _filtroMarketplaces = "";
     private string _filtroFeatures = "";
@@ -566,22 +577,7 @@ else
 
     private ProductDataSourceDto? CurrentProductDataSource => productDto.ProductDataSources?.FirstOrDefault();
 
-    // Propiedad puente: el select lee/escribe la ÚNICA Categoría del DTO.
-    private Guid? SelectedCategoryId
-    {
-        get => productDto.CategoryIds?.FirstOrDefault();
-        set
-        {
-            productDto.CategoryIds ??= new List<Guid>();
-            productDto.CategoryIds.Clear(); // Siempre 0 o 1: regla de origen único
 
-            if (value is not null)
-            {
-                Guid categoryId = value.Value;
-                productDto.CategoryIds.Add(categoryId);
-            }
-        }
-    }
 
 
     // 1. Se ejecuta al entrar en la página. Si es edición, carga los datos.
@@ -861,6 +857,100 @@ else
     private void SetActiveTab(string tabName)
     {
         activeTab = tabName;
+    }
+
+
+    //EVENTOS Y MÉTODOAS CATEGORÍA
+
+    // Propiedad puente: el select lee/escribe la ÚNICA Categoría del DTO.
+    private Guid? SelectedCategoryId
+    {
+        get => productDto.CategoryIds?.FirstOrDefault();
+        set
+        {
+            productDto.CategoryIds ??= new List<Guid>();
+            productDto.CategoryIds.Clear(); // Siempre 0 o 1: regla de origen único
+
+            if (value is not null)
+            {
+                Guid categoryId = value.Value;
+                productDto.CategoryIds.Add(categoryId);
+            }
+        }
+    }
+
+    private async Task OnCategoryChanging(ChangeEventArgs e)
+    {
+        if (e.Value == null)
+        {
+            return;
+        }
+
+        var newCategoryId = Guid.Parse(e.Value.ToString());
+
+        // Si es la misma categoría, no hacemos nada
+        if (newCategoryId == SelectedCategoryId)
+        {
+            return;
+        }
+
+        // Guardamos el nuevo valor en la variable temporal
+        _pendingCategoryId = newCategoryId;
+
+        // Si ya hay características cargadas, mostramos el modal
+        if (productDto.ProductFeatures != null && productDto.ProductFeatures.Any())
+        {
+            showCategoryChangeModal = true;
+        }
+        else
+        {
+            // Si no hay características, aplicamos el cambio directamente
+            await ConfirmCategoryChangeAsync();
+        }
+    }
+
+    private async Task ConfirmCategoryChangeAsync()
+    {
+
+        showCategoryChangeModal = false;
+
+        if (!_pendingCategoryId.HasValue)
+        {
+            return;
+        }
+        // 1. Actualizar la categoría (esto dispara el 'set' de tu propiedad puente)
+        SelectedCategoryId = _pendingCategoryId;
+
+        // 2. Limpiar las características que había antes
+        productDto.ProductFeatures?.Clear();
+
+        // 3. Llamar al backend para traer las nuevas obligatorias
+        var result = await CategoryClient.GetMandatoryFeaturesAsync(_pendingCategoryId.Value);
+
+        if (result.IsSuccess && result.Data != null)
+        {
+            foreach (var mandatoryFeature in result.Data)
+            {
+                // Buscamos el DataType en nuestra lista en memoria para que el formulario sepa qué control pintar
+                var featureInfo = availableFeatures.FirstOrDefault(f => f.Id == mandatoryFeature.FeatureId);
+            
+                productDto.ProductFeatures.Add(new ProductFeatureDto
+                {
+                    FeatureId = mandatoryFeature.FeatureId,
+                    FeatureName = mandatoryFeature.FeatureName,
+                    DataType = featureInfo?.DataType ?? FeatureDataType.Text, 
+                    Value = null,
+                    FeatureOptionId = null
+                });
+            }
+        }
+
+        _pendingCategoryId = null;
+    }
+    private void CancelCategoryChange()
+    {
+        showCategoryChangeModal = false;
+        _pendingCategoryId = null;
     }
 
 

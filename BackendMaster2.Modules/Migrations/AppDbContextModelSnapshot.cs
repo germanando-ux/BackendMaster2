@@ -335,6 +335,54 @@ namespace BackendMaster2.Modules.Migrations
                     b.ToTable("ProductFeatures");
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AltText")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId", "Order");
+
+                    b.ToTable("ProductImages");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductMarketplace", b =>
                 {
                     b.Property<Guid>("ProductId")
@@ -628,6 +676,17 @@ namespace BackendMaster2.Modules.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductImage", b =>
+                {
+                    b.HasOne("BackendMaster2.Shared.Domain.Product", "Product")
+                        .WithMany("ProductImages")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("BackendMaster2.Shared.Domain.ProductMarketplace", b =>
                 {
                     b.HasOne("BackendMaster2.Shared.Domain.Marketplace", "Marketplace")
@@ -745,6 +804,8 @@ namespace BackendMaster2.Modules.Migrations
                     b.Navigation("ProductDataSources");
 
                     b.Navigation("ProductFeatures");
+
+                    b.Navigation("ProductImages");
 
                     b.Navigation("ProductMarketplaces");
 

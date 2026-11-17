@@ -35,4 +35,13 @@ namespace BackendMaster2.Shared.Common
         {
         }
     }
+
+    /// <summary>
+    /// Errores de validación de producto
+    /// </summary>
+    public class BusinessRuleException : Exception
+    {
+        public BusinessRuleException(string message) : base(message) { }
+    }
+
 }

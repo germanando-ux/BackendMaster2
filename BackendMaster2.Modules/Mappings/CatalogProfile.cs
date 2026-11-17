@@ -30,10 +30,17 @@ public class CatalogProfile : Profile
         CreateMap<Feature, FeatureDto>().ReverseMap();
         CreateMap<FeatureOption, FeatureOptionDto>().ReverseMap();
 
+        // ProductImage -> ProductImageDto (Lectura)
+        CreateMap<ProductImage, ProductImageDto>();
+
+        // ProductImageDto -> ProductImage (Escritura)
+        CreateMap<ProductImageDto, ProductImage>()
+            .ForMember(dest => dest.Product, opt => opt.Ignore());
 
         // Mapeo de Entidad -> DTO (Lectura)
         CreateMap<ProductFeature, ProductFeatureDto>()
-            .ForMember(dest => dest.FeatureName, opt => opt.MapFrom(src => src.Feature.Name))
+            .ForMember(dest => dest.FeatureName, opt => opt.MapFrom(src => src.Feature != null ? src.Feature.Name : "Desconocida"))
+            .ForMember(dest => dest.DataType, opt => opt.MapFrom(src => src.Feature != null ? src.Feature.DataType : FeatureDataType.Text)) // ← FALLBACK SEGURO
             .ForMember(dest => dest.FeatureOptionValue, opt => opt.MapFrom(src => src.FeatureOption != null ? src.FeatureOption.Value : null));
 
         // Mapeo de DTO -> Entidad (Escritura)
@@ -54,6 +61,8 @@ public class CatalogProfile : Profile
                        opt => opt.MapFrom(src => src.ProductOptions.Select(po => po.ColorId)))
             .ForMember(dest => dest.CategoryIds,
                        opt => opt.MapFrom(src => src.ProductCategories.Select(pc => pc.CategoryId)));
+
+
 
         // 3. ProductDto -> Product (Escritura para Create/Update)
         // Ignoramos TODAS las colecciones porque las gestionamos a mano en el ProductService 
@@ -81,6 +90,7 @@ public class CatalogProfile : Profile
             .ForMember(dest => dest.ProductMarketplaces,
                        opt => opt.MapFrom(src => src.ProductMarketplaces))
             .ForMember(dest => dest.ProductFeatures,
-                       opt => opt.MapFrom(src => src.ProductFeatures));
+                       opt => opt.MapFrom(src => src.ProductFeatures))
+               .ForMember(dest => dest.ProductImages, opt => opt.MapFrom(src => src.ProductImages));
     }
 }

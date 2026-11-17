@@ -31,6 +31,7 @@ namespace BackendMaster2.Modules.Data
         public DbSet<FeatureOption> FeatureOptions => Set<FeatureOption>();
         public DbSet<CategoryFeature> CategoryFeatures => Set<CategoryFeature>();
         public DbSet<ProductFeature> ProductFeatures => Set<ProductFeature>();
+        public DbSet<ProductImage> ProductImages => Set<ProductImage>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -276,6 +277,25 @@ namespace BackendMaster2.Modules.Data
                       .WithMany(f => f.CategoryFeatures)
                       .HasForeignKey(e => e.FeatureId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ProductImage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.Product)
+                      .WithMany(p => p.ProductImages)
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade); // Si se borra el producto, se borran sus imágenes
+
+                entity.Property(e => e.StorageKey).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.Url).IsRequired().HasMaxLength(1000);
+                entity.Property(e => e.AltText).HasMaxLength(500);
+                entity.Property(e => e.Source).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.ExternalId).HasMaxLength(200);
+
+                // Índice para buscar rápidamente las imágenes de un producto ordenadas
+                entity.HasIndex(e => new { e.ProductId, e.Order });
             });
 
         }

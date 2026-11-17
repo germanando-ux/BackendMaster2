@@ -20,4 +20,6 @@ public class ProductDetailDto
     public List<ProductDataSourceDto> ProductDataSources { get; set; } = new();
     public List<ProductMarketplaceDto> ProductMarketplaces { get; set; } = new();
     public List<ProductFeatureDto> ProductFeatures { get; set; } = new();
+
+    public List<ProductImageDto> ProductImages { get; set; } = new();
 }

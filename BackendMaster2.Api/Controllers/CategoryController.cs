@@ -68,7 +68,7 @@ public class CategoryController : ControllerBase
     [HttpGet("GetMandatoryFeatures/{id}")]
     public async Task<ActionResult<CategoryFeaturesDto?>> GetMandatoryFeatures(Guid id)
     {
-        var category = await _catalogService.GetMandatoryFeatures(id);
+        var category = await _catalogService.GetMandatoryFeaturesAsync(id);
         return Ok(category);
     }
 }
