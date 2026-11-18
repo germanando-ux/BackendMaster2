@@ -10,6 +10,12 @@ services:
       - "5432:5432"
     volumes:
       - bm2_pgdata:/var/lib/postgresql/data
-
+  redis:
+    image: redis:7-alpine
+    container_name: backendmaster2-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
 volumes:
   bm2_pgdata:
+  

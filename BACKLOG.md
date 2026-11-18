@@ -12,7 +12,7 @@ El desarrollo se ejecutará estrictamente en este orden, con estrategia **in cre
 
 > ⚠️ **ALCANCE DEL PROYECTO**: BackendMaster2 es un **DEMOSTRADOR**, no un PIM operativo.
 > No se implementan validaciones de frontend (la validación vive en backend).
-> El README final debe declarar explícitamente lo que NO incluye.
+> El README final debe declarar explícitamente lo que NO incluye (ver sección "📝 Notas para el README").
 
 ---
 
@@ -101,11 +101,12 @@ El desarrollo se ejecutará estrictamente en este orden, con estrategia **in cre
 - [x] Endpoint IA para mejorar descripción + Modal + Toast.
 - [x] SignalR para notificaciones de tareas asíncronas.
 
-### Fase 2.1: Caché Distribuida (Redis) ⬅️ **PRÓXIMO**
+### Fase 2.1: Caché Distribuida (Redis) ⬅️ **EN PROGRESO**
 *Objetivo: aliviar la carga de BBDD en el `ProductForm` (hoy hace 6-7 llamadas de maestros al abrir).*
-- [ ] **Levantar contenedor Redis** en `docker-compose`.
-- [ ] **Alcance de caché**: estrictamente Maestros del Catálogo (Colores, Categorías, Tallas, Grupos de Tallas, Features).
+- [x] **Levantar contenedor Redis** en `docker-compose`.
+- [ ] **Alcance de caché**: estrictamente Maestros del Catálogo (Colores, Categorías, Tallas, Grupos de Tallas, Features, DataSources, Marketplaces).
 - [ ] **Invalidación específica**: al crear/editar/borrar un maestro, borrar solo su clave de caché (no toda la caché).
+- [ ] **Caché de Búsquedas Híbridas (IA + pgvector)**: Cachear el resultado de búsquedas semánticas (o la intención de IA ya resuelta) para evitar llamadas redundantes a la IA y operaciones costosas de `pgvector`. *(Aportación de Germán)*.
 - [ ] **Utilidades adicionales de Redis** (a valorar según tiempo):
   - [ ] **Rate Limiting** en la API (contador por usuario/token con `INCR` + `EXPIRE`).
   - [ ] **Distributed Locks** para el Worker de RabbitMQ (evitar procesamiento duplicado de mensajes).
@@ -164,10 +165,7 @@ El desarrollo se ejecutará estrictamente en este orden, con estrategia **in cre
 ## 🔵 Bloque 4: Despliegue y Producción
 - [ ] **Docker Compose completo**: API + PostgreSQL + RabbitMQ + Redis + MinIO + Hangfire (+ WooCommerce opcional).
 - [ ] **CI/CD**: Pipeline básico con GitHub Actions (Build + Test + Push imagen Docker).
-- [ ] **README de alcance**: documentar que es un DEMOSTRADOR, no un PIM operativo.
-      Declarar lo que NO incluye: validaciones de front, multidioma, multimoneda,
-      gestión de imágenes/assets (parcial), versionado/audit, workflows de aprobación,
-      concurrencia optimista, RBAC fino, paginación real.
+- [ ] **README de alcance**: documentar que es un DEMOSTRADOR, no un PIM operativo (ver sección "📝 Notas para el README").
 - [ ] **Monitoreo básico**: logs centralizados con Serilog.
 
 ---
@@ -207,9 +205,45 @@ El desarrollo se ejecutará estrictamente en este orden, con estrategia **in cre
 
 ---
 
+## 📝 Notas para el README (Limitaciones y alcance del demostrador)
+
+> **Esta sección se convertirá en el capítulo "Alcance y Limitaciones" del README final.**
+> Su objetivo es dejar claro al lector (y al entrevistador) qué decisiones se tomaron a propósito y qué queda fuera por alcance, demostrando conocimiento del dominio real de un PIM.
+
+### 🎯 Qué ES este proyecto
+- Un **demostrador técnico** de arquitectura .NET + Blazor + PostgreSQL + IA.
+- Muestra un modelo de dominio PIM simplificado pero funcional (Categorías jerárquicas, Features EAV, Tallas con payload, Imágenes, Canales).
+- Implementa búsqueda híbrida semántica con `pgvector` + extracción de intención por IA.
+- Incluye infraestructura asíncrona (RabbitMQ, Redis, SignalR) preparada para casos de uso reales (importación Excel, sincronización con Marketplaces).
+
+### ❌ Qué NO es (limitaciones explícitas)
+1. **No es un PIM operativo**: le faltan capacidades críticas para producción.
+2. **Sin validaciones de frontend**: la validación de negocio vive exclusivamente en backend (principio de defensa en profundidad). El frontend no bloquea el guardado.
+3. **Sin multidioma (i18n)**: ni en la UI ni en los datos de producto. Un PIM real gestiona textos en múltiples idiomas.
+4. **Sin multimoneda**: los precios son un único valor numérico. Un PIM real maneja divisas, tipos de cambio y listas de precios por mercado.
+5. **Modelo de dominio simplificado (Stock/Precio)**: actualmente `Stock` y `Price` viven en la tabla `Product` (Producto Padre). En un PIM real deben vivir en la **Variante (SKU)**, que es la combinación única de `Producto + Talla + Color`. El stock general del producto debería ser la suma de los stocks de sus variantes.
+6. **Sin gestión real de imágenes/assets**: la entidad `ProductImage` y su migración existen, pero no hay contenedor MinIO/S3, ni endpoint de subida, ni UI de gestión. Solo URLs externas.
+7. **Sin versionado / audit trail**: no hay historial de cambios de producto ni quién modificó qué.
+8. **Sin workflows de aprobación**: no existe estado "Borrador → Revisión → Aprobado → Publicado".
+9. **Sin concurrencia optimista**: no hay `rowversion` ni control de ediciones simultáneas.
+10. **Sin RBAC fino**: solo autenticación JWT básica. No hay permisos por rol/usuario (ej: "solo el rol Editor puede modificar precios").
+11. **Sin paginación real de servidor**: las listas de productos se traen completas (funcional para la demo, inviable en producción).
+12. **Sin integración real con Marketplaces**: las entidades `ProductMarketplace` y `ProductDataSource` existen, pero las fases de Shopify/WooCommerce están pendientes.
+13. **Sin importación masiva**: el endpoint de Excel y el Worker de RabbitMQ están pendientes (Fase 2.2).
+
+### 🔮 Evolución futura (si se continuara el proyecto)
+- Migración a DDD canónico de 4 capas (Domain / Application / Infrastructure / Presentation).
+- Evolución del modelo a **Variantes (SKU)** con Stock y Price a nivel de variante.
+- Implementación de `IStorageService` contra MinIO/S3 para gestión real de imágenes.
+- Agente conversacional sobre la API (Semantic Kernel / MCP).
+- Servicio Centralizado de Notificaciones (SignalR + Redis/RabbitMQ) para desacoplar Hubs de APIs de negocio.
+
+---
+
 ## 🏛️ Arquitectura y Evolución (Futuro)
 - [ ] Migración a DDD canónico (4 capas): separar Domain de Data, crear capa Application independiente.
 - [ ] Evaluar migración a Servicio Centralizado de Notificaciones (SignalR + Redis/RabbitMQ) para desacoplar Hubs de APIs de negocio.
 - [ ] UCP (Universal Commerce Protocol) como micro-proyecto de comercio agéntico.
 - [ ] **Filosofía de mapeo consolidada**: AutoMapper solo para mapeos planos (1 a 1);
       mapeos complejos con lógica condicional o proyecciones de EF Core, a mano en services/repositories.
+- [ ] **Evolución del modelo a Variantes (SKU)**: mover `Stock` y `Price` de `Product` a una entidad `ProductVariant` (combinación única de Producto + Talla + Color). El stock general del producto padre se calcularía como suma de stocks de variantes. *(Aportación de Germán)*.
