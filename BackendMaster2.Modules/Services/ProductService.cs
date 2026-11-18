@@ -289,6 +289,12 @@ namespace BackendMaster2.Modules.Services
 
         }
 
+        /// <summary>
+        /// Valida las reglas de negocio para un producto.
+        /// </summary>
+        /// <param name="productDto"></param>
+        /// <returns></returns>
+        /// <exception cref="BusinessRuleException"></exception>
         private async Task validateProductAsync(ProductDto productDto)
         {
             var validationErrors = new List<string>();
@@ -348,6 +354,13 @@ namespace BackendMaster2.Modules.Services
             await _productRepository.DeleteAsync(id);
         }
 
+
+        /// <summary>
+        /// llama a un método de ia de qewn que enriquece el código
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task ProcessEnrichDescriptionAsync(EnrichDescriptionRequestDto dto, CancellationToken cancellationToken = default)
         {
             // 1. Construimos el prompt usando el método privado

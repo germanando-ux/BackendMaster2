@@ -4,7 +4,8 @@ using BackendMaster2.Modules.Interfaces;
 using BackendMaster2.Modules.Repository;
 using BackendMaster2.Shared.Common;
 using BackendMaster2.Shared.Domain;
-
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace BackendMaster2.Modules.Services;
 
@@ -13,12 +14,15 @@ public class CatalogService : ICatalogService
     private readonly ICatalogRepository _catalogRepository;
     private readonly IMapper _mapper;
     private readonly IAiService _aiService;
+    private readonly ICacheService _cacheService;
 
-    public CatalogService( ICatalogRepository CatalogRepository, IMapper mapper, IAiService aiService)
+
+    public CatalogService( ICatalogRepository CatalogRepository, IMapper mapper, IAiService aiService, ICacheService cacheService)
     {
         _catalogRepository = CatalogRepository;
         _mapper = mapper;
         _aiService = aiService;
+        _cacheService = cacheService;
     }
 
 
@@ -29,7 +33,15 @@ public class CatalogService : ICatalogService
         //genero vector embedding para el nombre del color
         newColor.Embedding = await _aiService.GenerateEmbeddingAsync(newColor.Name);
         await _catalogRepository.CreateColorAsync(newColor);
+
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:colors:actives");
+        await _cacheService.RemoveAsync("maestros:colors:all");
+
         return _mapper.Map<ColorDto>(newColor);
+
+
         
     }
 
@@ -42,13 +54,38 @@ public class CatalogService : ICatalogService
         }
 
         await _catalogRepository.DeleteColorAsync(id);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:colors:actives");
+        await _cacheService.RemoveAsync("maestros:colors:all");
     }
 
     public async Task<IEnumerable<ColorDto>> GetAllColorsAsync(BaseQueryDto query)
     {
+        //detectamos si la consulta es "base" (sin searchTerm y con isActive true o null) para poder cachearla. Si no es base, no la cacheamos.
+        string cachekey = $"maestros:colors:{(query.IsActive == true ? "actives" : "all")}";
+        bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
+        if (isBaseQuery)
+        {
+            List<ColorDto> cachedColors = await _cacheService.GetAsync<List<ColorDto>>(cachekey);
+            if (cachedColors != null)
+            {
+                return cachedColors;
+            }
+        }
+
         IEnumerable<Color> colors = await _catalogRepository.GetAllColorsAsync(query);
-        return colors.Select(c => _mapper.Map<ColorDto>(c));
+        List<ColorDto> colorsDto = colors.Select(c => _mapper.Map<ColorDto>(c)).ToList();
+
+
+        if (isBaseQuery)
+        { 
+            await  _cacheService.SetAsync(cachekey, colorsDto);
+        }
+        return colorsDto;
     }
+
+
     public async Task<ColorDto?> GetColorByIdAsync(Guid id)
     {
         Color color = await _catalogRepository.GetColorByIdAsync(id);
@@ -72,6 +109,11 @@ public class CatalogService : ICatalogService
         existing.IsActive = color.IsActive;
 
         await _catalogRepository.UpdateColorAsync(existing);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:colors:actives");
+        await _cacheService.RemoveAsync("maestros:colors:all");
+
         return _mapper.Map<ColorDto>(existing);
     }
 
@@ -92,6 +134,11 @@ public class CatalogService : ICatalogService
         }).ToList();
 
         await _catalogRepository.CreateCategoryAsync(newCategory);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:categories:actives");
+        await _cacheService.RemoveAsync("maestros:categories:all");
+
         return _mapper.Map<CategoryDto>(newCategory);
     }
 
@@ -104,12 +151,38 @@ public class CatalogService : ICatalogService
         }
 
         await _catalogRepository.DeleteCategoryAsync(id);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:categories:actives");
+        await _cacheService.RemoveAsync("maestros:categories:all");
     }
 
     public async Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync(BaseQueryDto query)
     {
+
+        //detectamos si la consulta es "base" (sin searchTerm y con isActive true o null) para poder cachearla. Si no es base, no la cacheamos.
+        string cachekey = $"maestros:categories:{(query.IsActive == true ? "actives" : "all")}";
+        bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
+        if (isBaseQuery)
+        {
+            List<CategoryDto> cachedCategories = await _cacheService.GetAsync<List<CategoryDto>>(cachekey);
+            if (cachedCategories != null)
+            {
+                return cachedCategories;
+            }
+        }
+
         IEnumerable<Category> categories = await _catalogRepository.GetAllCategoriesAsync(query);
-        return categories.Select(c => _mapper.Map<CategoryDto>(c));
+        List<CategoryDto> categoriesDto = categories.Select(c => _mapper.Map<CategoryDto>(c)).ToList();
+
+
+        if (isBaseQuery)
+        {
+            await setMasterCacheAsync<List<CategoryDto>>(cachekey, categoriesDto);
+        }
+        return categoriesDto;
+
+       
     }
 
     public async Task<CategoryDto?> GetCategoryByIdAsync(Guid id)
@@ -145,6 +218,11 @@ public class CatalogService : ICatalogService
 
 
         await _catalogRepository.UpdateCategoryAsync(existing);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:categories:actives");
+        await _cacheService.RemoveAsync("maestros:categories:all");
+
         return _mapper.Map<CategoryDto>(existing);
     }
 
@@ -157,8 +235,29 @@ public class CatalogService : ICatalogService
     // ----- SIZE GROUPS -----
     public async Task<IEnumerable<SizeGroupDto>> GetAllSizeGroupsAsync(BaseQueryDto query)
     {
+        //detectamos si la consulta es "base" (sin searchTerm y con isActive true o null) para poder cachearla. Si no es base, no la cacheamos.
+        string cachekey = $"maestros:sizegroups:{(query.IsActive == true ? "actives" : "all")}";
+        bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
+        if (isBaseQuery)
+        {
+            List<SizeGroupDto> cachedSizeGroups = await _cacheService.GetAsync<List<SizeGroupDto>>(cachekey);
+            if (cachedSizeGroups != null)
+            {
+                return cachedSizeGroups;
+            }
+        }
+
         IEnumerable<SizeGroup> sizeGroups = await _catalogRepository.GetAllSizeGroupsAsync(query);
-        return sizeGroups.Select(sg => _mapper.Map<SizeGroupDto>(sg));
+        List<SizeGroupDto> sizeGroupsDto = sizeGroups.Select(sg => _mapper.Map<SizeGroupDto>(sg)).ToList();
+
+
+        if (isBaseQuery)
+        {
+            await _cacheService.SetAsync(cachekey, sizeGroupsDto);
+        }
+        return sizeGroupsDto;
+
+
     }
 
     public async Task<SizeGroupDto?> GetSizeGroupByIdAsync(Guid id)
@@ -171,6 +270,11 @@ public class CatalogService : ICatalogService
     {
         SizeGroup newSizeGroup = _mapper.Map<SizeGroup>(sizeGroupDto);
         await _catalogRepository.CreateSizeGroupAsync(newSizeGroup);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:sizegroups:actives");
+        await _cacheService.RemoveAsync("maestros:sizegroups:all");
+
         return _mapper.Map<SizeGroupDto>(newSizeGroup);
     }
 
@@ -187,6 +291,11 @@ public class CatalogService : ICatalogService
         existing.IsActive = sizeGroupDto.IsActive;
 
         await _catalogRepository.UpdateSizeGroupAsync(existing);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:sizegroups:actives");
+        await _cacheService.RemoveAsync("maestros:sizegroups:all");
+
         return _mapper.Map<SizeGroupDto>(existing);
     }
 
@@ -196,16 +305,40 @@ public class CatalogService : ICatalogService
         if (existing is null)
         {
             throw new NotFoundException($"No existe ningún grupo de tallas con el id {id}.");
-        }
+        }    
 
         await _catalogRepository.DeleteSizeGroupAsync(id);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:sizegroups:actives");
+        await _cacheService.RemoveAsync("maestros:sizegroups:all");
     }
 
     // ----- SIZES -----
     public async Task<IEnumerable<SizeDto>> GetAllSizesAsync(BaseQueryDto query)
     {
+        //detectamos si la consulta es "base" (sin searchTerm y con isActive true o null) para poder cachearla. Si no es base, no la cacheamos.
+        string cachekey = $"maestros:sizes:{(query.IsActive == true ? "actives" : "all")}";
+        bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
+        if (isBaseQuery)
+        {
+            List<SizeDto> cachedSizes = await _cacheService.GetAsync<List<SizeDto>>(cachekey);
+            if (cachedSizes != null)
+            {
+                return cachedSizes;
+            }
+        }
+
         IEnumerable<Size> sizes = await _catalogRepository.GetAllSizesAsync(query);
-        return sizes.Select(s => _mapper.Map<SizeDto>(s));
+        List<SizeDto> sizesDto = sizes.Select(s => _mapper.Map<SizeDto>(s)).ToList();
+
+
+        if (isBaseQuery)
+        {
+            await _cacheService.SetAsync(cachekey, sizesDto);
+        }
+        return sizesDto;
+
     }
 
     public async Task<SizeDto?> GetSizeByIdAsync(Guid id)
@@ -218,6 +351,11 @@ public class CatalogService : ICatalogService
     {
         Size newSize = _mapper.Map<Size>(sizeDto);
         await _catalogRepository.CreateSizeAsync(newSize);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:sizes:actives");
+        await _cacheService.RemoveAsync("maestros:sizes:all");
+
         return _mapper.Map<SizeDto>(newSize);
     }
 
@@ -235,6 +373,11 @@ public class CatalogService : ICatalogService
         existing.IsActive = sizeDto.IsActive;
 
         await _catalogRepository.UpdateSizeAsync(existing);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:sizes:actives");
+        await _cacheService.RemoveAsync("maestros:sizes:all");
+
         return _mapper.Map<SizeDto>(existing);
     }
 
@@ -247,14 +390,40 @@ public class CatalogService : ICatalogService
         }
 
         await _catalogRepository.DeleteSizeAsync(id);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:sizes:actives");
+        await _cacheService.RemoveAsync("maestros:sizes:all");
+
     }
 
 
     // ----- FEATURES -----
     public async Task<IEnumerable<FeatureDto>> GetAllFeaturesAsync(BaseQueryDto query)
     {
+        //detectamos si la consulta es "base" (sin searchTerm y con isActive true o null) para poder cachearla. Si no es base, no la cacheamos.
+        string cachekey = $"maestros:features:{(query.IsActive == true ? "actives" : "all")}";
+        bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
+        if (isBaseQuery)
+        {
+            List<FeatureDto> cachedFeatures = await _cacheService.GetAsync<List<FeatureDto>>(cachekey);
+            if (cachedFeatures != null)
+            {
+                return cachedFeatures;
+            }
+        }
+
         IEnumerable<Feature> features = await _catalogRepository.GetAllFeaturesAsync(query);
-        return features.Select(f => _mapper.Map<FeatureDto>(f));
+        List<FeatureDto> featuresDto = features.Select(f => _mapper.Map<FeatureDto>(f)).ToList();
+
+
+        if (isBaseQuery)
+        {
+            await _cacheService.SetAsync(cachekey, featuresDto);
+        }
+        return featuresDto;
+
+        
     }
 
     public async Task<FeatureDto?> GetFeatureByIdAsync(Guid id)
@@ -267,6 +436,11 @@ public class CatalogService : ICatalogService
     {
         Feature newFeature = _mapper.Map<Feature>(featureDto);
         await _catalogRepository.CreateFeatureAsync(newFeature);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:features:actives");
+        await _cacheService.RemoveAsync("maestros:features:all");
+
         return _mapper.Map<FeatureDto>(newFeature);
     }
 
@@ -295,6 +469,11 @@ public class CatalogService : ICatalogService
         }
 
         await _catalogRepository.UpdateFeatureAsync(existing);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:features:actives");
+        await _cacheService.RemoveAsync("maestros:features:all");
+
         return _mapper.Map<FeatureDto>(existing);
     }
 
@@ -307,14 +486,39 @@ public class CatalogService : ICatalogService
         }
 
         await _catalogRepository.DeleteFeatureAsync(id);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:features:actives");
+        await _cacheService.RemoveAsync("maestros:features:all");
     }
 
 
     // ----- FEATURES OPTIONS -----
     public async Task<IEnumerable<FeatureOptionDto>> GetAllFeatureOptionsAsync(BaseQueryDto query)
     {
+        //detectamos si la consulta es "base" (sin searchTerm y con isActive true o null) para poder cachearla. Si no es base, no la cacheamos.
+        string cachekey = $"maestros:featureoptions:{(query.IsActive == true ? "actives" : "all")}";
+        bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
+        if (isBaseQuery)
+        {
+            List<FeatureOptionDto> cachedFeatureOptions = await _cacheService.GetAsync<List<FeatureOptionDto>>(cachekey);
+            if (cachedFeatureOptions != null)
+            {
+                return cachedFeatureOptions;
+            }
+        }
+            
         IEnumerable<FeatureOption> featureOptions = await _catalogRepository.GetAllFeatureOptionsAsync(query);
-        return featureOptions.Select(fo => _mapper.Map<FeatureOptionDto>(fo));
+        List<FeatureOptionDto> featureOptionsDto = featureOptions.Select(fo => _mapper.Map<FeatureOptionDto>(fo)).ToList();
+
+
+        if (isBaseQuery)
+        {
+            await _cacheService.SetAsync(cachekey, featureOptionsDto);
+        }
+        return featureOptionsDto;
+
+
     }
 
     public async Task<FeatureOptionDto?> GetFeatureOptionByIdAsync(Guid id)
@@ -327,6 +531,11 @@ public class CatalogService : ICatalogService
     {
         FeatureOption newFeatureOption = _mapper.Map<FeatureOption>(featureOptionDto);
         await _catalogRepository.CreateFeatureOptionAsync(newFeatureOption);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:featureoptions:actives");
+        await _cacheService.RemoveAsync("maestros:featureoptions:all");
+
         return _mapper.Map<FeatureOptionDto>(newFeatureOption);
     }
 
@@ -342,6 +551,11 @@ public class CatalogService : ICatalogService
         existing.Value   = featureOptionDto.Value;
 
         await _catalogRepository.UpdateFeatureOptionAsync(existing);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:featureoptions:actives");
+        await _cacheService.RemoveAsync("maestros:featureoptions:all");
+
         return _mapper.Map<FeatureOptionDto>(existing);
     }
 
@@ -354,7 +568,12 @@ public class CatalogService : ICatalogService
         }
 
         await _catalogRepository.DeleteFeatureOptionAsync(id);
+
+        // Invalidación de caché
+        await _cacheService.RemoveAsync("maestros:featureoptions:actives");
+        await _cacheService.RemoveAsync("maestros:featureoptions:all");
     }
 
+   
 
 }

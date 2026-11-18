@@ -2,6 +2,7 @@
   <Folder Name="/Elementos de la solución/">
     <File Path="BACKLOG.md" />
     <File Path="compose.yaml" />
+    <File Path="contexto.md" />
     <File Path="DIARIO_ARQUITECTURA.md" />
     <File Path="Readme.md" />
   </Folder>

@@ -65,6 +65,7 @@ namespace BackendMaster2.Api
             builder.Services.AddScoped<IAiService, AiService>();
             builder.Services.AddScoped<IMasterDataService, MasterDataService>();
             builder.Services.AddScoped<IMasterDataRepository, MasterDataRepository>();
+            builder.Services.AddScoped<ICacheService, CacheService>();
             //registro de servicios de notificación SignalR
             builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 
@@ -128,6 +129,12 @@ namespace BackendMaster2.Api
                     apiKey: builder.Configuration["AiSettings:ApiKey"]!,
                     endpoint: new Uri(builder.Configuration["AiSettings:Endpoint"]!));
 
+            //REDIS
+            builder.Services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = builder.Configuration.GetSection("Redis:Configuration").Value;
+                options.InstanceName = builder.Configuration.GetSection("Redis:InstanceName").Value;
+            });
 
             var app = builder.Build();
 

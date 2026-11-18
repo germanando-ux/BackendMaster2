@@ -1,5 +1,8 @@
 # BACKLOG - BackendMaster2
 
+> 📌 Propósito: plan y progreso (qué se hace y por dónde vamos).
+> Los básicos del proyecto (arquitectura, dominio, convenciones) viven en CONTEXTO.md. No mezclar.
+
 ## 🗺️ Roadmap Estratégico Acordado
 El desarrollo se ejecutará estrictamente en este orden, con estrategia **in crescendo** (de lo más simple y rápido a lo más complejo):
 
@@ -37,6 +40,7 @@ El desarrollo se ejecutará estrictamente en este orden, con estrategia **in cre
 - [ ] **Deuda de mapeo**: aplicar filosofía híbrida a `ProductDetailDto` → `ProductDto` en el frontend (el mapeo manual campo a campo ya provocó un olvido con DataSources/Marketplaces).
 - [x] **Bug de serialización de enums**: resuelto con fallback seguro en AutoMapper (`CatalogProfile`).
 - [x] **Persistencia `FeatureOptionId`**: resuelto (se guardaba en el DTO pero no se copiaba a la entidad en Create/Update).
+- [ ] **Campos residuales `Price`/`Stock` en `Product`**: eliminarlos de la entidad y calcularlos en el front (suma de stocks de `ProductSizes`; precio de la variante principal). Vinculado a la evolución a Variantes (SKU). *(Aportación de Germán)*.
 
 ---
 
@@ -101,12 +105,14 @@ El desarrollo se ejecutará estrictamente en este orden, con estrategia **in cre
 - [x] Endpoint IA para mejorar descripción + Modal + Toast.
 - [x] SignalR para notificaciones de tareas asíncronas.
 
-### Fase 2.1: Caché Distribuida (Redis) ⬅️ **EN PROGRESO**
+### Fase 2.1: Caché Distribuida (Redis) ⬅️ **EN PROGRESO (validación final)**
 *Objetivo: aliviar la carga de BBDD en el `ProductForm` (hoy hace 6-7 llamadas de maestros al abrir).*
 - [x] **Levantar contenedor Redis** en `docker-compose`.
-- [ ] **Alcance de caché**: estrictamente Maestros del Catálogo (Colores, Categorías, Tallas, Grupos de Tallas, Features, DataSources, Marketplaces).
-- [ ] **Invalidación específica**: al crear/editar/borrar un maestro, borrar solo su clave de caché (no toda la caché).
-- [ ] **Caché de Búsquedas Híbridas (IA + pgvector)**: Cachear el resultado de búsquedas semánticas (o la intención de IA ya resuelta) para evitar llamadas redundantes a la IA y operaciones costosas de `pgvector`. *(Aportación de Germán)*.
+- [x] **Alcance de caché**: maestros del catálogo (Colores, Categorías, Tallas, Grupos de Tallas, Features, FeatureOptions) + DataSources y Marketplaces, en `CatalogService` y `MasterDataService`.
+- [x] **Invalidación específica**: al crear/editar/borrar un maestro, borrar solo sus claves (`actives` y `all`).
+- [x] **Refactor**: lógica de caché centralizada en `ICacheService`/`CacheService` (Modules), consumida por inyección.
+- [ ] **Validación final en runtime** del refactor `ICacheService` (comprobar claves en Redis Insight).
+- [ ] **Caché de Búsquedas Híbridas (IA + pgvector)**: cachear el resultado de búsquedas semánticas (o la intención de IA ya resuelta) para evitar llamadas redundantes a la IA y operaciones costosas de `pgvector`. *(Aportación de Germán)*.
 - [ ] **Utilidades adicionales de Redis** (a valorar según tiempo):
   - [ ] **Rate Limiting** en la API (contador por usuario/token con `INCR` + `EXPIRE`).
   - [ ] **Distributed Locks** para el Worker de RabbitMQ (evitar procesamiento duplicado de mensajes).
@@ -221,7 +227,7 @@ El desarrollo se ejecutará estrictamente en este orden, con estrategia **in cre
 2. **Sin validaciones de frontend**: la validación de negocio vive exclusivamente en backend (principio de defensa en profundidad). El frontend no bloquea el guardado.
 3. **Sin multidioma (i18n)**: ni en la UI ni en los datos de producto. Un PIM real gestiona textos en múltiples idiomas.
 4. **Sin multimoneda**: los precios son un único valor numérico. Un PIM real maneja divisas, tipos de cambio y listas de precios por mercado.
-5. **Modelo de dominio simplificado (Stock/Precio)**: actualmente `Stock` y `Price` viven en la tabla `Product` (Producto Padre). En un PIM real deben vivir en la **Variante (SKU)**, que es la combinación única de `Producto + Talla + Color`. El stock general del producto debería ser la suma de los stocks de sus variantes.
+5. **Modelo de dominio en evolución (Stock/Precio)**: el precio y el stock ya están modelados a nivel de talla (`ProductSizes`), pero **no a nivel de color** (`ProductOptions` es una tabla de unión simple sin payload). Además, la tabla `Product` conserva campos `Price` y `Stock` **residuales** que deben eliminarse y sustituirse por cálculos en frontend (suma de stocks de tallas, precio de la variante principal). En un PIM real, precio y stock viven en la **Variante (SKU)**, combinación única de `Producto + Talla + Color`.
 6. **Sin gestión real de imágenes/assets**: la entidad `ProductImage` y su migración existen, pero no hay contenedor MinIO/S3, ni endpoint de subida, ni UI de gestión. Solo URLs externas.
 7. **Sin versionado / audit trail**: no hay historial de cambios de producto ni quién modificó qué.
 8. **Sin workflows de aprobación**: no existe estado "Borrador → Revisión → Aprobado → Publicado".
@@ -241,7 +247,7 @@ El desarrollo se ejecutará estrictamente en este orden, con estrategia **in cre
 ---
 
 ## 🏛️ Arquitectura y Evolución (Futuro)
-- [ ] Migración a DDD canónico (4 capas): separar Domain de Data, crear capa Application independiente.
+- [ ] Migración a DDD canónico de 4 capas: separar Domain de Data, crear capa Application independiente.
 - [ ] Evaluar migración a Servicio Centralizado de Notificaciones (SignalR + Redis/RabbitMQ) para desacoplar Hubs de APIs de negocio.
 - [ ] UCP (Universal Commerce Protocol) como micro-proyecto de comercio agéntico.
 - [ ] **Filosofía de mapeo consolidada**: AutoMapper solo para mapeos planos (1 a 1);
