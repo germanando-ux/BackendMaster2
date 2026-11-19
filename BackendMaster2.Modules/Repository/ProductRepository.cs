@@ -100,23 +100,22 @@ namespace BackendMaster2.Modules.Repository
             }
 
             // 2. Aplicar filtros duros (solo si tienen valor)
-            if (query.MaxPrice.HasValue)
-            {
-                dbQuery = dbQuery.Where(p => p.Price <= query.MaxPrice.Value);
-            }
 
-            if (query.MinStock.HasValue)
+            if (query.MinPrice.HasValue || query.MaxPrice.HasValue || query.MinStock.HasValue || (query.SizeNames != null && query.SizeNames.Any()))
             {
-                dbQuery = dbQuery.Where(p => p.Stock >= query.MinStock.Value);
+                dbQuery = dbQuery.Where(p => p.ProductSizes.Any(ps =>
+                    (!query.MinPrice.HasValue || ps.Price >= query.MinPrice.Value) &&
+                    (!query.MaxPrice.HasValue || ps.Price <= query.MaxPrice.Value) &&
+                    (!query.MinStock.HasValue || ps.Stock >= query.MinStock.Value) &&
+                    (query.SizeNames == null || !query.SizeNames.Any() || query.SizeNames.Contains(ps.Size.Name))
+                ));
             }
 
             // 3. Ordenación por similitud semántica (Distancia Coseno)
             // Npgsql traduce .CosineDistance() automáticamente al operador <=> de pgvector
             if (query.ProductVector != null)
             {
-                //dbQuery = dbQuery.OrderBy(p =>
-                //    p.Embedding == null ? 1.0 : p.Embedding.CosineDistance(query.ProductVector)
-                //);
+            
 
                 dbQuery = dbQuery
                     .Where(p => p.Embedding != null)
@@ -128,7 +127,7 @@ namespace BackendMaster2.Modules.Repository
                 dbQuery = dbQuery.OrderBy(p => p.Price);
             }
 
-            // EJECUTAMOS LA QUERY, TRAEMOS LOS CANDIDATOS A MEMORIA 
+            // EJECUTAMOS LA QUERY DURA, TRAEMOS LOS CANDIDATOS A MEMORIA 
             List<Product> candidatos = await dbQuery.Take(limit).ToListAsync();
 
             // Hacemos el filtro por similitud semántica (Entity framework se hacía la picha un lío )

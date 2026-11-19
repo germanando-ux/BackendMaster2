@@ -19,7 +19,7 @@ public class CacheService : ICacheService
         _cache = cache;
     }
 
-    public async Task<T?> GetAsync<T>(string key) where T : class
+    public async Task<T?> GetCacheAsync<T>(string key) where T : class
     {
         var cachedData = await _cache.GetStringAsync(key);
 
@@ -31,7 +31,7 @@ public class CacheService : ICacheService
         return JsonSerializer.Deserialize<T>(cachedData);
     }
 
-    public async Task SetAsync<T>(string key, T data, TimeSpan? expiration = null)
+    public async Task SetCacheAsync<T>(string key, T data, TimeSpan? expiration = null)
     {
         var cacheOptions = new DistributedCacheEntryOptions
         {

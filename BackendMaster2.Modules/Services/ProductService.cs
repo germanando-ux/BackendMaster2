@@ -21,15 +21,17 @@ namespace BackendMaster2.Modules.Services
         private readonly IAiService _aiService;
         private readonly INotificationService _notificationService;
         private readonly ICatalogService _catalogService;
+        private readonly ICacheService _cacheService;   
 
         // Depende del CONTRATO, no de la clase: el repositorio real lo inyecta el DI.
-        public ProductService(IProductRepository productRepository, IMapper mapper, IAiService aiService, INotificationService notificationService, ICatalogService catalogService)
+        public ProductService(IProductRepository productRepository, IMapper mapper, IAiService aiService, INotificationService notificationService, ICatalogService catalogService, ICacheService cacheService)
         {
             _productRepository = productRepository;
             _mapper = mapper;
             _aiService = aiService;
             _notificationService = notificationService;
             _catalogService = catalogService;
+            _cacheService = cacheService;
         }
 
         /// <summary>
@@ -39,8 +41,27 @@ namespace BackendMaster2.Modules.Services
         /// <returns></returns>
         public async Task<IEnumerable<ProductDto>> GetAllProductsAsync(BaseQueryDto query)
         {
+            //detectamos si la consulta es "base" (sin searchTerm y con isActive true o null) para poder cachearla. Si no es base, no la cacheamos.
+            string cachekey = $"maestros:products:{(query.IsActive == true ? "actives" : "all")}";
+            bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
+
+            if (isBaseQuery)
+            {
+                List<ProductDto> cachedProducts = await _cacheService.GetCacheAsync<List<ProductDto>>(cachekey);
+                if (cachedProducts != null)
+                {
+                    return cachedProducts;
+                }
+            }
             var products = await _productRepository.GetAllProductsAsync(query);
-            return products.Select(p => _mapper.Map<ProductDto>(p));
+            List<ProductDto> productsDto = products.Select(p => _mapper.Map<ProductDto>(p)).ToList();
+
+            // Guardamos en caché si es una consulta base
+            if (isBaseQuery)
+            {
+                await _cacheService.SetCacheAsync<List<ProductDto>>(cachekey, productsDto);
+            }
+            return productsDto;
         }
 
   
@@ -146,6 +167,11 @@ namespace BackendMaster2.Modules.Services
 
             // 3. Guardamos la entidad (EF Core insertará el producto y sus opciones en cascada)
             await _productRepository.CreateAsync(newProduct);
+
+            // Invalidación de caché
+            await _cacheService.RemoveAsync("maestros:products:actives");
+            await _cacheService.RemoveAsync("maestros:products:all");
+
             // 4. Devolvemos el DTO con el Id ya generado por la base de datos
             return _mapper.Map<ProductDto>(newProduct);
         }
@@ -284,6 +310,10 @@ namespace BackendMaster2.Modules.Services
             // 5. Guardamos
             await _productRepository.UpdateAsync(existing);
 
+            // Invalidación de caché
+            await _cacheService.RemoveAsync("maestros:products:actives");
+            await _cacheService.RemoveAsync("maestros:products:all");
+
             return _mapper.Map<ProductDto>(existing);
 
 
@@ -352,6 +382,10 @@ namespace BackendMaster2.Modules.Services
             }
 
             await _productRepository.DeleteAsync(id);
+
+            // Invalidación de caché
+            await _cacheService.RemoveAsync("maestros:products:actives");
+            await _cacheService.RemoveAsync("maestros:products:all");
         }
 
 
@@ -405,9 +439,12 @@ namespace BackendMaster2.Modules.Services
                 queryHybrid.ColorVector = await _aiService.GenerateEmbeddingAsync(searchIntent.ColorQuery, cancellationToken);
             }
             queryHybrid.MaxPrice = searchIntent.MaxPrice;
+            queryHybrid.MinPrice = searchIntent.MinPrice;
             queryHybrid.MinStock = searchIntent.MinStock;
+            queryHybrid.SizeNames = searchIntent.SizeNames ?? new List<string>();
 
-            //LLamamos al repositorio para hacer la búsqueda híbrida.
+
+            //LLAMAMOS AL REPOSITORIO PARA HACER LA BÚSQUEDA HÍBRIDA
             IEnumerable<ProductSearchHybridResult> products = await _productRepository.GetAllProductsHybridSearchAsync(queryHybrid);
 
 
@@ -424,30 +461,41 @@ namespace BackendMaster2.Modules.Services
             });
         }
 
+   
+
         /// <summary>
-        /// Construye el prompt para la IA a partir de la información del DTO.
+        /// Construye el prompt para la IA (Qwen) a partir de la información del DTO.
         /// </summary>
-        /// <param name="dto"></param>
-        /// <returns></returns>
         private string BuildEnrichmentPrompt(EnrichDescriptionRequestDto dto)
         {
-            var colorsText = dto.Colors.Any()
+            string colorsText = dto.Colors.Any()
                 ? string.Join(", ", dto.Colors)
                 : "No especificados";
 
+            string categoriesText = !string.IsNullOrWhiteSpace(dto.Categories)
+                ? dto.Categories
+                : "No especificada";
+
+            string featuresText = dto.Features != null && dto.Features.Any()
+                ? string.Join(", ", dto.Features.Select(f => $"{f.Key}: {f.Value}"))
+                : "No especificadas";
+
             return $"""
-            Eres un experto en redactar fichas de producto de comercio electrónico.
-            Mejora y enriquece la siguiente descripción comercial para un producto.
+            Eres un experto en redactar fichas de producto de comercio electrónico de alta conversión.
+            Tu tarea es mejorar y enriquecer la descripción comercial de un producto, integrando de forma natural y fluida la información de contexto proporcionada.
 
             Información del producto:
+            - Categoría: {categoriesText}
             - Descripción actual: {dto.CurrentDescription}
+            - Características clave: {featuresText}
             - Colores disponibles: {colorsText}
-            - Precio: {dto.Price:C}
+            - Precio de referencia: Desde {dto.Price:C}
 
-            Requisitos:
-            - Devuelve un texto atractivo, profesional y optimizado para ventas.
-            - Resalta el valor del producto manteniendo la coherencia con su precio y colores.
-            - Devuelve ÚNICAMENTE el texto enriquecido sin introducciones ni comentarios adicionales.
+            Requisitos de redacción:
+            1. Integra las "Características clave" y la "Categoría" de forma orgánica en el texto, no como una lista robótica.
+            2. Resalta el valor del producto y su relación calidad-precio.
+            3. Mantén un tono profesional, atractivo y orientado a la venta.
+            4. Devuelve ÚNICAMENTE el texto enriquecido, sin introducciones, sin comillas y sin comentarios adicionales.
             """;
         }
     }

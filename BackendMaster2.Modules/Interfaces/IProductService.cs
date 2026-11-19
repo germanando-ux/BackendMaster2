@@ -18,6 +18,14 @@ namespace BackendMaster2.Modules.Interfaces
         Task<ProductDto> CreateAsync(ProductDto product);
         Task<ProductDto> UpdateAsync(ProductDto product);
         Task DeleteAsync(Guid id);
+
+        /// <summary>
+        /// LLama al servicio de chat de IA para traducir la consulta del usuario a un JSON con la intención de búsqueda de producto.
+        /// Convierte en vectores la consulta de texto y la de color
+        /// Llama al repositorio para hacer la búsqueda híbrida.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
         Task ProcessEnrichDescriptionAsync(EnrichDescriptionRequestDto dto, CancellationToken cancellationToken = default);
         Task<IEnumerable<ProductSearchHybridDto>> GetAllProductsHybridSearchAsync(string query, CancellationToken cancellationToken = default);
     }

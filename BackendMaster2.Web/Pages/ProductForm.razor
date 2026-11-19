@@ -364,13 +364,13 @@ else
                                 {
                                     <div class="text-center py-4 text-muted">
                                         <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
-                                        <span class="small">No hay características asignadas a esta categoría.</span>
+                                        <span class="small">No hay ProductMarketplaces.</span>
                                     </div>
                                 }
                             </div>
                         </div>
 
-                        @* bloque búsqueda y añadir características *@
+                        @* bloque búsqueda y añadir marketplace *@
                         <div class="col-md-12 mb-3">
                             <div class="p-3 bg-light rounded border">
                                 <label class="form-label fw-bold small text-uppercase text-muted mb-2">
@@ -385,7 +385,7 @@ else
                                             <option value="@mp.Id">@mp.Name</option>
                                         }
                                     </select>
-                                    <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center" @onclick="AddSelectedFeature" title="Añadir a la lista">
+                                    <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center" @onclick="AddSelectedMarketplace" title="Añadir a la lista">
                                         <i class="bi bi-plus-lg fs-5"></i>
                                     </button>
                                 </div>
@@ -651,6 +651,14 @@ else
         }
 
 
+        //CARGAMOS todas las sizegroups disponibles
+        var sizeGroupsResult = await SizeGroupClient.GetAllSizeGroupsAsync();
+        if (sizeGroupsResult.IsSuccess)
+        {
+            availableSizeGroups = sizeGroupsResult.Data ?? new();
+        }
+
+
         //CARGAMOS todas grupos de datasources disponibles
         var datasourceResult = await DataSourceClient.GetAllDataSourceAsync();
         if (datasourceResult.IsSuccess)
@@ -792,11 +800,14 @@ else
 
         try
         {
+
             var request = new EnrichDescriptionRequestDto
             {
                 CurrentDescription = productDto.Description,
                 Colors = availableColors.Where(c => productDto.ColorIds.Contains(c.Id)).Select(c => c.Name).ToList(),
-                Price = productDto.Price,
+                Features = createFeatureValueDictionary(),
+                Categories = BuildCategoryPath(availableCategories.Where(c => productDto.CategoryIds.Contains(c.Id))),
+                Price = productDto.ProductSizes?.Any() == true ? productDto.ProductSizes.Min(ps => ps.Price ?? 0) : 0,
                 SRConnectionId = NotificationService.GetConnectionId() ?? string.Empty
             };
 
@@ -860,7 +871,38 @@ else
     }
 
 
-    //EVENTOS Y MÉTODOAS CATEGORÍA
+    //EVENTOS Y MÉTODOS CATEGORÍA
+
+    /// <summary>
+    /// Monta una cadena con la ruta completa de la categoría, desde la raíz hasta la hoja, separadas por " > ". Ej: "Ropa > Ropa Deportiva > Mallas"
+    /// </summary>
+    /// <param name="categories"></param>
+    /// <returns></returns>
+    private string BuildCategoryPath(IEnumerable<CategoryDto> categories)
+    {
+        if (categories == null || !categories.Any())
+            return string.Empty;
+
+        var list = categories.ToList();
+
+        // 1. Identificamos la "hoja": la categoría cuyo Id NO es el ParentId de ninguna otra en la lista
+        var leaf = list.FirstOrDefault(c => !list.Any(other => other.ParentId == c.Id));
+
+        if (leaf == null)
+            return string.Empty;
+
+        // 2. Subimos desde la hoja hasta la raíz construyendo la ruta
+        var pathNames = new List<string>();
+        var current = leaf;
+
+        while (current != null)
+        {
+            pathNames.Insert(0, current.Name); // Insertamos al principio para que la raíz quede primera
+            current = list.FirstOrDefault(c => c.Id == current.ParentId);
+        }
+
+        return string.Join(" > ", pathNames);
+    }
 
     // Propiedad puente: el select lee/escribe la ÚNICA Categoría del DTO.
     private Guid? SelectedCategoryId
@@ -933,7 +975,7 @@ else
             {
                 // Buscamos el DataType en nuestra lista en memoria para que el formulario sepa qué control pintar
                 var featureInfo = availableFeatures.FirstOrDefault(f => f.Id == mandatoryFeature.FeatureId);
-            
+
                 productDto.ProductFeatures.Add(new ProductFeatureDto
                 {
                     FeatureId = mandatoryFeature.FeatureId,
@@ -1077,9 +1119,51 @@ else
     }
 
     //EVENTOS feature y featureOption
+    private Dictionary<string, string> createFeatureValueDictionary()
+    {
+        var featuresValuesDict = new Dictionary<string, string>();
+        if (productDto.ProductFeatures != null)
+        {
+            foreach (var feature in productDto.ProductFeatures)
+            {
+                // Priorizamos el valor de la opción (si es tipo Lista), si no, el valor libre (Texto/Número)
+                string featureValue = !string.IsNullOrWhiteSpace(feature.FeatureOptionValue) ? feature.FeatureOptionValue : feature.Value;
+
+                if (string.IsNullOrWhiteSpace(featureValue))
+                {
+                    featureValue = GetFeatureOptionValue(feature.FeatureId, feature.FeatureOptionId);
+                }
+                // Solo añadimos al diccionario si tenemos nombre y valor válidos
+                if (!string.IsNullOrWhiteSpace(feature.FeatureName) && !string.IsNullOrWhiteSpace(featureValue))
+                {
+                    featuresValuesDict[feature.FeatureName] = featureValue;
+                }
+            }
+        }
+        return featuresValuesDict;
+    }
+
+
+    /// <summary>
+    /// Obtiene la lista de opciones para una característica específica. Si no hay opciones, devuelve una lista vacía.
+    /// </summary>
+    /// <param name="featureId"></param>
+    /// <returns></returns>
     private List<FeatureOptionDto> GetFeatureOptions(Guid featureId)
     {
         return filteredFeatures.FirstOrDefault(f => f.Id == featureId)?.FeatureOptions?.ToList()?? new List<FeatureOptionDto>();
+    }
+
+
+    /// <summary>
+    /// Obtiene el valor de la opción seleccionada para una característica específica. Si no hay opción seleccionada, devuelve una cadena vacía.
+    /// </summary>
+    /// <param name="featureId"></param>
+    /// <param name="optionId"></param>
+    /// <returns></returns>
+    private string GetFeatureOptionValue(Guid featureId, Guid? optionId)
+    {
+        return filteredFeatures.FirstOrDefault(f => f.Id == featureId)?.FeatureOptions?.FirstOrDefault(fo => fo.Id == optionId)?.Value ?? string.Empty;
     }
 
     private void RemoveproductFeature(Guid featureId)

@@ -28,7 +28,7 @@ public class AiService : IAiService
     }
 
     /// <summary>
-    /// Método para generar Embeddings a partir de un texto
+    /// Método para generar Embeddings a partir de un texto. LLamanado a la API de Google Gemini para generar el embedding y devolverlo como un Vector compatible con pgvector.
     /// </summary>
     /// <param name="text"></param>
     /// <param name="cancellationToken"></param>
@@ -79,28 +79,50 @@ public class AiService : IAiService
             return result.Text ?? string.Empty;
     }
 
+
     /// <summary>
-    /// Traducimos a un json la consulta del usuario por medio de un chat de ia
+    /// Método para generar Embeddings a partir de un texto. LLamanado a la API de Google Gemini para generar el embedding y devolverlo como un Vector compatible con pgvector.
     /// </summary>
     /// <param name="text"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     public async Task<SearchProductIntentDto> GenerateProductSearchIntent(string text, CancellationToken cancellationToken = default)
     {
-        //string prompt = $@"Analiza el siguiente texto y determina la intención de búsqueda de producto. 
-        //                Devuelve un JSON con las propiedades: ProductQuery (string), ColorQuery (string), MaxPrice (decimal), MinStock (int). Texto: {text}.
-        //                Devuelve SOLO el objeto JSON válido, sin texto adicional, sin explicaciones y sin etiquetas markdown";
+        string prompt = $@"Eres un asistente experto en comercio electrónico. Tu tarea es analizar la consulta de un usuario y extraer su intención de búsqueda en formato JSON estricto.
 
-        string prompt = $@"Analiza el siguiente texto de búsqueda de un usuario en una tienda online.
-                        Devuelve un JSON con las propiedades: 
-                        - ProductQuery (string): El término principal del producto. CONSERVA adjetivos descriptivos como 'calentito', 'ligero', 'impermeable', etc. NO los normalices ni los elimines.
-                        - ColorQuery (string): El color mencionado, si lo hay.
-                        - MaxPrice (decimal|null): Precio máximo si se menciona.
-                        - MinStock (int|null): Stock mínimo si se menciona.
+        Reglas de extracción:
+        1. ProductQuery (string): El término principal del producto. CONSERVA todos los adjetivos descriptivos, estilo o uso (ej: 'calentito', 'ligero', 'impermeable', 'para correr'). NO los normalices ni los elimines, ya que se usarán para búsqueda semántica por vectores. Ignora categorías o características técnicas específicas, céntrate en la descripción natural.
+        2. ColorQuery (string): El color mencionado, si lo hay (ej: 'verde aguamarina', 'burdeos'). Si no hay color, deja este campo vacío.
+        3. MinPrice (decimal|null): Precio mínimo si se menciona un rango (ej: 'entre 20 y 50' -> 20). Si no, null.
+        4. MaxPrice (decimal|null): Precio máximo si se menciona (ej: 'menos de 50' -> 50). Si no, null.
+        5. SizeNames (array de strings): Lista de tallas específicas mencionadas (ej: 'talla 40 y 42' -> ['40', '42']). No intentes inferir rangos, solo extrae las tallas explícitas. Si no se mencionan, deja el array vacío [].
+        6. MinStock (int): Si el usuario implica disponibilidad ('en stock', 'disponible'), establece este valor en 1. Si no se menciona, establece 0 (sin filtro de stock).
 
-                        Texto del usuario: ""{text}""
+        Ejemplo 1:
+        Texto: 'zapatillas de correr rojas baratas por menos de 60 euros en talla 42'
+        JSON: {{
+          ""ProductQuery"": ""zapatillas de correr baratas"",
+          ""ColorQuery"": ""rojas"",
+          ""MinPrice"": null,
+          ""MaxPrice"": 60,
+          ""SizeNames"": [""42""],
+          ""MinStock"": 0
+        }}
 
-                        Devuelve SOLO el objeto JSON válido, sin markdown, sin explicaciones.";
+        Ejemplo 2:
+        Texto: 'abrigo de lana calentito disponible'
+        JSON: {{
+          ""ProductQuery"": ""abrigo de lana calentito"",
+          ""ColorQuery"": """",
+          ""MinPrice"": null,
+          ""MaxPrice"": null,
+          ""SizeNames"": [],
+          ""MinStock"": 1
+        }}
+
+        Texto del usuario: ""{text}""
+
+        Devuelve SOLO el objeto JSON válido, sin markdown, sin comillas externas y sin explicaciones adicionales.";
 
         ChatResponse result = await _chatClient.GetResponseAsync(prompt, new ChatOptions { Temperature = 0.0f }, cancellationToken: cancellationToken);
 

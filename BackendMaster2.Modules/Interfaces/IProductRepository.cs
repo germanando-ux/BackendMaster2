@@ -13,6 +13,15 @@ namespace BackendMaster2.Modules.Interfaces
     public interface IProductRepository
     {
         Task<IEnumerable<Product>> GetAllProductsAsync(BaseQueryDto query);
+
+
+        /// <summary>
+        /// Busca en productos y colores por similitud semántica usando vectores.
+        /// Aplica filtros duros (precio, stock) y devuelve un DTO con el score de similitud.
+        /// Devuelve solo los productos que superen un umbral de similitud (0.6, 60%) y limita la cantidad de resultados según el parámetro topK.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
         Task<IEnumerable<ProductSearchHybridResult>> GetAllProductsHybridSearchAsync(QueryHybridProductDto query);
         Task<Product?> GetByIdAsync(Guid id);
         Task<ProductDetailDto?> GetProductDetailByIdAsync(Guid id);

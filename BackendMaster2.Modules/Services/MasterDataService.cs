@@ -37,7 +37,7 @@ public class MasterDataService : IMasterDataService
 
         if (isBaseQuery)
         {
-            List<MarketplaceDto> cachedMarketplaces = await _cacheService.GetAsync<List<MarketplaceDto>>(cachekey);
+            List<MarketplaceDto> cachedMarketplaces = await _cacheService.GetCacheAsync<List<MarketplaceDto>>(cachekey);
             if (cachedMarketplaces != null)
             {
                 return cachedMarketplaces;
@@ -49,7 +49,7 @@ public class MasterDataService : IMasterDataService
 
         if (isBaseQuery)
         {
-            await _cacheService.SetAsync(cachekey, marketplacesDto);
+            await _cacheService.SetCacheAsync(cachekey, marketplacesDto);
         }
         return marketplacesDto;
     }
@@ -112,7 +112,7 @@ public class MasterDataService : IMasterDataService
 
         if (isBaseQuery)
         {
-            List<DataSourceDto> cachedDataSources = await _cacheService.GetAsync<List<DataSourceDto>>(cachekey);
+            List<DataSourceDto> cachedDataSources = await _cacheService.GetCacheAsync<List<DataSourceDto>>(cachekey);
             if (cachedDataSources != null)
             {
                 return cachedDataSources;
@@ -124,7 +124,7 @@ public class MasterDataService : IMasterDataService
 
         if (isBaseQuery)
         {
-            await _cacheService.SetAsync(cachekey, dataSourcesDto);
+            await _cacheService.SetCacheAsync(cachekey, dataSourcesDto);
         }
         return dataSourcesDto;
     }

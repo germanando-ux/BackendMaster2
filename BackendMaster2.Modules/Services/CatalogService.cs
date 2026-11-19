@@ -67,7 +67,7 @@ public class CatalogService : ICatalogService
         bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
         if (isBaseQuery)
         {
-            List<ColorDto> cachedColors = await _cacheService.GetAsync<List<ColorDto>>(cachekey);
+            List<ColorDto> cachedColors = await _cacheService.GetCacheAsync<List<ColorDto>>(cachekey);
             if (cachedColors != null)
             {
                 return cachedColors;
@@ -80,7 +80,7 @@ public class CatalogService : ICatalogService
 
         if (isBaseQuery)
         { 
-            await  _cacheService.SetAsync(cachekey, colorsDto);
+            await  _cacheService.SetCacheAsync(cachekey, colorsDto);
         }
         return colorsDto;
     }
@@ -165,7 +165,7 @@ public class CatalogService : ICatalogService
         bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
         if (isBaseQuery)
         {
-            List<CategoryDto> cachedCategories = await _cacheService.GetAsync<List<CategoryDto>>(cachekey);
+            List<CategoryDto> cachedCategories = await _cacheService.GetCacheAsync<List<CategoryDto>>(cachekey);
             if (cachedCategories != null)
             {
                 return cachedCategories;
@@ -178,7 +178,7 @@ public class CatalogService : ICatalogService
 
         if (isBaseQuery)
         {
-            await setMasterCacheAsync<List<CategoryDto>>(cachekey, categoriesDto);
+            await _cacheService.SetCacheAsync<List<CategoryDto>>(cachekey, categoriesDto);
         }
         return categoriesDto;
 
@@ -240,7 +240,7 @@ public class CatalogService : ICatalogService
         bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
         if (isBaseQuery)
         {
-            List<SizeGroupDto> cachedSizeGroups = await _cacheService.GetAsync<List<SizeGroupDto>>(cachekey);
+            List<SizeGroupDto> cachedSizeGroups = await _cacheService.GetCacheAsync<List<SizeGroupDto>>(cachekey);
             if (cachedSizeGroups != null)
             {
                 return cachedSizeGroups;
@@ -253,7 +253,7 @@ public class CatalogService : ICatalogService
 
         if (isBaseQuery)
         {
-            await _cacheService.SetAsync(cachekey, sizeGroupsDto);
+            await _cacheService.SetCacheAsync(cachekey, sizeGroupsDto);
         }
         return sizeGroupsDto;
 
@@ -322,7 +322,7 @@ public class CatalogService : ICatalogService
         bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
         if (isBaseQuery)
         {
-            List<SizeDto> cachedSizes = await _cacheService.GetAsync<List<SizeDto>>(cachekey);
+            List<SizeDto> cachedSizes = await _cacheService.GetCacheAsync<List<SizeDto>>(cachekey);
             if (cachedSizes != null)
             {
                 return cachedSizes;
@@ -335,7 +335,7 @@ public class CatalogService : ICatalogService
 
         if (isBaseQuery)
         {
-            await _cacheService.SetAsync(cachekey, sizesDto);
+            await _cacheService.SetCacheAsync(cachekey, sizesDto);
         }
         return sizesDto;
 
@@ -406,7 +406,7 @@ public class CatalogService : ICatalogService
         bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
         if (isBaseQuery)
         {
-            List<FeatureDto> cachedFeatures = await _cacheService.GetAsync<List<FeatureDto>>(cachekey);
+            List<FeatureDto> cachedFeatures = await _cacheService.GetCacheAsync<List<FeatureDto>>(cachekey);
             if (cachedFeatures != null)
             {
                 return cachedFeatures;
@@ -419,7 +419,7 @@ public class CatalogService : ICatalogService
 
         if (isBaseQuery)
         {
-            await _cacheService.SetAsync(cachekey, featuresDto);
+            await _cacheService.SetCacheAsync(cachekey, featuresDto);
         }
         return featuresDto;
 
@@ -501,7 +501,7 @@ public class CatalogService : ICatalogService
         bool isBaseQuery = string.IsNullOrWhiteSpace(query.SearchTerm);
         if (isBaseQuery)
         {
-            List<FeatureOptionDto> cachedFeatureOptions = await _cacheService.GetAsync<List<FeatureOptionDto>>(cachekey);
+            List<FeatureOptionDto> cachedFeatureOptions = await _cacheService.GetCacheAsync<List<FeatureOptionDto>>(cachekey);
             if (cachedFeatureOptions != null)
             {
                 return cachedFeatureOptions;
@@ -514,7 +514,7 @@ public class CatalogService : ICatalogService
 
         if (isBaseQuery)
         {
-            await _cacheService.SetAsync(cachekey, featureOptionsDto);
+            await _cacheService.SetCacheAsync(cachekey, featureOptionsDto);
         }
         return featureOptionsDto;
 
